@@ -8,7 +8,7 @@ import App from './CleanApp' // Clean three-panel layout with proper terminal
 
 ReactDOM.createRoot(document.getElementById('app') as HTMLElement).render(
   <ErrorBoundary>
-    <WindowContextProvider titlebar={{ title: 'Electron React App', icon: appIcon, menuItems }}>
+    <WindowContextProvider titlebar={{ title: 'My Jarvis Desktop', icon: appIcon, menuItems }}>
       <App />
     </WindowContextProvider>
   </ErrorBoundary>

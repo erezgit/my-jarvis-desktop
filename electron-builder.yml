@@ -1,5 +1,5 @@
-appId: com.guasam.era
-productName: ElectronReactApp
+appId: com.erezfern.my-jarvis-desktop
+productName: MyJarvisDesktop
 directories:
   buildResources: resources/build
 files:
