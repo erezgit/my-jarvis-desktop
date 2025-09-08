@@ -1,12 +1,12 @@
 {
-  "name": "era",
-  "version": "12.0.0",
-  "description": "A modern Electron application template with React, Vite, TypeScript, Shadcn UI and TailwindCSS",
+  "name": "my-jarvis-desktop",
+  "version": "1.0.0",
+  "description": "My Jarvis Desktop - AI-powered desktop application with integrated terminal",
   "main": "./out/main/main.js",
   "license": "MIT",
   "author": {
-    "name": "Guasam",
-    "url": "https://github.com/guasam"
+    "name": "Erez",
+    "url": "https://github.com/erezfern"
   },
   "scripts": {
     "dev": "cross-env ELECTRON_DISABLE_SANDBOX=1 electron-vite dev -w",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/guasam/electron-react-app"
+    "url": "https://github.com/erezfern/my-jarvis-desktop"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
