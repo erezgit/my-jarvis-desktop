@@ -27,7 +27,11 @@ export const registerFileHandlers = (mainWindow: BrowserWindow) => {
   ipcMain.handle('read-directory', async (event, dirPath: string) => {
     try {
       const items = await fs.readdir(dirPath, { withFileTypes: true })
-      const results = await Promise.all(items.map(async (item) => {
+      
+      // Filter out .DS_Store and other system files
+      const filteredItems = items.filter(item => item.name !== '.DS_Store')
+      
+      const results = await Promise.all(filteredItems.map(async (item) => {
         const fullPath = path.join(dirPath, item.name)
         const stats = await fs.stat(fullPath)
         return {
@@ -35,7 +39,7 @@ export const registerFileHandlers = (mainWindow: BrowserWindow) => {
           path: fullPath,
           isDirectory: item.isDirectory(),
           size: stats.size,
-          modified: stats.mtime,
+          modified: stats.mtime.toISOString(), // Convert Date to string
           extension: item.isDirectory() ? '' : path.extname(item.name)
         }
       }))
@@ -64,7 +68,7 @@ export const registerFileHandlers = (mainWindow: BrowserWindow) => {
         path: filePath,
         name: path.basename(filePath),
         size: stats.size,
-        modified: stats.mtime,
+        modified: stats.mtime.toISOString(), // Convert Date to string
         extension: path.extname(filePath)
       }
     } catch (error) {

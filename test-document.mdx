@@ -1,0 +1,111 @@
+# My Jarvis Desktop - MDX Test Document
+
+## What is MDX?
+
+MDX allows you to use JSX in your markdown content. You can import components, export components, and use JavaScript expressions.
+
+## Features Demo
+
+### GitHub Flavored Markdown
+
+- [x] Task lists work
+- [ ] With checkboxes
+- ~~Strikethrough text~~
+- **Bold text** and *italic text*
+
+### Tables
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| MDX Support | ✅ | Full MDX rendering |
+| Syntax Highlighting | ✅ | Code blocks with colors |
+| React Components | ✅ | Embed interactive elements |
+
+### Code Blocks
+
+```javascript
+// JavaScript code with syntax highlighting
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+const result = greet('Jarvis');
+console.log(result);
+```
+
+```typescript
+// TypeScript example
+interface User {
+  name: string;
+  age: number;
+  email?: string;
+}
+
+const user: User = {
+  name: 'Erez',
+  age: 30
+};
+```
+
+### Self-Contained Components
+
+export const StatusBadge = ({ status }) => {
+  const colors = {
+    success: 'bg-green-500',
+    warning: 'bg-yellow-500',
+    error: 'bg-red-500'
+  };
+  
+  return (
+    <span className={`inline-block px-2 py-1 rounded text-white text-sm ${colors[status] || 'bg-gray-500'}`}>
+      {status.toUpperCase()}
+    </span>
+  );
+};
+
+export const ProgressBar = ({ value, max = 100 }) => {
+  const percentage = (value / max) * 100;
+  
+  return (
+    <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+      <div 
+        className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+        style={{ width: `${percentage}%` }}
+      >
+        <span className="text-xs text-white pl-2">{percentage.toFixed(0)}%</span>
+      </div>
+    </div>
+  );
+};
+
+## Using the Components
+
+Here's a status badge: <StatusBadge status="success" />
+
+And another one: <StatusBadge status="warning" />
+
+Progress example:
+<ProgressBar value={75} max={100} />
+
+### Blockquotes
+
+> This is a blockquote with **bold text** and *italic text*.
+> It can span multiple lines.
+
+### Links
+
+- [Visit GitHub](https://github.com)
+- [My Jarvis Desktop Repo](https://github.com/erezgit/my-jarvis-desktop)
+
+---
+
+## Summary
+
+This MDX file demonstrates:
+1. ✅ Markdown rendering with GFM support
+2. ✅ Syntax highlighting for code blocks
+3. ✅ Self-contained React components
+4. ✅ Interactive elements within documents
+5. ✅ Full styling with Tailwind classes
+
+**The future of documentation is here!** 🚀

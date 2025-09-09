@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.preview-container {
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.mdx-content {
+  line-height: 1.6;
+}
+
+.mdx-content h1 {
+  @apply text-3xl font-bold mb-4 mt-8;
+}
+
+.mdx-content h2 {
+  @apply text-2xl font-semibold mb-3 mt-6;
+}
+
+.mdx-content h3 {
+  @apply text-xl font-semibold mb-2 mt-4;
+}
+
+.mdx-content p {
+  @apply mb-4;
+}
+
+.mdx-content ul,
+.mdx-content ol {
+  @apply mb-4 pl-6;
+}
+
+.mdx-content li {
+  @apply mb-1;
+}
+
+.mdx-content pre {
+  @apply bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.mdx-content code {
+  @apply bg-gray-100 px-1 py-0.5 rounded text-sm;
+}
+
+.mdx-content blockquote {
+  @apply border-l-4 border-gray-300 pl-4 italic mb-4;
+}
+
+.mdx-content table {
+  @apply w-full border-collapse mb-4;
+}
+
+.mdx-content th {
+  @apply border border-gray-300 px-4 py-2 bg-gray-50 font-semibold text-left;
+}
+
+.mdx-content td {
+  @apply border border-gray-300 px-4 py-2;
+}
+
+/* Error styles */
+.error-container,
+.error-display,
+.error-boundary {
+  @apply max-w-2xl mx-auto;
+}
+
+/* Welcome screen */
+.welcome-container {
+  @apply max-w-2xl mx-auto;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

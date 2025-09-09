@@ -8,10 +8,20 @@ const terminals: { [key: string]: pty.IPty } = {}
 export const registerTerminalHandlers = (mainWindow: BrowserWindow) => {
   // Create a new terminal - EXACT copy from working app
   ipcMain.on('terminal-create', (event, id) => {
-    // Use bash instead of zsh to avoid autocomplete issues
-    const shell = os.platform() === 'win32' ? 'powershell.exe' : '/bin/bash'
+    // Determine the user's default shell or fallback to zsh/bash
+    let shell: string
+    let shellArgs: string[] = []
     
-    const ptyProcess = pty.spawn(shell, [], {
+    if (os.platform() === 'win32') {
+      shell = 'powershell.exe'
+    } else {
+      // Use the user's default shell from SHELL env var, or fallback to zsh
+      shell = process.env.SHELL || '/bin/zsh'
+      // Use login shell (-l) to load user's configuration (.zshrc, .bash_profile, etc.)
+      shellArgs = ['-l']
+    }
+    
+    const ptyProcess = pty.spawn(shell, shellArgs, {
       name: 'xterm-256color',
       cols: 80,
       rows: 30,
