@@ -239,7 +239,7 @@ export const VirtualizedFileTree: React.FC<FileTreeProps> = ({
   return (
     <div className={cn("flex flex-col h-full", className)}>
       {/* Header with clickable folder name */}
-      <div className="border-b px-3 py-2">
+      <div className="px-3 py-2">
         <button
           onClick={selectNewDirectory}
           className="text-sm font-medium hover:text-primary transition-colors text-left"

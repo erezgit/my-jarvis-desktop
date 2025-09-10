@@ -23,7 +23,7 @@ interface ProperTerminalState {
   isReady: boolean;
 }
 
-export class ProperTerminal extends React.PureComponent<ProperTerminalProps, ProperTerminalState> {
+class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, ProperTerminalState> {
   private containerRef = React.createRef<HTMLDivElement>();
   private terminal: Terminal | null = null;
   private fitAddon: FitAddon | null = null;
@@ -208,5 +208,22 @@ export class ProperTerminal extends React.PureComponent<ProperTerminalProps, Pro
     );
   }
 }
+
+// Create a forwardRef wrapper to expose the handleResize method
+export const ProperTerminal = React.forwardRef<ProperTerminalComponent, ProperTerminalProps>((props, ref) => {
+  const componentRef = React.useRef<ProperTerminalComponent>(null);
+  
+  React.useImperativeHandle(ref, () => ({
+    handleResize: () => {
+      if (componentRef.current) {
+        componentRef.current.handleResize();
+      }
+    }
+  }));
+  
+  return <ProperTerminalComponent ref={componentRef} {...props} />;
+});
+
+ProperTerminal.displayName = 'ProperTerminal';
 
 export default ProperTerminal;

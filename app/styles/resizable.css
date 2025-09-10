@@ -1,0 +1,43 @@
+/* Custom styles for resizable panels - EXACTLY 1px */
+[data-slot="resizable-handle"] {
+  width: 1px !important;
+  min-width: 1px !important;
+  max-width: 1px !important;
+  background-color: rgba(255, 255, 255, 0.25) !important; /* Always visible at the brighter color */
+  cursor: col-resize;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  flex-shrink: 0 !important;
+}
+
+[data-slot="resizable-handle"]:hover {
+  background-color: rgba(255, 255, 255, 0.25) !important; /* Same as normal - no change */
+  width: 1px !important;
+}
+
+[data-slot="resizable-handle"]:active {
+  background-color: rgba(124, 58, 237, 0.5) !important; /* Purple only when dragging */
+  width: 1px !important;
+}
+
+/* Remove ALL pseudo-elements and their styles */
+[data-slot="resizable-handle"]::before,
+[data-slot="resizable-handle"]::after {
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+}
+
+/* Ensure no focus styles add width */
+[data-slot="resizable-handle"]:focus-visible {
+  width: 1px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Override any children that might add width */
+[data-slot="resizable-handle"] * {
+  display: none !important;
+}

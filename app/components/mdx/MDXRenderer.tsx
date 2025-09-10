@@ -4,59 +4,76 @@ import { serialize } from 'next-mdx-remote/serialize';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 
-// Pre-registered components available to all MDX files
+// Import custom MDX components
+import { AgentStatus, MetricCard, TaskProgress } from '../mdx-components';
+
+// Pre-registered components available to all MDX files - matching MarkdownRenderer colors
 const components = {
-  // Override default markdown elements with Tailwind styles
+  // Custom MDX Components
+  AgentStatus,
+  MetricCard,
+  TaskProgress,
+  
+  // Headings - white with light blue accent for h1/h2
   h1: (props: ComponentProps<'h1'>) => (
-    <h1 className="text-3xl font-bold mb-6 text-zinc-900 dark:text-zinc-100" {...props} />
+    <h1 className="text-3xl font-bold mb-6 text-sky-400" {...props} />
   ),
   h2: (props: ComponentProps<'h2'>) => (
-    <h2 className="text-2xl font-semibold mb-4 mt-6 text-zinc-800 dark:text-zinc-200" {...props} />
+    <h2 className="text-2xl font-semibold mb-4 mt-6 text-sky-300" {...props} />
   ),
   h3: (props: ComponentProps<'h3'>) => (
-    <h3 className="text-xl font-medium mb-3 mt-4 text-zinc-700 dark:text-zinc-300" {...props} />
+    <h3 className="text-xl font-medium mb-3 mt-4 text-white" {...props} />
+  ),
+  h4: (props: ComponentProps<'h4'>) => (
+    <h4 className="text-lg font-medium mb-2 mt-3 text-white" {...props} />
   ),
   p: (props: ComponentProps<'p'>) => (
-    <p className="mb-4 text-zinc-600 dark:text-zinc-400 leading-relaxed" {...props} />
+    <p className="mb-4 text-white leading-relaxed" {...props} />
   ),
   ul: (props: ComponentProps<'ul'>) => (
-    <ul className="list-disc list-inside mb-4 text-zinc-600 dark:text-zinc-400 space-y-1" {...props} />
+    <ul className="list-disc list-inside mb-4 text-white space-y-1" {...props} />
   ),
   ol: (props: ComponentProps<'ol'>) => (
-    <ol className="list-decimal list-inside mb-4 text-zinc-600 dark:text-zinc-400 space-y-1" {...props} />
+    <ol className="list-decimal list-inside mb-4 text-white space-y-1" {...props} />
   ),
   li: (props: ComponentProps<'li'>) => (
     <li className="mb-1" {...props} />
   ),
   code: (props: ComponentProps<'code'>) => (
-    <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
+    <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono text-sky-200" {...props} />
   ),
   pre: (props: ComponentProps<'pre'>) => (
-    <pre className="bg-zinc-900 dark:bg-zinc-950 p-4 rounded-lg overflow-x-auto mb-4" {...props} />
+    <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto mb-4" {...props} />
   ),
   blockquote: (props: ComponentProps<'blockquote'>) => (
-    <blockquote className="border-l-4 border-zinc-300 dark:border-zinc-600 pl-4 italic my-4 text-zinc-600 dark:text-zinc-400" {...props} />
+    <blockquote className="border-l-4 border-sky-500 pl-4 italic my-4 text-gray-300" {...props} />
   ),
   a: (props: ComponentProps<'a'>) => (
-    <a className="text-blue-600 dark:text-blue-400 hover:underline" {...props} />
+    <a className="text-sky-400 hover:text-sky-300 hover:underline" {...props} />
   ),
   hr: (props: ComponentProps<'hr'>) => (
-    <hr className="my-6 border-zinc-200 dark:border-zinc-700" {...props} />
+    <hr className="my-6 border-zinc-600" {...props} />
   ),
   table: (props: ComponentProps<'table'>) => (
-    <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700 mb-4" {...props} />
+    <table className="min-w-full divide-y divide-zinc-600 mb-4" {...props} />
   ),
   thead: (props: ComponentProps<'thead'>) => (
-    <thead className="bg-zinc-50 dark:bg-zinc-800" {...props} />
+    <thead className="bg-zinc-800" {...props} />
   ),
   tbody: (props: ComponentProps<'tbody'>) => (
-    <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-700" {...props} />
+    <tbody className="bg-zinc-900 divide-y divide-zinc-700" {...props} />
   ),
   th: (props: ComponentProps<'th'>) => (
-    <th className="px-4 py-2 text-left font-medium text-zinc-900 dark:text-zinc-100" {...props} />
+    <th className="px-4 py-2 text-left font-medium text-sky-300" {...props} />
   ),
   td: (props: ComponentProps<'td'>) => (
-    <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400" {...props} />
+    <td className="px-4 py-2 text-white" {...props} />
+  ),
+  strong: (props: ComponentProps<'strong'>) => (
+    <strong className="font-semibold text-white" {...props} />
+  ),
+  em: (props: ComponentProps<'em'>) => (
+    <em className="italic text-gray-200" {...props} />
   ),
   // Task list support
   input: (props: ComponentProps<'input'>) => {
@@ -111,7 +128,7 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
   // Handle empty content
   if (!source || source.trim() === '') {
     return (
-      <div className={`text-zinc-500 dark:text-zinc-400 italic ${className}`}>
+      <div className={`text-gray-400 italic ${className}`}>
         This file is empty
       </div>
     );
@@ -120,7 +137,7 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className={`text-zinc-500 dark:text-zinc-400 ${className}`}>
+      <div className={`text-gray-400 ${className}`}>
         Processing MDX content...
       </div>
     );
@@ -130,10 +147,10 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
   if (error) {
     return (
       <div className={`${className}`}>
-        <div className="mb-2 text-sm text-red-500 dark:text-red-400">
+        <div className="mb-2 text-sm text-red-400">
           MDX Error: {error}
         </div>
-        <pre className="whitespace-pre-wrap text-zinc-600 dark:text-zinc-400 font-mono text-sm bg-zinc-50 dark:bg-zinc-900 p-4 rounded">
+        <pre className="whitespace-pre-wrap text-gray-400 font-mono text-sm bg-zinc-900 p-4 rounded">
           {source}
         </pre>
       </div>
@@ -143,7 +160,7 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
   // Render MDX
   if (mdxSource) {
     return (
-      <div className={`prose prose-sm lg:prose-base max-w-none dark:prose-invert ${className}`}>
+      <div className={`max-w-none ${className}`}>
         <MDXRemote 
           {...mdxSource}
           components={components}
