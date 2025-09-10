@@ -3,6 +3,17 @@ import { useWindowContext } from './WindowContext'
 import { useTitlebarContext } from './TitlebarContext'
 import { TitlebarMenu } from './TitlebarMenu'
 import { useConveyor } from '@/app/hooks/use-conveyor'
+import { User, Sun, Moon } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
+import { Switch } from '../ui/switch'
+import { useTheme } from '@/app/contexts/ThemeContext'
 
 const SVG_PATHS = {
   close: 'M 0,0 0,0.7 4.3,5 0,9.3 0,10 0.7,10 5,5.7 9.3,10 10,10 10,9.3 5.7,5 10,0.7 10,0 9.3,0 5,4.3 0.7,0 Z',
@@ -43,6 +54,10 @@ export const Titlebar = () => {
         {title}
       </div>
       {menusVisible && <TitlebarMenu />}
+      
+      {/* User Button with Theme Toggle */}
+      <UserButton />
+      
       {wcontext?.platform === 'win32' && <TitlebarControls />}
     </div>
   )
@@ -77,6 +92,42 @@ const TitlebarControlButton = ({ svgPath, label }: { svgPath: string; label: str
       <svg width="10" height="10">
         <path fill="currentColor" d={svgPath} />
       </svg>
+    </div>
+  )
+}
+
+const UserButton = () => {
+  const { theme, themeMode, toggleTheme } = useTheme()
+  
+  return (
+    <div className="window-titlebar-user">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="user-button">
+            <User className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48"
+                             style={{ 
+                               backgroundColor: theme.modalBg,
+                               borderColor: theme.border,
+                               color: theme.textPrimary
+                             }}>
+          <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+          <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
+          <DropdownMenuItem className="flex items-center justify-between"
+                            onSelect={(e) => e.preventDefault()}>
+            <div className="flex items-center gap-2">
+              {themeMode === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <span>Dark Mode</span>
+            </div>
+            <Switch 
+              checked={themeMode === 'dark'} 
+              onCheckedChange={toggleTheme}
+            />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

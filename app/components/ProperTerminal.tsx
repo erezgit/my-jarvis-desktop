@@ -17,6 +17,8 @@ declare global {
 
 interface ProperTerminalProps {
   id?: string;
+  theme?: any;
+  themeMode?: 'light' | 'dark';
 }
 
 interface ProperTerminalState {
@@ -45,9 +47,23 @@ class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, P
     this.initTerminal();
   }
   
+  componentDidUpdate(prevProps: ProperTerminalProps) {
+    // Update theme when props change
+    if (this.props.theme && prevProps.theme !== this.props.theme) {
+      this.updateTheme(this.props.theme);
+    }
+  }
+
   componentWillUnmount() {
     this.cleanup();
   }
+
+  updateTheme = (theme: any) => {
+    if (!this.terminal) return;
+    
+    // Create new theme object to trigger xterm.js update
+    this.terminal.options.theme = { ...theme };
+  };
   
   initTerminal = () => {
     if (!this.containerRef.current || this.isInitialized) return;
@@ -55,16 +71,19 @@ class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, P
     console.log('Initializing terminal:', this.termId);
     this.isInitialized = true;
     
+    // Use provided theme or default
+    const terminalTheme = this.props.theme || {
+      background: '#1e1e1e',
+      foreground: '#d4d4d4'
+    };
+
     // Create terminal with better ANSI handling
     this.terminal = new Terminal({
       allowProposedApi: true,
       cursorBlink: true,
       fontSize: 14,
       fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4'
-      },
+      theme: terminalTheme,
       allowTransparency: false,
       scrollback: 1000,
       convertEol: true  // Convert line endings

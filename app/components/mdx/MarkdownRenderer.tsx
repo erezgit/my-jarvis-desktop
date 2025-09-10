@@ -1,46 +1,47 @@
 import { ComponentProps } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Pre-registered components for styling markdown elements
-const components = {
-  // Headings - white with light blue accent for h1/h2
+const createComponents = (isDarkMode: boolean) => ({
+  // Headings
   h1: ({ children, ...props }: ComponentProps<'h1'>) => (
-    <h1 className="text-3xl font-bold mb-6 text-sky-400" {...props}>
+    <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-sky-400' : 'text-gray-900'}`} {...props}>
       {children}
     </h1>
   ),
   h2: ({ children, ...props }: ComponentProps<'h2'>) => (
-    <h2 className="text-2xl font-semibold mb-4 mt-6 text-sky-300" {...props}>
+    <h2 className={`text-2xl font-semibold mb-4 mt-6 ${isDarkMode ? 'text-sky-300' : 'text-gray-800'}`} {...props}>
       {children}
     </h2>
   ),
   h3: ({ children, ...props }: ComponentProps<'h3'>) => (
-    <h3 className="text-xl font-medium mb-3 mt-4 text-white" {...props}>
+    <h3 className={`text-xl font-medium mb-3 mt-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`} {...props}>
       {children}
     </h3>
   ),
   h4: ({ children, ...props }: ComponentProps<'h4'>) => (
-    <h4 className="text-lg font-medium mb-2 mt-3 text-white" {...props}>
+    <h4 className={`text-lg font-medium mb-2 mt-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`} {...props}>
       {children}
     </h4>
   ),
   
-  // Paragraphs and text - white
+  // Paragraphs and text
   p: ({ children, ...props }: ComponentProps<'p'>) => (
-    <p className="mb-4 text-white leading-relaxed" {...props}>
+    <p className={`mb-4 leading-relaxed ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props}>
       {children}
     </p>
   ),
   
-  // Lists - white
+  // Lists
   ul: ({ children, ...props }: ComponentProps<'ul'>) => (
-    <ul className="list-disc list-inside mb-4 text-white space-y-1" {...props}>
+    <ul className={`list-disc list-inside mb-4 space-y-1 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props}>
       {children}
     </ul>
   ),
   ol: ({ children, ...props }: ComponentProps<'ol'>) => (
-    <ol className="list-decimal list-inside mb-4 text-white space-y-1" {...props}>
+    <ol className={`list-decimal list-inside mb-4 space-y-1 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props}>
       {children}
     </ol>
   ),
@@ -57,7 +58,7 @@ const components = {
     
     if (isInline) {
       return (
-        <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono text-sky-200" {...props}>
+        <code className={`px-1.5 py-0.5 rounded text-sm font-mono ${isDarkMode ? 'bg-zinc-800 text-sky-200' : 'bg-gray-100 text-blue-600'}`} {...props}>
           {children}
         </code>
       );
@@ -65,59 +66,59 @@ const components = {
     
     // For code blocks
     return (
-      <code className="block bg-zinc-900 p-4 rounded-lg overflow-x-auto text-sm font-mono text-gray-300" {...props}>
+      <code className={`block p-4 rounded-lg overflow-x-auto text-sm font-mono ${isDarkMode ? 'bg-zinc-900 text-gray-300' : 'bg-gray-100 text-gray-800'}`} {...props}>
         {children}
       </code>
     );
   },
   pre: ({ children, ...props }: ComponentProps<'pre'>) => (
-    <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto mb-4" {...props}>
+    <pre className={`p-4 rounded-lg overflow-x-auto mb-4 ${isDarkMode ? 'bg-zinc-900' : 'bg-gray-100'}`} {...props}>
       {children}
     </pre>
   ),
   
   // Blockquotes
   blockquote: ({ children, ...props }: ComponentProps<'blockquote'>) => (
-    <blockquote className="border-l-4 border-sky-500 pl-4 italic my-4 text-gray-300" {...props}>
+    <blockquote className={`border-l-4 pl-4 italic my-4 ${isDarkMode ? 'border-sky-500 text-gray-300' : 'border-blue-500 text-gray-600'}`} {...props}>
       {children}
     </blockquote>
   ),
   
-  // Links - light blue
+  // Links
   a: ({ children, ...props }: ComponentProps<'a'>) => (
-    <a className="text-sky-400 hover:text-sky-300 hover:underline" {...props}>
+    <a className={`hover:underline ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-blue-600 hover:text-blue-800'}`} {...props}>
       {children}
     </a>
   ),
   
   // Horizontal rules
   hr: ({ ...props }: ComponentProps<'hr'>) => (
-    <hr className="my-6 border-zinc-600" {...props} />
+    <hr className={`my-6 ${isDarkMode ? 'border-zinc-600' : 'border-gray-300'}`} {...props} />
   ),
   
   // Tables
   table: ({ children, ...props }: ComponentProps<'table'>) => (
-    <table className="min-w-full divide-y divide-zinc-600 mb-4" {...props}>
+    <table className={`min-w-full divide-y mb-4 ${isDarkMode ? 'divide-zinc-600' : 'divide-gray-300'}`} {...props}>
       {children}
     </table>
   ),
   thead: ({ children, ...props }: ComponentProps<'thead'>) => (
-    <thead className="bg-zinc-800" {...props}>
+    <thead className={isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'} {...props}>
       {children}
     </thead>
   ),
   tbody: ({ children, ...props }: ComponentProps<'tbody'>) => (
-    <tbody className="bg-zinc-900 divide-y divide-zinc-700" {...props}>
+    <tbody className={`divide-y ${isDarkMode ? 'bg-zinc-900 divide-zinc-700' : 'bg-white divide-gray-200'}`} {...props}>
       {children}
     </tbody>
   ),
   th: ({ children, ...props }: ComponentProps<'th'>) => (
-    <th className="px-4 py-2 text-left font-medium text-sky-300" {...props}>
+    <th className={`px-4 py-2 text-left font-medium ${isDarkMode ? 'text-sky-300' : 'text-gray-900'}`} {...props}>
       {children}
     </th>
   ),
   td: ({ children, ...props }: ComponentProps<'td'>) => (
-    <td className="px-4 py-2 text-white" {...props}>
+    <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props}>
       {children}
     </td>
   ),
@@ -127,18 +128,18 @@ const components = {
     <img className="max-w-full h-auto rounded-lg my-4" {...props} />
   ),
   
-  // Strong and emphasis - white/bright
+  // Strong and emphasis
   strong: ({ children, ...props }: ComponentProps<'strong'>) => (
-    <strong className="font-semibold text-white" {...props}>
+    <strong className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`} {...props}>
       {children}
     </strong>
   ),
   em: ({ children, ...props }: ComponentProps<'em'>) => (
-    <em className="italic text-gray-200" {...props}>
+    <em className={`italic ${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`} {...props}>
       {children}
     </em>
   ),
-};
+});
 
 interface MarkdownRendererProps {
   source: string;
@@ -146,10 +147,14 @@ interface MarkdownRendererProps {
 }
 
 export function MarkdownRenderer({ source, className = "" }: MarkdownRendererProps) {
+  const { themeMode } = useTheme();
+  const isDarkMode = themeMode === 'dark';
+  const components = createComponents(isDarkMode);
+  
   // Handle empty content
   if (!source || source.trim() === '') {
     return (
-      <div className={`text-gray-400 italic ${className}`}>
+      <div className={`italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ${className}`}>
         This file is empty
       </div>
     );

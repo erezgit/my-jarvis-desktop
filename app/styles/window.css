@@ -113,6 +113,36 @@
   margin: 0;
 }
 
+.window-titlebar-user {
+  position: absolute;
+  right: 100px;
+  top: 50%;
+  transform: translateY(-50%);
+  -webkit-app-region: no-drag;
+}
+
+.window-titlebar-user .user-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--window-c-hover);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: var(--window-c-text);
+}
+
+.window-titlebar-user .user-button:hover {
+  opacity: 0.8;
+}
+
+.platform-darwin .window-titlebar-user {
+  right: 16px;
+}
+
 .window-titlebar-controls {
   display: flex;
   position: absolute;

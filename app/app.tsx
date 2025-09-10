@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { ProperTerminal } from './components/ProperTerminal'
 import { VirtualizedFileTree } from './components/VirtualizedFileTree'
 import { FilePreview } from './components/FilePreview'
@@ -8,12 +8,14 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from './components/ui/resizable'
+import { useTheme } from './contexts/ThemeContext'
 import './styles/app.css'
 import './styles/resizable.css'
 
-export default function App() {
+function AppContent() {
   const [selectedFile, setSelectedFile] = useState<any>(null)
   const terminalRef = useRef<any>(null)
+  const { theme, themeMode, toggleTheme } = useTheme()
 
   // Handle terminal resize when panel size changes
   const handleTerminalResize = useCallback(() => {
@@ -25,8 +27,15 @@ export default function App() {
     }
   }, [])
 
+  // Update terminal theme when theme changes
+  useEffect(() => {
+    if (terminalRef.current && terminalRef.current.updateTheme) {
+      terminalRef.current.updateTheme(theme.terminal)
+    }
+  }, [theme.terminal])
+
   return (
-    <div className="h-screen bg-background">
+    <div className="h-screen" style={{ backgroundColor: theme.background }}>
       {/* Main Content - Three Panel Layout with Resizable Panels */}
       <ResizablePanelGroup 
         direction="horizontal" 
@@ -38,32 +47,45 @@ export default function App() {
           minSize={15}
           maxSize={30}
         >
-          <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: '#1e1e1e' }}>
+          <div className="h-full flex flex-col overflow-hidden" 
+               style={{ 
+                 backgroundColor: theme.sidePanel,
+                 color: theme.textPrimary 
+               }}>
             <VirtualizedFileTree 
               onFileSelect={(file) => setSelectedFile(file)}
             />
           </div>
         </ResizablePanel>
 
-        <ResizableHandle />
+        <ResizableHandle style={{ backgroundColor: theme.border }} />
 
         {/* Center Panel - Document/Preview (50%) */}
         <ResizablePanel 
           defaultSize={50}
           minSize={30}
         >
-          <div className="h-full p-4 overflow-y-auto" style={{ backgroundColor: '#1e1e1e' }}>
-            <div className="flex items-center gap-2 mb-4">
+          <div className="h-full flex flex-col" 
+               style={{ 
+                 backgroundColor: theme.centerPanel,
+                 color: theme.textPrimary 
+               }}>
+            {/* Fixed header - 60px height */}
+            <div className="h-[60px] flex items-center px-4 flex-shrink-0"
+                 style={{}}>
               <FileText className="h-4 w-4" />
-              <h2 className="font-medium">
+              <h2 className="font-medium ml-2">
                 {selectedFile ? selectedFile.name : 'Document Preview'}
               </h2>
             </div>
-            <FilePreview file={selectedFile} />
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto pt-0 pb-4 px-4">
+              <FilePreview file={selectedFile} />
+            </div>
           </div>
         </ResizablePanel>
 
-        <ResizableHandle />
+        <ResizableHandle style={{ backgroundColor: theme.border }} />
 
         {/* Right Panel - Terminal (30%) */}
         <ResizablePanel 
@@ -72,14 +94,21 @@ export default function App() {
           maxSize={50}
           onResize={handleTerminalResize}
         >
-          <div className="h-full pl-4 pr-0 py-4" style={{ backgroundColor: '#1e1e1e' }}>
+          <div className="h-full pl-4 pr-0 py-4" 
+               style={{ backgroundColor: theme.sidePanel }}>
             <ProperTerminal 
               ref={terminalRef}
               id="main-terminal"
+              theme={theme.terminal}
+              themeMode={themeMode}
             />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
   )
+}
+
+export default function App() {
+  return <AppContent />
 }
