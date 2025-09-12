@@ -42,6 +42,18 @@ if (process.contextIsolated) {
       },
       selectDirectory: async () => {
         return await ipcRenderer.invoke('select-directory')
+      },
+      watchDirectory: async (dirPath: string) => {
+        return await ipcRenderer.invoke('watch-directory', dirPath)
+      },
+      unwatchDirectory: async (dirPath: string) => {
+        return await ipcRenderer.invoke('unwatch-directory', dirPath)
+      },
+      onDirectoryChanged: (callback: (data: any) => void) => {
+        ipcRenderer.on('directory-changed', (event, data) => callback(data))
+      },
+      removeDirectoryChangeListener: () => {
+        ipcRenderer.removeAllListeners('directory-changed')
       }
     })
   } catch (error) {

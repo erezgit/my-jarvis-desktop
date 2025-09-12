@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTheme } from '../../contexts/ThemeContext';
 
 interface Task {
   name: string;
@@ -11,31 +10,20 @@ interface TaskProgressProps {
 }
 
 export const TaskProgress: React.FC<TaskProgressProps> = ({ tasks }) => {
-  const { theme, themeMode } = useTheme();
-  const isDarkMode = themeMode === 'dark';
   const completed = tasks.filter(t => t.done).length;
   const percentage = tasks.length > 0 ? (completed / tasks.length) * 100 : 0;
   
   return (
     <div className="my-6">
       <div className="flex justify-between mb-2">
-        <span 
-          className="text-sm font-medium"
-          style={{ color: isDarkMode ? '#FFFFFF' : '#111827' }} // white : gray-900
-        >
+        <span className="text-sm font-medium text-foreground">
           Task Completion
         </span>
-        <span 
-          className="text-sm"
-          style={{ color: isDarkMode ? '#9CA3AF' : '#6B7280' }} // gray-400 : gray-600
-        >
+        <span className="text-sm text-muted-foreground">
           {completed}/{tasks.length}
         </span>
       </div>
-      <div 
-        className="w-full rounded-full h-2"
-        style={{ backgroundColor: isDarkMode ? '#3F3F46' : '#E5E7EB' }} // zinc-700 : gray-200
-      >
+      <div className="w-full bg-muted rounded-full h-2">
         <div 
           className="bg-sky-500 h-2 rounded-full transition-all duration-300"
           style={{ width: `${percentage}%` }}
@@ -48,21 +36,10 @@ export const TaskProgress: React.FC<TaskProgressProps> = ({ tasks }) => {
               type="checkbox" 
               checked={task.done} 
               disabled 
-              className="rounded"
-              style={{
-                borderColor: isDarkMode ? '#6B7280' : '#9CA3AF', // gray-500 : gray-400
-                backgroundColor: isDarkMode ? '#27272A' : '#FFFFFF', // zinc-800 : white
-              }}
+              className="rounded border-border bg-background"
               readOnly
             />
-            <span 
-              className={task.done ? 'line-through' : ''}
-              style={{ 
-                color: task.done 
-                  ? '#6B7280' // gray-500 for both modes when done
-                  : isDarkMode ? '#FFFFFF' : '#111827' // white : gray-900 when active
-              }}
-            >
+            <span className={`${task.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
               {task.name}
             </span>
           </div>

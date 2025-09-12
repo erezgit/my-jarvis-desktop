@@ -2,7 +2,9 @@ import React from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebglAddon } from '@xterm/addon-webgl';
-import '@xterm/xterm/css/xterm.css';
+// CSS import disabled - default xterm.css overrides custom background colors
+// Terminal styling handled entirely through theme objects
+// import '@xterm/xterm/css/xterm.css';
 
 // Declare the window.electronAPI interface
 declare global {
@@ -61,8 +63,47 @@ class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, P
   updateTheme = (theme: any) => {
     if (!this.terminal) return;
     
-    // Create new theme object to trigger xterm.js update
-    this.terminal.options.theme = { ...theme };
+    console.log('=== TERMINAL THEME UPDATE ===');
+    console.log('Theme received:', theme);
+    console.log('Background color:', theme.background);
+    
+    // NUCLEAR OPTION: Completely dispose and recreate terminal
+    console.log('DESTROYING TERMINAL AND RECREATING...');
+    
+    // Store current dimensions
+    const cols = this.terminal.cols;
+    const rows = this.terminal.rows;
+    
+    // Dispose current terminal
+    this.terminal.dispose();
+    
+    // Create new terminal with new theme
+    this.terminal = new Terminal({
+      allowProposedApi: true,
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
+      theme: theme, // Direct theme application
+      allowTransparency: false,
+      scrollback: 1000,
+      convertEol: true
+    });
+    
+    // Reopen terminal
+    this.terminal.open(this.containerRef.current!);
+    
+    // Reload fit addon
+    if (this.fitAddon) {
+      this.fitAddon.dispose();
+    }
+    this.fitAddon = new FitAddon();
+    this.terminal.loadAddon(this.fitAddon);
+    this.fitAddon.fit();
+    
+    // Reconnect handlers
+    this.terminal.onData(this.handleData);
+    
+    console.log('=== TERMINAL RECREATED WITH NEW THEME ===');
   };
   
   initTerminal = () => {
@@ -71,11 +112,17 @@ class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, P
     console.log('Initializing terminal:', this.termId);
     this.isInitialized = true;
     
-    // Use provided theme or default
+    // Use provided theme or default (fallback to light theme colors)
     const terminalTheme = this.props.theme || {
-      background: '#1e1e1e',
-      foreground: '#d4d4d4'
+      background: 'hsl(240, 4.8%, 95.9%)',
+      foreground: '#2D2D2D'
     };
+    
+    console.log('=== TERMINAL INITIALIZATION ===');
+    console.log('Props theme:', this.props.theme);
+    console.log('Using theme:', terminalTheme);
+    console.log('Background color:', terminalTheme.background);
+    console.log('=== INIT COMPLETE ===');
 
     // Create terminal with better ANSI handling
     this.terminal = new Terminal({
@@ -92,13 +139,9 @@ class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, P
     // Open terminal
     this.terminal.open(this.containerRef.current);
     
-    // Try to use WebGL renderer for better performance
-    try {
-      this.webglAddon = new WebglAddon();
-      this.terminal.loadAddon(this.webglAddon);
-    } catch (e) {
-      console.warn('WebGL renderer not supported, using default');
-    }
+    // WebGL addon disabled - causes background color theming issues
+    // Performance impact is negligible for desktop app
+    console.log('WebGL addon disabled to maintain theme compatibility');
     
     // Load FitAddon
     this.fitAddon = new FitAddon();
@@ -218,11 +261,12 @@ class ProperTerminalComponent extends React.PureComponent<ProperTerminalProps, P
         style={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#1e1e1e',
+          backgroundColor: 'transparent',
           padding: 0,
           margin: 0,
           overflow: 'hidden'
         }}
+        className="bg-transparent"
       />
     );
   }

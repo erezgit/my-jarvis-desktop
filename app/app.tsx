@@ -35,7 +35,7 @@ function AppContent() {
   }, [theme.terminal])
 
   return (
-    <div className="h-screen" style={{ backgroundColor: theme.background }}>
+    <div className="h-screen bg-background">
       {/* Main Content - Three Panel Layout with Resizable Panels */}
       <ResizablePanelGroup 
         direction="horizontal" 
@@ -47,32 +47,23 @@ function AppContent() {
           minSize={15}
           maxSize={30}
         >
-          <div className="h-full flex flex-col overflow-hidden" 
-               style={{ 
-                 backgroundColor: theme.sidePanel,
-                 color: theme.textPrimary 
-               }}>
+          <div className="h-full flex flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
             <VirtualizedFileTree 
               onFileSelect={(file) => setSelectedFile(file)}
             />
           </div>
         </ResizablePanel>
 
-        <ResizableHandle style={{ backgroundColor: theme.border }} />
+        <ResizableHandle className="bg-border" />
 
         {/* Center Panel - Document/Preview (50%) */}
         <ResizablePanel 
           defaultSize={50}
           minSize={30}
         >
-          <div className="h-full flex flex-col" 
-               style={{ 
-                 backgroundColor: theme.centerPanel,
-                 color: theme.textPrimary 
-               }}>
+          <div className="h-full flex flex-col bg-card text-card-foreground">
             {/* Fixed header - 60px height */}
-            <div className="h-[60px] flex items-center px-4 flex-shrink-0"
-                 style={{}}>
+            <div className="h-[60px] flex items-center px-4 flex-shrink-0">
               <FileText className="h-4 w-4" />
               <h2 className="font-medium ml-2">
                 {selectedFile ? selectedFile.name : 'Document Preview'}
@@ -85,7 +76,7 @@ function AppContent() {
           </div>
         </ResizablePanel>
 
-        <ResizableHandle style={{ backgroundColor: theme.border }} />
+        <ResizableHandle className="bg-border" />
 
         {/* Right Panel - Terminal (30%) */}
         <ResizablePanel 
@@ -94,8 +85,7 @@ function AppContent() {
           maxSize={50}
           onResize={handleTerminalResize}
         >
-          <div className="h-full pl-4 pr-0 py-4" 
-               style={{ backgroundColor: theme.sidePanel }}>
+          <div className="h-full pl-4 pr-0 py-4 bg-sidebar">
             <ProperTerminal 
               ref={terminalRef}
               id="main-terminal"

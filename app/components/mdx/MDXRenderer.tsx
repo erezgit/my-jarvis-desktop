@@ -3,39 +3,38 @@ import { MDXRemote } from 'next-mdx-remote';
 import { serialize } from 'next-mdx-remote/serialize';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import { useTheme } from '../../contexts/ThemeContext';
 
 // Import custom MDX components
 import { AgentStatus, MetricCard, TaskProgress } from '../mdx-components';
 
-// Create theme-aware components for MDX files - matching MarkdownRenderer pattern
-const createComponents = (isDarkMode: boolean) => ({
+// Create semantic CSS components for MDX files
+const components = {
   // Custom MDX Components
   AgentStatus,
   MetricCard,
   TaskProgress,
   
-  // Headings - theme-aware colors matching MarkdownRenderer
+  // Headings - semantic CSS classes
   h1: (props: ComponentProps<'h1'>) => (
-    <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-sky-400' : 'text-gray-900'}`} {...props} />
+    <h1 className="text-3xl font-bold mb-6 text-primary" {...props} />
   ),
   h2: (props: ComponentProps<'h2'>) => (
-    <h2 className={`text-2xl font-semibold mb-4 mt-6 ${isDarkMode ? 'text-sky-300' : 'text-gray-800'}`} {...props} />
+    <h2 className="text-2xl font-semibold mb-4 mt-6 text-foreground" {...props} />
   ),
   h3: (props: ComponentProps<'h3'>) => (
-    <h3 className={`text-xl font-medium mb-3 mt-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`} {...props} />
+    <h3 className="text-xl font-medium mb-3 mt-4 text-foreground" {...props} />
   ),
   h4: (props: ComponentProps<'h4'>) => (
-    <h4 className={`text-lg font-medium mb-2 mt-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`} {...props} />
+    <h4 className="text-lg font-medium mb-2 mt-3 text-foreground" {...props} />
   ),
   p: (props: ComponentProps<'p'>) => (
-    <p className={`mb-4 leading-relaxed ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props} />
+    <p className="mb-4 leading-relaxed text-foreground" {...props} />
   ),
   ul: (props: ComponentProps<'ul'>) => (
-    <ul className={`list-disc list-inside mb-4 space-y-1 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props} />
+    <ul className="list-disc list-inside mb-4 space-y-1 text-foreground" {...props} />
   ),
   ol: (props: ComponentProps<'ol'>) => (
-    <ol className={`list-decimal list-inside mb-4 space-y-1 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props} />
+    <ol className="list-decimal list-inside mb-4 space-y-1 text-foreground" {...props} />
   ),
   li: (props: ComponentProps<'li'>) => (
     <li className="mb-1" {...props} />
@@ -46,47 +45,47 @@ const createComponents = (isDarkMode: boolean) => ({
     
     if (isInline) {
       return (
-        <code className={`px-1.5 py-0.5 rounded text-sm font-mono ${isDarkMode ? 'bg-zinc-800 text-sky-200' : 'bg-gray-100 text-blue-600'}`} {...props} />
+        <code className="px-1.5 py-0.5 rounded text-sm font-mono bg-muted text-primary" {...props} />
       );
     }
     
     // For code blocks
     return (
-      <code className={`block p-4 rounded-lg overflow-x-auto text-sm font-mono ${isDarkMode ? 'bg-zinc-900 text-gray-300' : 'bg-gray-100 text-gray-800'}`} {...props} />
+      <code className="block p-4 rounded-lg overflow-x-auto text-sm font-mono bg-muted text-muted-foreground" {...props} />
     );
   },
   pre: (props: ComponentProps<'pre'>) => (
-    <pre className={`p-4 rounded-lg overflow-x-auto mb-4 ${isDarkMode ? 'bg-zinc-900' : 'bg-gray-100'}`} {...props} />
+    <pre className="p-4 rounded-lg overflow-x-auto mb-4 bg-muted" {...props} />
   ),
   blockquote: (props: ComponentProps<'blockquote'>) => (
-    <blockquote className={`border-l-4 pl-4 italic my-4 ${isDarkMode ? 'border-sky-500 text-gray-300' : 'border-blue-500 text-gray-600'}`} {...props} />
+    <blockquote className="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground" {...props} />
   ),
   a: (props: ComponentProps<'a'>) => (
-    <a className={`hover:underline ${isDarkMode ? 'text-sky-400 hover:text-sky-300' : 'text-blue-600 hover:text-blue-800'}`} {...props} />
+    <a className="text-primary hover:text-primary/80 hover:underline" {...props} />
   ),
   hr: (props: ComponentProps<'hr'>) => (
-    <hr className={`my-6 ${isDarkMode ? 'border-zinc-600' : 'border-gray-300'}`} {...props} />
+    <hr className="my-6 border-border" {...props} />
   ),
   table: (props: ComponentProps<'table'>) => (
-    <table className={`min-w-full divide-y mb-4 ${isDarkMode ? 'divide-zinc-600' : 'divide-gray-300'}`} {...props} />
+    <table className="min-w-full divide-y divide-border mb-4" {...props} />
   ),
   thead: (props: ComponentProps<'thead'>) => (
-    <thead className={isDarkMode ? 'bg-zinc-800' : 'bg-gray-100'} {...props} />
+    <thead className="bg-muted" {...props} />
   ),
   tbody: (props: ComponentProps<'tbody'>) => (
-    <tbody className={`divide-y ${isDarkMode ? 'bg-zinc-900 divide-zinc-700' : 'bg-white divide-gray-200'}`} {...props} />
+    <tbody className="bg-card divide-y divide-border" {...props} />
   ),
   th: (props: ComponentProps<'th'>) => (
-    <th className={`px-4 py-2 text-left font-medium ${isDarkMode ? 'text-sky-300' : 'text-gray-900'}`} {...props} />
+    <th className="px-4 py-2 text-left font-medium text-foreground" {...props} />
   ),
   td: (props: ComponentProps<'td'>) => (
-    <td className={`px-4 py-2 ${isDarkMode ? 'text-white' : 'text-gray-700'}`} {...props} />
+    <td className="px-4 py-2 text-foreground" {...props} />
   ),
   strong: (props: ComponentProps<'strong'>) => (
-    <strong className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`} {...props} />
+    <strong className="font-semibold text-foreground" {...props} />
   ),
   em: (props: ComponentProps<'em'>) => (
-    <em className={`italic ${isDarkMode ? 'text-gray-200' : 'text-gray-600'}`} {...props} />
+    <em className="italic text-muted-foreground" {...props} />
   ),
   // Task list support
   input: (props: ComponentProps<'input'>) => {
@@ -98,8 +97,8 @@ const createComponents = (isDarkMode: boolean) => ({
   // Images
   img: (props: ComponentProps<'img'>) => (
     <img className="max-w-full h-auto rounded-lg my-4" {...props} />
-  ),
-});
+  )
+};
 
 interface MDXRendererProps {
   source: string;
@@ -107,8 +106,6 @@ interface MDXRendererProps {
 }
 
 export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
-  const { themeMode } = useTheme();
-  const isDarkMode = themeMode === 'dark';
   const [mdxSource, setMdxSource] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -147,7 +144,7 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
   // Handle empty content
   if (!source || source.trim() === '') {
     return (
-      <div className={`italic ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ${className}`}>
+      <div className={`italic text-muted-foreground ${className}`}>
         This file is empty
       </div>
     );
@@ -156,7 +153,7 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ${className}`}>
+      <div className={`text-muted-foreground ${className}`}>
         Processing MDX content...
       </div>
     );
@@ -169,15 +166,12 @@ export function MDXRenderer({ source, className = "" }: MDXRendererProps) {
         <div className="mb-2 text-sm text-red-400">
           MDX Error: {error}
         </div>
-        <pre className={`whitespace-pre-wrap font-mono text-sm p-4 rounded ${isDarkMode ? 'text-gray-400 bg-zinc-900' : 'text-gray-600 bg-gray-100'}`}>
+        <pre className="whitespace-pre-wrap font-mono text-sm p-4 rounded bg-muted text-muted-foreground">
           {source}
         </pre>
       </div>
     );
   }
-
-  // Get theme-aware components
-  const components = createComponents(isDarkMode);
 
   // Render MDX
   if (mdxSource) {

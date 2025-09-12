@@ -2,7 +2,7 @@
 export const themes = {
   light: {
     // Panel backgrounds
-    sidePanel: '#F5F5F5',      // Light gray for file tree and terminal
+    sidePanel: 'hsl(240, 4.8%, 95.9%)',      // Neutral gray for file tree and terminal
     centerPanel: '#FFFFFF',     // White for preview
     
     // App structure
@@ -26,7 +26,7 @@ export const themes = {
     
     // Terminal theme
     terminal: {
-      background: '#F5F5F5',
+      background: 'hsl(240, 4.8%, 95.9%)',
       foreground: '#2D2D2D',
       cursor: '#7C3AED',
       cursorAccent: '#FFFFFF',

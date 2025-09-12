@@ -3,7 +3,7 @@
   width: 1px !important;
   min-width: 1px !important;
   max-width: 1px !important;
-  background-color: rgba(255, 255, 255, 0.25) !important; /* Always visible at the brighter color */
+  background-color: var(--border) !important; /* Uses theme border color */
   cursor: col-resize;
   padding: 0 !important;
   margin: 0 !important;
@@ -12,7 +12,7 @@
 }
 
 [data-slot="resizable-handle"]:hover {
-  background-color: rgba(255, 255, 255, 0.25) !important; /* Same as normal - no change */
+  background-color: var(--border) !important; /* Same as normal - no change */
   width: 1px !important;
 }
 

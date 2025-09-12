@@ -24,21 +24,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('theme', newMode)
   }
 
-  // Apply theme to document root for Tailwind CSS variables
+  // Apply theme to document root for CSS variables (shadcn handles the colors)
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('light', 'dark')
     root.classList.add(themeMode)
-    
-    // Set CSS variables for dynamic theming
-    const themeColors = themes[themeMode]
-    root.style.setProperty('--color-background', themeColors.background)
-    root.style.setProperty('--color-side-panel', themeColors.sidePanel)
-    root.style.setProperty('--color-center-panel', themeColors.centerPanel)
-    root.style.setProperty('--color-text-primary', themeColors.textPrimary)
-    root.style.setProperty('--color-text-secondary', themeColors.textSecondary)
-    root.style.setProperty('--color-border', themeColors.border)
-    root.style.setProperty('--color-accent', themeColors.accent)
   }, [themeMode])
 
   return (

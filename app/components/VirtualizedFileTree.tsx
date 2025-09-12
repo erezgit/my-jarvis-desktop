@@ -51,8 +51,9 @@ const FileTreeItem = memo(({
   return (
     <div
       className={cn(
-        "flex items-center gap-1 px-2 py-1 hover:bg-accent cursor-pointer select-none",
-        isSelected && "bg-accent"
+        "flex items-center gap-1 px-2 py-1 mx-2 my-0.5 cursor-pointer select-none rounded-lg transition-colors duration-200",
+        "hover:bg-component/80",
+        isSelected && "bg-component"
       )}
       style={{ paddingLeft: `${(item.level || 0) * 16 + 8}px` }}
       onClick={handleClick}
@@ -86,6 +87,56 @@ export const VirtualizedFileTree: React.FC<FileTreeProps> = ({
   useEffect(() => {
     loadHomeDirectory()
   }, [])
+
+  // Watch current directory for changes
+  useEffect(() => {
+    let watchStarted = false
+
+    const startWatching = async () => {
+      if (currentPath && window.fileAPI && !watchStarted) {
+        watchStarted = true
+        try {
+          console.log('[File Tree] Starting to watch directory:', currentPath)
+          const result = await window.fileAPI.watchDirectory(currentPath)
+          console.log('[File Tree] Watch result:', result)
+        } catch (error) {
+          console.error('[File Tree] Failed to start watching directory:', error)
+        }
+      }
+    }
+
+    const handleDirectoryChange = (data: { type: string; directory: string; file: string }) => {
+      console.log('[File Tree] Directory changed:', data)
+      
+      // Only refresh if the change is in the current directory
+      if (data.directory === currentPath) {
+        console.log('[File Tree] Refreshing directory due to change:', data.type)
+        // Debounce the refresh to avoid too many updates
+        setTimeout(() => {
+          loadDirectory(currentPath)
+        }, 250)
+      }
+    }
+
+    if (currentPath) {
+      // Start watching the directory
+      startWatching()
+      
+      // Listen for directory changes
+      if (window.fileAPI) {
+        window.fileAPI.onDirectoryChanged(handleDirectoryChange)
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      if (currentPath && window.fileAPI) {
+        console.log('[File Tree] Cleaning up directory watcher for:', currentPath)
+        window.fileAPI.removeDirectoryChangeListener()
+        window.fileAPI.unwatchDirectory(currentPath).catch(console.error)
+      }
+    }
+  }, [currentPath])
 
   const loadHomeDirectory = async () => {
     try {

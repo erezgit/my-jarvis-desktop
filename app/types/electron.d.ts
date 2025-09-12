@@ -19,6 +19,10 @@ export interface FileAPI {
   } | null>
   getHomeDir: () => Promise<string>
   selectDirectory: () => Promise<string | null>
+  watchDirectory: (dirPath: string) => Promise<{ success: boolean; message: string }>
+  unwatchDirectory: (dirPath: string) => Promise<{ success: boolean; message: string }>
+  onDirectoryChanged: (callback: (data: { type: string; directory: string; file: string }) => void) => void
+  removeDirectoryChangeListener: () => void
 }
 
 export interface ElectronAPI {
