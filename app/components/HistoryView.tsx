@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import type { ConversationSummary } from "../../../shared/types";
 import { getHistoriesUrl } from "../config/api";
 
@@ -7,24 +6,33 @@ interface HistoryViewProps {
   workingDirectory: string;
   encodedName: string | null;
   onBack: () => void;
+  onConversationSelect: (sessionId: string) => void;
 }
 
-export function HistoryView({ encodedName }: HistoryViewProps) {
-  const navigate = useNavigate();
+export function HistoryView({ encodedName, onConversationSelect }: HistoryViewProps) {
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug logging
+  console.log('HistoryView rendered with encodedName:', encodedName);
+
   useEffect(() => {
     const loadConversations = async () => {
+      console.log('loadConversations called with encodedName:', encodedName);
+
       if (!encodedName) {
+        console.log('No encodedName, keeping loading state');
         // Keep loading state when encodedName is not available yet
         return;
       }
 
       try {
+        console.log('Setting loading true and fetching...');
         setLoading(true);
-        const response = await fetch(getHistoriesUrl(encodedName));
+        const url = getHistoriesUrl(encodedName);
+        console.log('Fetching from URL:', url);
+        const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error(
@@ -32,8 +40,11 @@ export function HistoryView({ encodedName }: HistoryViewProps) {
           );
         }
         const data = await response.json();
+        console.log('Received data:', data);
         setConversations(data.conversations || []);
+        console.log('Setting loading false');
       } catch (err) {
+        console.error('Error loading conversations:', err);
         setError(
           err instanceof Error ? err.message : "Failed to load conversations",
         );
@@ -46,9 +57,7 @@ export function HistoryView({ encodedName }: HistoryViewProps) {
   }, [encodedName]);
 
   const handleConversationSelect = (sessionId: string) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("sessionId", sessionId);
-    navigate({ search: searchParams.toString() });
+    onConversationSelect(sessionId);
   };
 
   if (loading || !encodedName) {

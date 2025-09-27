@@ -27,8 +27,8 @@ export function ChatPage() {
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // For Electron app, use a fixed working directory - pointing to my-jarvis workspace
-  const workingDirectory = "/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/projects/my-jarvis";
+  // For Electron app, use a fixed working directory - pointing to my-jarvis-desktop workspace
+  const workingDirectory = "/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop";
 
   // Simplified state for Electron - no URL-based navigation
   const [currentView, setCurrentView] = useState<string | null>(null);
@@ -403,6 +403,11 @@ export function ChatPage() {
     setCurrentView(null);
   }, []);
 
+  const handleConversationSelect = useCallback((sessionId: string) => {
+    setSessionId(sessionId);
+    setCurrentView(null); // Exit history view and show the conversation
+  }, []);
+
   // Handle global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -501,6 +506,7 @@ export function ChatPage() {
             workingDirectory={workingDirectory || ""}
             encodedName={getEncodedName()}
             onBack={handleBackToChat}
+            onConversationSelect={handleConversationSelect}
           />
         ) : historyLoading ? (
           /* Loading conversation history */

@@ -1,11 +1,11 @@
-import { ChatPage } from "./components/ChatPage";
+import { ResponsiveLayout } from "./components/Layout/ResponsiveLayout";
 import { SettingsProvider } from "./contexts/SettingsContext";
 
 function App() {
   return (
     <SettingsProvider>
-      {/* Direct to ChatPage - no project selection for Electron app */}
-      <ChatPage />
+      {/* Three-panel responsive layout with chat, file tree, and preview */}
+      <ResponsiveLayout />
     </SettingsProvider>
   );
 }
