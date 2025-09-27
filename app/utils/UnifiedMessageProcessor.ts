@@ -16,6 +16,7 @@ import {
 } from "./messageConversion";
 import { isThinkingContentItem } from "./messageTypes";
 import { extractToolInfo, generateToolPatterns } from "./toolUtils";
+import { generateThinkingMessage } from "./thinkingMessageGenerator";
 
 /**
  * Tool cache interface for tracking tool_use information
@@ -271,6 +272,19 @@ export class UnifiedMessageProcessor {
         contentItem.name,
         contentItem.input || {},
       );
+    }
+
+    // Generate thinking message before tool execution (for Jarvis mode)
+    if (contentItem.name) {
+      const thinkingMessage = generateThinkingMessage(
+        contentItem.name,
+        contentItem.input || {},
+        options.timestamp || Date.now()
+      );
+
+      if (thinkingMessage) {
+        context.addMessage(thinkingMessage);
+      }
     }
 
     // Special handling for ExitPlanMode - create plan message instead of tool message

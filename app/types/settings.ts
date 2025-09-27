@@ -1,9 +1,15 @@
 export type Theme = "light" | "dark";
 export type EnterBehavior = "send" | "newline";
+export type InterfaceMode = "jarvis" | "developer";
+
+export interface MessageDisplaySettings {
+  mode: InterfaceMode;
+}
 
 export interface AppSettings {
   theme: Theme;
   enterBehavior: EnterBehavior;
+  messageDisplay: MessageDisplaySettings;
   version: number;
 }
 
@@ -25,8 +31,11 @@ export interface SettingsContextType {
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: "light",
   enterBehavior: "send",
-  version: 1,
+  messageDisplay: {
+    mode: "jarvis"  // Default to consumer experience
+  },
+  version: 3,  // Increment for migration
 };
 
 // Current settings version for migration
-export const CURRENT_SETTINGS_VERSION = 1;
+export const CURRENT_SETTINGS_VERSION = 3;

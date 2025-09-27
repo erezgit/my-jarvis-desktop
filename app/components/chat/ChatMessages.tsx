@@ -21,6 +21,7 @@ import {
   VoiceMessageComponentWrapper,
   LoadingComponent,
 } from "../MessageComponents";
+import { useSettings } from "../../hooks/useSettings";
 // import { UI_CONSTANTS } from "../../utils/constants"; // Unused for now
 
 interface ChatMessagesProps {
@@ -31,6 +32,7 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const { settings } = useSettings();
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -60,6 +62,31 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
     // Use timestamp as key for stable rendering, fallback to index if needed
     const key = `${message.timestamp}-${index}`;
 
+    // Switch based on interface mode
+    if (settings.messageDisplay.mode === "jarvis") {
+      // Jarvis mode: strict filtering - only show user messages, voice messages, and thinking messages
+      if (isChatMessage(message) && message.role === "user") {
+        return <ChatMessageComponent key={key} message={message} />;
+      }
+      if (isVoiceMessage(message)) {
+        return <VoiceMessageComponentWrapper key={key} message={message} />;
+      }
+      if (isThinkingMessage(message)) {
+        return <ThinkingMessageComponent key={key} message={message} />;
+      }
+      // Hide all technical messages including assistant chat responses
+      return null;
+    } else if (settings.messageDisplay.mode === "developer") {
+      // Developer mode: show everything for debugging
+      return renderMessageComponent(message, key);
+    }
+
+    // Fallback: show everything (safety)
+    return renderMessageComponent(message, key);
+  };
+
+  // Helper function for component rendering
+  const renderMessageComponent = (message: AllMessage, key: string) => {
     if (isSystemMessage(message)) {
       return <SystemMessageComponent key={key} message={message} />;
     } else if (isToolMessage(message)) {
