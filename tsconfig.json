@@ -1,0 +1,21 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/app/*": ["app/*"],
+      "@/lib/*": ["lib/*"],
+      "@/resources/*": ["resources/*"]
+    }
+  },
+  "include": [
+    "app/**/*",
+    "lib/**/*",
+    "electron.vite.config.*"
+  ],
+  "exclude": [
+    "out",
+    "dist",
+    "node_modules"
+  ]
+}
