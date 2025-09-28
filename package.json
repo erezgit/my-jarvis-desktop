@@ -1,6 +1,6 @@
 {
   "name": "my-jarvis-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "My Jarvis Desktop - Production Electron app with claude-code-webui integration",
   "main": "./out/main/main.js",
   "license": "MIT",
@@ -14,7 +14,7 @@
     "lint": "eslint . --ext .ts,.tsx --fix",
     "start": "electron-vite preview",
     "postinstall": "electron-builder install-app-deps",
-    "prebuild": "cd lib/claude-webui-server && npm install",
+    "prebuild": "cd lib/claude-webui-server && npm install && npm run build",
     "vite:build:app": "electron-vite build",
     "electron:build:win": "electron-builder --win",
     "electron:build:mac": "electron-builder --mac",
@@ -23,7 +23,9 @@
     "build:unpack": "run-s vite:build:app electron:build:dir",
     "build:win": "run-s vite:build:app electron:build:win",
     "build:mac": "run-s vite:build:app electron:build:mac",
-    "build:linux": "run-s vite:build:app electron:build:linux"
+    "build:linux": "run-s vite:build:app electron:build:linux",
+    "test:production": "./scripts/test-production.sh",
+    "verify:safe-push": "npm run test:production && echo '✅ Safe to push to remote'"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "1.0.108",
