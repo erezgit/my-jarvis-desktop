@@ -21,7 +21,7 @@ export function MessageContainer({
   return (
     <div className={`mb-4 flex ${justifyClass}`}>
       <div
-        className={`max-w-[85%] sm:max-w-[70%] rounded-lg px-4 py-3 ${colorScheme}`}
+        className={`max-w-[85%] sm:max-w-[70%] rounded-lg ${alignment === 'left' ? 'pr-2 pl-0' : 'px-3.5'} py-1.5 ${colorScheme}`}
       >
         {children}
       </div>

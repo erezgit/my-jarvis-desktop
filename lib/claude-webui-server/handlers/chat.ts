@@ -43,7 +43,7 @@ async function* executeClaudeCommand(
       prompt: processedMessage,
       options: {
         abortController,
-        executable: "node" as const,
+        executable: process.execPath, // CRITICAL: Must use process.execPath for Electron packaging. DO NOT change to "node" - causes spawn ENOENT
         executableArgs: [],
         pathToClaudeCodeExecutable: cliPath,
         ...(sessionId ? { resume: sessionId } : {}),

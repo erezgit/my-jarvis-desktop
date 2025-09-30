@@ -66,7 +66,7 @@ export function CollapsibleDetails({
 
   return (
     <div
-      className={`mb-3 p-3 rounded-lg ${colorScheme.bg} border ${colorScheme.border}`}
+      className={`mb-3 pr-3 pl-0 pt-3 pb-3 rounded-lg ${colorScheme.bg} ${colorScheme.border ? `border ${colorScheme.border}` : ''}`}
     >
       <div
         className={`${colorScheme.header} text-xs font-medium mb-1 flex items-center gap-2 ${isCollapsible ? "cursor-pointer hover:opacity-80" : ""}`}
@@ -101,7 +101,7 @@ export function CollapsibleDetails({
       </div>
       {shouldShowPreview && (
         <div
-          className="mt-2 pl-6 border-l-2 border-dashed opacity-80"
+          className="mt-2 pl-0 border-l-2 border-dashed opacity-80"
           style={{ borderColor: "inherit" }}
         >
           <pre
@@ -121,7 +121,7 @@ export function CollapsibleDetails({
       )}
       {hasDetails && isExpanded && (
         <pre
-          className={`whitespace-pre-wrap ${colorScheme.content} text-xs font-mono leading-relaxed mt-2 pl-6 border-l-2 ${colorScheme.border}`}
+          className={`whitespace-pre-wrap ${colorScheme.content} text-xs font-mono leading-relaxed mt-2 pl-0 ${colorScheme.border ? `border-l-2 ${colorScheme.border}` : ''}`}
         >
           {details}
         </pre>

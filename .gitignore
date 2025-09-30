@@ -11,7 +11,11 @@ yarn-error.log*
 dist/
 build/
 out/
-lib/
+# Only ignore specific build outputs, not the entire lib directory
+lib/main/
+lib/preload/
+lib/utils/
+lib/conveyor/
 
 # Development files
 .DS_Store

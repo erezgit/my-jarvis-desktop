@@ -265,9 +265,17 @@ export async function validateClaudeCli(
     let claudePath = "";
 
     if (customPath) {
-      // Use custom path if provided
+      // Use custom path if provided - skip detection entirely
       claudePath = customPath;
-      logger.cli.info(`🔍 Validating custom Claude path: ${customPath}`);
+      logger.cli.info(`🔍 Using provided Claude path: ${customPath}`);
+
+      // For Electron production mode, trust the provided path and skip detection
+      // The main process has already validated this path
+      logger.cli.info("✅ Skipping detection - using validated path from main process");
+      if (customPath) {
+        logger.cli.info(`✅ Claude CLI path: ${customPath}`);
+      }
+      return customPath;
     } else {
       // Auto-detect using runtime's findExecutable method
       logger.cli.info("🔍 Searching for Claude CLI in PATH...");

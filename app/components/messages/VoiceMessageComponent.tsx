@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Play, Pause } from 'lucide-react';
 import { VoiceMessage } from '../../types';
 
 interface VoiceMessageComponentProps {
@@ -30,19 +31,25 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
   };
 
   return (
-    <div className="voice-message border rounded-lg p-4 bg-blue-50">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={handlePlayPause}
-          className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700 transition-colors"
-        >
-          {isPlaying ? "⏸️" : "▶️"}
-        </button>
-        <div className="flex-1">
-          <div className="text-sm text-gray-600">🎵 Voice Message</div>
-          <div className="text-gray-800">{message.content}</div>
-        </div>
+    <div className="mb-3 pr-3 pl-0 pt-3 pb-3">
+      {/* Plain text message */}
+      <div className="text-gray-900 dark:text-gray-100 text-sm mb-2">
+        {message.content}
       </div>
+
+      {/* Small gray play button underneath */}
+      <button
+        onClick={handlePlayPause}
+        className="flex items-center gap-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors text-xs"
+      >
+        {isPlaying ? (
+          <Pause className="w-3 h-3" />
+        ) : (
+          <Play className="w-3 h-3" />
+        )}
+        <span>{isPlaying ? 'Pause' : 'Play'}</span>
+      </button>
+
       <audio
         ref={audioRef}
         src={message.audioUrl}

@@ -27,8 +27,8 @@ export function ChatPage() {
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // For Electron app, use a fixed working directory - pointing to my-jarvis-desktop workspace
-  const workingDirectory = "/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop";
+  // For Electron app, use a fixed working directory - pointing to my-jarvis user workspace
+  const workingDirectory = "/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/projects/my-jarvis";
 
   // Simplified state for Electron - no URL-based navigation
   const [currentView, setCurrentView] = useState<string | null>(null);
@@ -422,8 +422,8 @@ export function ChatPage() {
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto p-3 sm:p-6 h-screen flex flex-col">
+    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-8 flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -446,52 +446,7 @@ export function ChatPage() {
               </button>
             )}
             <div>
-              <nav aria-label="Breadcrumb">
-                <div className="flex items-center">
-                  <button
-                    onClick={handleBackToProjects}
-                    className="text-slate-800 dark:text-slate-100 text-lg sm:text-3xl font-bold tracking-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 rounded-md px-1 -mx-1"
-                    aria-label="Back to project selection"
-                  >
-                    Claude Code Web UI
-                  </button>
-                  {(isHistoryView || sessionId) && (
-                    <>
-                      <span
-                        className="text-slate-800 dark:text-slate-100 text-lg sm:text-3xl font-bold tracking-tight mx-3 select-none"
-                        aria-hidden="true"
-                      >
-                        {" "}
-                        ›{" "}
-                      </span>
-                      <h1
-                        className="text-slate-800 dark:text-slate-100 text-lg sm:text-3xl font-bold tracking-tight"
-                        aria-current="page"
-                      >
-                        {isHistoryView
-                          ? "Conversation History"
-                          : "Conversation"}
-                      </h1>
-                    </>
-                  )}
-                </div>
-              </nav>
-              {workingDirectory && (
-                <div className="flex items-center text-sm font-mono mt-1">
-                  <button
-                    onClick={handleBackToProjectChat}
-                    className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 rounded px-1 -mx-1 cursor-pointer"
-                    aria-label={`Return to new chat in ${workingDirectory}`}
-                  >
-                    {workingDirectory}
-                  </button>
-                  {sessionId && (
-                    <span className="ml-2 text-xs text-slate-600 dark:text-slate-400">
-                      Session: {sessionId.substring(0, 8)}...
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Removed title and path display for cleaner interface */}
             </div>
           </div>
           <div className="flex items-center gap-3">

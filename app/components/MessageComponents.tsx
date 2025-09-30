@@ -15,6 +15,7 @@ import { MessageContainer } from "./messages/MessageContainer";
 import { CollapsibleDetails } from "./messages/CollapsibleDetails";
 import { VoiceMessageComponent } from "./messages/VoiceMessageComponent";
 import { MESSAGE_CONSTANTS } from "../utils/constants";
+import { Mic, BookOpen, Search, FolderOpen, Eye, Brain } from "lucide-react";
 import {
   createEditResult,
   createBashPreview,
@@ -45,8 +46,8 @@ interface ChatMessageComponentProps {
 export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
   const isUser = message.role === "user";
   const colorScheme = isUser
-    ? "bg-blue-600 text-white"
-    : "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100";
+    ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+    : "bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100";
 
   return (
     <MessageContainer
@@ -56,7 +57,7 @@ export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
       <div className="mb-2 flex items-center justify-between gap-4">
         <div
           className={`text-xs font-semibold opacity-90 ${
-            isUser ? "text-blue-100" : "text-slate-600 dark:text-slate-400"
+            isUser ? "text-neutral-700 dark:text-neutral-300" : "text-neutral-600 dark:text-neutral-400"
           }`}
         >
           {isUser ? "User" : "Claude"}
@@ -64,7 +65,7 @@ export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
         <TimestampComponent
           timestamp={message.timestamp}
           className={`text-xs opacity-70 ${
-            isUser ? "text-blue-200" : "text-slate-500 dark:text-slate-500"
+            isUser ? "text-gray-600 dark:text-gray-400" : "text-slate-500 dark:text-slate-500"
           }`}
         />
       </div>
@@ -283,20 +284,25 @@ interface ThinkingMessageComponentProps {
 export function ThinkingMessageComponent({
   message,
 }: ThinkingMessageComponentProps) {
+  // Extract icon component based on thinking content
+  const getThinkingIcon = (content: string) => {
+    if (content.includes("Initializing Jarvis")) return <Mic className="w-4 h-4" />;
+    if (content.startsWith("Reading -")) return <BookOpen className="w-4 h-4" />;
+    if (content.startsWith("Searching -")) return <Search className="w-4 h-4" />;
+    if (content.startsWith("Scanning -")) return <FolderOpen className="w-4 h-4" />;
+    if (content.startsWith("Exploring -")) return <Eye className="w-4 h-4" />;
+    return <Brain className="w-4 h-4" />; // Default thinking icon
+  };
+
+  const icon = getThinkingIcon(message.content);
+
   return (
-    <CollapsibleDetails
-      label="Claude's Reasoning"
-      details={message.content}
-      badge="thinking"
-      icon={<span className="bg-purple-400 dark:bg-purple-500">💭</span>}
-      colorScheme={{
-        header: "text-purple-700 dark:text-purple-300",
-        content: "text-purple-600 dark:text-purple-400 italic",
-        border: "border-purple-200 dark:border-purple-700",
-        bg: "bg-purple-50/60 dark:bg-purple-900/15 border border-purple-200 dark:border-purple-800",
-      }}
-      defaultExpanded={true}
-    />
+    <div className="mb-3 pr-3 pl-0 pt-3 pb-3">
+      <div className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
+        {icon}
+        <span>thinking - {message.content}</span>
+      </div>
+    </div>
   );
 }
 

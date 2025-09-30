@@ -56,6 +56,14 @@ export function createApp(
   );
 
   // API routes
+  app.get("/api/health", (c) => {
+    return c.json({
+      status: "ok",
+      timestamp: Date.now(),
+      uptime: process.uptime()
+    });
+  });
+
   app.get("/api/projects", (c) => handleProjectsRequest(c));
 
   app.get("/api/projects/:encodedProjectName/histories", (c) =>
