@@ -28,7 +28,7 @@ export function ChatPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // For Electron app, use a fixed working directory - pointing to my-jarvis user workspace
-  const workingDirectory = "/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/projects/my-jarvis";
+  const workingDirectory = "/Users/erezfern/Workspace/my-jarvis";
 
   // Simplified state for Electron - no URL-based navigation
   const [currentView, setCurrentView] = useState<string | null>(null);

@@ -97,7 +97,7 @@ export const VirtualizedFileTree: React.FC<FileTreeProps> = ({
       setLoading(true)
       setError(null)
       // Default to my-jarvis workspace directory
-      const myJarvisPath = '/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/projects/my-jarvis'
+      const myJarvisPath = '/Users/erezfern/Workspace/my-jarvis'
       await loadDirectory(myJarvisPath)
     } catch (err) {
       setError('Failed to load jarvis directory')
