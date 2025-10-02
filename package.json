@@ -1,6 +1,6 @@
 {
   "name": "my-jarvis-desktop",
-  "version": "1.5.5",
+  "version": "1.10.0",
   "description": "My Jarvis Desktop - Production Electron app with claude-code-webui integration",
   "main": "./out/main/main.js",
   "license": "MIT",

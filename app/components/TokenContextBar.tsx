@@ -45,7 +45,7 @@ export function TokenContextBar() {
     <div className="w-full bg-background/95 backdrop-blur">
       {/* Clickable progress bar area */}
       <div
-        className="py-2 cursor-pointer hover:bg-accent/5 transition-colors"
+        className="py-4 cursor-pointer hover:bg-accent/5 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Progress bar - always visible */}

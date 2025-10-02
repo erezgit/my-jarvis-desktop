@@ -444,7 +444,7 @@ export function ChatPage() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
       <div className="max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4 sm:mb-8 flex-shrink-0">
+        <div className="flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
             {isHistoryView && (
               <button
@@ -468,7 +468,7 @@ export function ChatPage() {
               {/* Removed title and path display for cleaner interface */}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             {!isHistoryView && <HistoryButton onClick={handleHistoryClick} />}
             <SettingsButton onClick={handleSettingsClick} />
           </div>
