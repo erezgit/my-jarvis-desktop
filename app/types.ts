@@ -6,6 +6,13 @@ import type {
   PermissionMode as SDKPermissionMode,
 } from "@anthropic-ai/claude-code";
 
+// Token usage tracking
+export interface TokenUsageData {
+  tokens_used: number;
+  max_tokens: number;
+  percentage: number;
+}
+
 // Chat message for user/assistant interactions (not part of SDKMessage)
 export interface ChatMessage {
   type: "chat";

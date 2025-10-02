@@ -54,6 +54,9 @@ export interface ProcessingContext {
     toolUseId: string,
   ) => void;
   onAbortRequest?: () => void;
+
+  // Token usage tracking
+  onTokenUpdate?: (newTokens: number) => void;
 }
 
 /**
@@ -181,9 +184,17 @@ export class UnifiedMessageProcessor {
 
     // Special handling for Write/Edit tool results - file operations
     if (toolName === "Write" || toolName === "Edit") {
-      // Parse file path from content: "File created successfully at: /path/to/file"
-      const pathMatch = content.match(/at: (.+)$/);
       console.log('[FILE_OP_DEBUG] Write/Edit tool result, content:', content);
+
+      // Try multiple patterns to extract file path
+      // Pattern 1: Write tool format - "File created successfully at: /path/to/file"
+      let pathMatch = content.match(/at: (.+)$/);
+
+      // Pattern 2: Edit tool format - "The file /path/to/file has been updated"
+      if (!pathMatch) {
+        pathMatch = content.match(/The file (.+) has been updated/);
+      }
+
       console.log('[FILE_OP_DEBUG] Path match:', pathMatch);
 
       if (pathMatch) {
@@ -487,6 +498,19 @@ export class UnifiedMessageProcessor {
     const timestamp = options.timestamp || Date.now();
     const resultMessage = convertResultMessage(message, timestamp);
     context.addMessage(resultMessage);
+
+    // Extract and update token usage
+    console.log('[TOKEN_DEBUG] processResultMessage called, message:', message);
+    console.log('[TOKEN_DEBUG] message.usage:', message.usage);
+    console.log('[TOKEN_DEBUG] context.onTokenUpdate exists:', !!context.onTokenUpdate);
+
+    if (message.usage && context.onTokenUpdate) {
+      const totalTokens = message.usage.input_tokens + message.usage.output_tokens;
+      console.log('[TOKEN_DEBUG] Calling onTokenUpdate with totalTokens:', totalTokens);
+      context.onTokenUpdate(totalTokens);
+    } else {
+      console.log('[TOKEN_DEBUG] NOT updating tokens - usage:', message.usage, 'callback:', !!context.onTokenUpdate);
+    }
 
     // Clear current assistant message (streaming only)
     if (options.isStreaming) {

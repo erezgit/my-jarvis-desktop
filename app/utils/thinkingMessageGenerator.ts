@@ -13,11 +13,6 @@ interface ThinkingPattern {
 
 const THINKING_PATTERNS: ThinkingPattern[] = [
   {
-    toolName: "Bash",
-    pattern: /jarvis_voice\.sh.*--voice echo/,
-    messageTemplate: () => "Initializing Jarvis..."
-  },
-  {
     toolName: "Read",
     pattern: /.*/,
     messageTemplate: (_, input) => {

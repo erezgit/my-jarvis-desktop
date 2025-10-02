@@ -45,6 +45,9 @@ export function useStreamParser() {
         // Permission/Error handling
         onPermissionError: context.onPermissionError,
         onAbortRequest: context.onAbortRequest,
+
+        // Token usage tracking
+        onTokenUpdate: context.onTokenUpdate,
       };
     },
     [],

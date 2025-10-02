@@ -9,15 +9,17 @@ interface VoiceMessageComponentProps {
 export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hasAutoPlayedRef = useRef<string | null>(null);
 
-  // Auto-play if enabled
+  // Auto-play if enabled - but only once per unique message
   useEffect(() => {
-    if (message.autoPlay && audioRef.current) {
+    if (message.autoPlay && audioRef.current && hasAutoPlayedRef.current !== message.audioUrl) {
+      hasAutoPlayedRef.current = message.audioUrl;
       audioRef.current.play().catch((error) => {
         console.warn('Auto-play failed:', error);
       });
     }
-  }, [message.autoPlay]);
+  }, [message.autoPlay, message.audioUrl]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {

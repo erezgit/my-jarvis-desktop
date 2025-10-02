@@ -22,12 +22,17 @@ import { getChatUrl, getProjectsUrl } from "../config/api";
 import { KEYBOARD_SHORTCUTS } from "../utils/constants";
 import { normalizeWindowsPath } from "../utils/pathUtils";
 import type { StreamingContext } from "../hooks/streaming/useMessageProcessor";
+import { TokenContextBar } from "./TokenContextBar";
+import { useTokenUsage } from "../hooks/useTokenUsage";
 
 export function ChatPage() {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Token usage tracking
+  const { updateTokenUsage } = useTokenUsage();
 
   // For Electron app, use a fixed working directory - pointing to my-jarvis user workspace
   const workingDirectory = "/Users/erezfern/Workspace/my-jarvis";
@@ -209,6 +214,7 @@ export function ChatPage() {
             shouldAbort = true;
             await createAbortHandler(requestId)();
           },
+          onTokenUpdate: updateTokenUsage,
         };
 
         while (true) {
@@ -435,7 +441,7 @@ export function ChatPage() {
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 transition-colors duration-300">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
       <div className="max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-8 flex-shrink-0">
@@ -521,6 +527,9 @@ export function ChatPage() {
           </div>
         ) : (
           <>
+            {/* Token Progress Bar */}
+            <TokenContextBar />
+
             {/* Chat Messages */}
             <ChatMessages messages={messages} isLoading={isLoading} />
 

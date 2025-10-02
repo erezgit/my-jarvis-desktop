@@ -4,12 +4,14 @@ interface MessageContainerProps {
   alignment: "left" | "right" | "center";
   colorScheme: string;
   children: React.ReactNode;
+  customBgColor?: string;
 }
 
 export function MessageContainer({
   alignment,
   colorScheme,
   children,
+  customBgColor,
 }: MessageContainerProps) {
   const justifyClass =
     alignment === "right"
@@ -21,7 +23,8 @@ export function MessageContainer({
   return (
     <div className={`mb-4 flex ${justifyClass}`}>
       <div
-        className={`max-w-[85%] sm:max-w-[70%] rounded-lg ${alignment === 'left' ? 'pr-2 pl-0' : 'px-3.5'} py-1.5 ${colorScheme}`}
+        className={`max-w-[85%] sm:max-w-[70%] rounded-lg px-4 py-3 ${colorScheme}`}
+        style={customBgColor ? { backgroundColor: customBgColor } : undefined}
       >
         {children}
       </div>

@@ -47,32 +47,37 @@ interface ChatMessageComponentProps {
 export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
   const isUser = message.role === "user";
   const colorScheme = isUser
-    ? "bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+    ? "text-black dark:text-gray-100"
     : "bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100";
 
   return (
     <MessageContainer
       alignment={isUser ? "right" : "left"}
       colorScheme={colorScheme}
+      customBgColor={isUser ? "hsl(140.6, 84.2%, 92.5%)" : undefined}
     >
-      <div className="mb-2 flex items-center justify-between gap-4">
-        <div
-          className={`text-xs font-semibold opacity-90 ${
-            isUser ? "text-neutral-700 dark:text-neutral-300" : "text-neutral-600 dark:text-neutral-400"
-          }`}
-        >
-          {isUser ? "User" : "Claude"}
+      {!isUser && (
+        <div className="mb-2 flex items-center justify-between gap-4">
+          <div className="text-xs font-semibold opacity-90 text-neutral-600 dark:text-neutral-400">
+            Claude
+          </div>
+          <TimestampComponent
+            timestamp={message.timestamp}
+            className="text-xs opacity-70 text-slate-500 dark:text-slate-500"
+          />
         </div>
-        <TimestampComponent
-          timestamp={message.timestamp}
-          className={`text-xs opacity-70 ${
-            isUser ? "text-gray-600 dark:text-gray-400" : "text-slate-500 dark:text-slate-500"
-          }`}
-        />
-      </div>
-      <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
+      )}
+      <div className="whitespace-pre-wrap text-sm leading-relaxed">
         {message.content}
-      </pre>
+      </div>
+      {isUser && (
+        <div className="mt-2 flex justify-end">
+          <TimestampComponent
+            timestamp={message.timestamp}
+            className="text-xs opacity-70 text-gray-600 dark:text-gray-400"
+          />
+        </div>
+      )}
     </MessageContainer>
   );
 }
@@ -301,7 +306,7 @@ export function ThinkingMessageComponent({
     <div className="mb-3 pr-3 pl-0 pt-3 pb-3">
       <div className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
         {icon}
-        <span>thinking - {message.content}</span>
+        <span>{message.content}</span>
       </div>
     </div>
   );
@@ -407,34 +412,25 @@ export function FileOperationMessageComponent({ message }: FileOperationComponen
   const operationText = message.operation === 'created' ? 'Created file' : 'Modified file';
 
   return (
-    <MessageContainer
-      alignment="left"
-      colorScheme="bg-gray-50 dark:bg-gray-800"
-    >
-      <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-        <svg className="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="mb-3 pr-3 pl-0 pt-3 pb-3">
+      <div className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
+        <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
           <polyline points="14 2 14 8 20 8"/>
         </svg>
         <span>{operationText} - {message.fileName}</span>
       </div>
-    </MessageContainer>
+    </div>
   );
 }
 
 export function LoadingComponent() {
   return (
-    <MessageContainer
-      alignment="left"
-      colorScheme="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100"
-    >
-      <div className="text-xs font-semibold mb-2 opacity-90 text-slate-600 dark:text-slate-400">
-        Claude
-      </div>
-      <div className="flex items-center gap-2 text-sm">
+    <div className="mb-3 pr-3 pl-0 pt-3 pb-3">
+      <div className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2">
         <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
         <span className="animate-pulse">Thinking...</span>
       </div>
-    </MessageContainer>
+    </div>
   );
 }

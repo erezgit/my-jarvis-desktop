@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
 
@@ -16,26 +16,57 @@ interface FileItem {
   content?: string
 }
 
+// Custom hook to detect large screens using window.matchMedia
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() => {
+    // Initialize with current match state
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(min-width: 1024px)').matches
+    }
+    return true // Default to desktop for SSR
+  })
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
+
+    // Handler for media query changes
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches)
+    }
+
+    // Set initial value
+    setIsDesktop(mediaQuery.matches)
+
+    // Add event listener
+    mediaQuery.addEventListener('change', handleChange)
+
+    // Cleanup
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange)
+    }
+  }, [])
+
+  return isDesktop
+}
+
 export function ResponsiveLayout() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
+  const isDesktop = useIsDesktop()
 
+  // Conditional rendering - only ONE layout exists in DOM at a time
   return (
-    <>
-      {/* Desktop Layout - Hidden on mobile, visible on lg+ screens */}
-      <div className="hidden lg:flex h-screen">
+    <div className="h-screen">
+      {isDesktop ? (
         <DesktopLayout
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
         />
-      </div>
-
-      {/* Mobile Layout - Visible on mobile, hidden on lg+ screens */}
-      <div className="block lg:hidden h-screen">
+      ) : (
         <MobileLayout
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
         />
-      </div>
-    </>
+      )}
+    </div>
   )
 }

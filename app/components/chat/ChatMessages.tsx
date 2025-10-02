@@ -117,7 +117,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto bg-neutral-100 dark:bg-neutral-900 py-1 sm:py-4 mb-3 sm:mb-6 flex flex-col"
+      className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900 py-1 sm:py-4 mb-3 sm:mb-6 flex flex-col"
     >
       {messages.length === 0 ? (
         <EmptyState />
