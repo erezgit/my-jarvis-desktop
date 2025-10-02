@@ -24,6 +24,7 @@ import { normalizeWindowsPath } from "../utils/pathUtils";
 import type { StreamingContext } from "../hooks/streaming/useMessageProcessor";
 import { TokenContextBar } from "./TokenContextBar";
 import { useTokenUsage } from "../hooks/useTokenUsage";
+import { useSettings } from "../hooks/useSettings";
 
 export function ChatPage() {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
@@ -34,8 +35,8 @@ export function ChatPage() {
   // Token usage tracking
   const { updateTokenUsage } = useTokenUsage();
 
-  // For Electron app, use a fixed working directory - pointing to my-jarvis user workspace
-  const workingDirectory = "/Users/erezfern/Workspace/my-jarvis";
+  // Workspace state - read from settings context
+  const { workingDirectory, setWorkingDirectory } = useSettings();
 
   // Simplified state for Electron - no URL-based navigation
   const [currentView, setCurrentView] = useState<string | null>(null);
@@ -388,13 +389,33 @@ export function ChatPage() {
     setIsSettingsOpen(false);
   }, []);
 
+  const handleWorkspaceChange = useCallback((newPath: string) => {
+    if (newPath === workingDirectory) return;
+
+    console.log('[WORKSPACE_SWITCH] Switching workspace from', workingDirectory, 'to', newPath);
+
+    // Update via settings context (persists automatically)
+    setWorkingDirectory(newPath);
+
+    // Clear current session
+    setMessages([]);
+    setCurrentSessionId(null);
+    setSessionId(null);
+
+    // Close settings
+    setIsSettingsOpen(false);
+  }, [workingDirectory, setWorkingDirectory, setMessages, setCurrentSessionId]);
+
   // Load projects to get encodedName mapping
+  // Reload when workingDirectory changes to update file tree
   useEffect(() => {
+    console.log('[PROJECTS_EFFECT] Loading projects for workspace:', workingDirectory);
     const loadProjects = async () => {
       try {
         const response = await fetch(getProjectsUrl());
         if (response.ok) {
           const data = await response.json();
+          console.log('[PROJECTS_EFFECT] Loaded projects:', data.projects?.length || 0);
           setProjects(data.projects || []);
         }
       } catch (error) {
@@ -402,7 +423,7 @@ export function ChatPage() {
       }
     };
     loadProjects();
-  }, []);
+  }, [workingDirectory]);
 
   const handleBackToChat = useCallback(() => {
     setCurrentView(null);
@@ -551,7 +572,12 @@ export function ChatPage() {
         )}
 
         {/* Settings Modal */}
-        <SettingsModal isOpen={isSettingsOpen} onClose={handleSettingsClose} />
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={handleSettingsClose}
+          workingDirectory={workingDirectory}
+          onWorkspaceChange={handleWorkspaceChange}
+        />
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 
 // Import custom MDX components
-import { AgentStatus, MetricCard, TaskProgress, ArchitectureDiagram } from './mdx-components';
+import { AgentStatus, MetricCard, TaskProgress, ArchitectureDiagram, TicketStack } from './mdx-components';
 
 // Simple theme detection using CSS media query
 function useSimpleTheme() {
@@ -20,6 +20,7 @@ const createComponents = (isDarkMode: boolean) => ({
   MetricCard,
   TaskProgress,
   ArchitectureDiagram,
+  TicketStack,
 
   // Headings - theme-aware colors matching MarkdownRenderer
   h1: (props: ComponentProps<'h1'>) => (

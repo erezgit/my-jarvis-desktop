@@ -17,6 +17,7 @@ interface FileItem {
 }
 
 interface FileTreeProps {
+  workingDirectory: string
   onFileSelect?: (file: FileItem) => void
   className?: string
 }
@@ -81,6 +82,7 @@ export interface FileTreeRef {
 }
 
 export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
+  workingDirectory,
   onFileSelect,
   className
 }, ref) => {
@@ -139,25 +141,12 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
     }
   }
 
-  // Load initial directory
+  // Load directory when workingDirectory changes
   useEffect(() => {
-    loadMyJarvisDirectory()
-  }, [])
-
-  const loadMyJarvisDirectory = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      // Default to my-jarvis workspace directory
-      const myJarvisPath = '/Users/erezfern/Workspace/my-jarvis'
-      await loadDirectory(myJarvisPath)
-    } catch (err) {
-      setError('Failed to load my-jarvis directory')
-      console.error(err)
-    } finally {
-      setLoading(false)
+    if (workingDirectory) {
+      loadDirectory(workingDirectory)
     }
-  }
+  }, [workingDirectory])
 
   const loadDirectory = async (path: string) => {
     try {

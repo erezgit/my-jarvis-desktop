@@ -4,12 +4,31 @@ import {
   CommandLineIcon,
   UserIcon,
   CogIcon,
+  FolderIcon,
 } from "@heroicons/react/24/outline";
 import { useSettings } from "../../hooks/useSettings";
 
-export function GeneralSettings() {
+interface GeneralSettingsProps {
+  workingDirectory?: string;
+  onWorkspaceChange?: (path: string) => void;
+}
+
+export function GeneralSettings({ workingDirectory, onWorkspaceChange }: GeneralSettingsProps = {}) {
   const { settings, theme, enterBehavior, toggleTheme, toggleEnterBehavior, updateSettings } =
     useSettings();
+
+  const WORKSPACES = [
+    {
+      id: 'my-jarvis',
+      displayName: 'My Jarvis',
+      path: '/Users/erezfern/Workspace/my-jarvis'
+    },
+    {
+      id: 'my-jarvis-onboarding',
+      displayName: 'My Jarvis Onboarding',
+      path: '/Users/erezfern/Workspace/my-jarvis-onboarding'
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -175,6 +194,52 @@ export function GeneralSettings() {
               Choose your interface experience. Jarvis Mode provides a clean, consumer-focused view while Developer Mode shows all technical details.
             </div>
           </div>
+
+          {/* Workspace Settings */}
+          {onWorkspaceChange && (
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+                Workspaces
+              </label>
+              <div className="space-y-2">
+                {WORKSPACES.map((workspace) => (
+                  <div key={workspace.id} className="flex items-center gap-2">
+                    <button
+                      onClick={() => onWorkspaceChange(workspace.path)}
+                      className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
+                      role="radio"
+                      aria-checked={workingDirectory === workspace.path}
+                      aria-label={`${workspace.displayName} workspace`}
+                    >
+                      <FolderIcon className="w-5 h-5 text-green-500" />
+                      <div>
+                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                          {workspace.displayName}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {workspace.path}
+                        </div>
+                      </div>
+                      <div className="ml-auto">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          workingDirectory === workspace.path
+                            ? 'bg-green-500 border-green-500'
+                            : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                          {workingDirectory === workspace.path && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Switch between different workspace directories. Changing workspace will clear the current session.
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

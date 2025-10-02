@@ -9,6 +9,7 @@ import { FilePreview } from '../FilePreview/FilePreview'
 import { ChatPage } from '../ChatPage'
 import { isFileOperationMessage } from '../../types'
 import { useChatStateContext } from '../../contexts/ChatStateContext'
+import { useSettings } from '../../hooks/useSettings'
 
 interface FileItem {
   name: string
@@ -32,6 +33,9 @@ interface DesktopLayoutProps {
 export function DesktopLayout({ selectedFile, onFileSelect }: DesktopLayoutProps) {
   const fileTreeRef = useRef<FileTreeRef>(null)
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
+
+  // Get working directory from settings
+  const { workingDirectory } = useSettings()
 
   // Get messages from shared context
   const { messages } = useChatStateContext()
@@ -115,7 +119,11 @@ export function DesktopLayout({ selectedFile, onFileSelect }: DesktopLayoutProps
         maxSize={30}
         className="bg-gray-50 dark:bg-gray-900"
       >
-        <VirtualizedFileTree ref={fileTreeRef} onFileSelect={onFileSelect} />
+        <VirtualizedFileTree
+          ref={fileTreeRef}
+          workingDirectory={workingDirectory}
+          onFileSelect={onFileSelect}
+        />
       </Panel>
 
       <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" />

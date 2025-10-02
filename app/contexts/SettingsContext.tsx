@@ -48,16 +48,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
   }, [settings.enterBehavior, updateSettings]);
 
+  const setWorkingDirectory = useCallback((path: string) => {
+    updateSettings({ workingDirectory: path });
+  }, [updateSettings]);
+
   const value = useMemo(
     (): SettingsContextType => ({
       settings,
       theme: settings.theme,
       enterBehavior: settings.enterBehavior,
+      workingDirectory: settings.workingDirectory,
       toggleTheme,
       toggleEnterBehavior,
+      setWorkingDirectory,
       updateSettings,
     }),
-    [settings, toggleTheme, toggleEnterBehavior, updateSettings],
+    [settings, toggleTheme, toggleEnterBehavior, setWorkingDirectory, updateSettings],
   );
 
   return (

@@ -10,6 +10,7 @@ export interface AppSettings {
   theme: Theme;
   enterBehavior: EnterBehavior;
   messageDisplay: MessageDisplaySettings;
+  workingDirectory: string;
   version: number;
 }
 
@@ -22,8 +23,10 @@ export interface SettingsContextType {
   settings: AppSettings;
   theme: Theme;
   enterBehavior: EnterBehavior;
+  workingDirectory: string;
   toggleTheme: () => void;
   toggleEnterBehavior: () => void;
+  setWorkingDirectory: (path: string) => void;
   updateSettings: (updates: Partial<AppSettings>) => void;
 }
 
@@ -34,8 +37,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   messageDisplay: {
     mode: "jarvis"  // Default to consumer experience
   },
-  version: 3,  // Increment for migration
+  workingDirectory: "/Users/erezfern/Workspace/my-jarvis",
+  version: 4,  // Increment for migration
 };
 
 // Current settings version for migration
-export const CURRENT_SETTINGS_VERSION = 3;
+export const CURRENT_SETTINGS_VERSION = 4;
