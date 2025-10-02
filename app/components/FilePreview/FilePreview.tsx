@@ -1,3 +1,6 @@
+import { MarkdownRenderer } from './mdx/MarkdownRenderer';
+import { MDXRenderer } from './mdx/MDXRenderer';
+
 interface FileItem {
   name: string;
   path: string;
@@ -57,15 +60,20 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
 
   // Handle different file types based on extension
   if (file.content) {
-    // For markdown files, render as simple formatted text for now
-    if (file.extension === '.md' || file.extension === '.mdx') {
+    // Rich markdown rendering
+    if (file.extension === '.md') {
       return (
         <div className={`h-full w-full overflow-auto p-6 bg-white dark:bg-gray-900 ${className}`}>
-          <div className="prose dark:prose-invert max-w-none">
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-              {file.content}
-            </pre>
-          </div>
+          <MarkdownRenderer source={file.content} />
+        </div>
+      );
+    }
+
+    // Interactive MDX rendering
+    if (file.extension === '.mdx') {
+      return (
+        <div className={`h-full w-full overflow-auto p-6 bg-white dark:bg-gray-900 ${className}`}>
+          <MDXRenderer source={file.content} />
         </div>
       );
     }

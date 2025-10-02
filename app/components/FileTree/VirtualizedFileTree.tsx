@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, memo, useImperativeHandle, forwardRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
 
@@ -76,16 +76,68 @@ const FileTreeItem = memo(({
 
 FileTreeItem.displayName = 'FileTreeItem'
 
-export const VirtualizedFileTree: React.FC<FileTreeProps> = ({
+export interface FileTreeRef {
+  refreshDirectory: (path: string) => Promise<void>;
+}
+
+export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   onFileSelect,
   className
-}) => {
+}, ref) => {
   const [currentPath, setCurrentPath] = useState<string>('')
   const [items, setItems] = useState<FileItem[]>([])
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Expose refresh method to parent via ref
+  useImperativeHandle(ref, () => ({
+    refreshDirectory: async (path: string) => {
+      await refreshDirectoryContents(path)
+    }
+  }))
+
+  // Surgically refresh a specific directory without affecting the rest of the tree
+  const refreshDirectoryContents = async (path: string) => {
+    // Find the directory item in the current tree
+    const findDirectory = (items: FileItem[], targetPath: string): FileItem | null => {
+      for (const item of items) {
+        if (item.path === targetPath && item.isDirectory) {
+          return item;
+        }
+        if (item.children && item.children.length > 0) {
+          const found = findDirectory(item.children, targetPath);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const targetDir = findDirectory(items, path);
+
+    if (targetDir && typeof window !== 'undefined' && (window as any).fileAPI) {
+      try {
+        // Reload the directory contents
+        const files = await (window as any).fileAPI.readDirectory(path);
+        const newChildren: FileItem[] = files.map((file: any) => ({
+          ...file,
+          level: (targetDir.level || 0) + 1,
+          isExpanded: false,
+          children: [],
+          parent: targetDir
+        }));
+
+        // Update only this directory's children
+        targetDir.children = newChildren;
+
+        // Trigger re-render by creating a new array reference
+        setItems([...items]);
+      } catch (err) {
+        console.error('Failed to refresh directory:', err);
+      }
+    }
+  }
 
   // Load initial directory
   useEffect(() => {
@@ -100,7 +152,7 @@ export const VirtualizedFileTree: React.FC<FileTreeProps> = ({
       const myJarvisPath = '/Users/erezfern/Workspace/my-jarvis'
       await loadDirectory(myJarvisPath)
     } catch (err) {
-      setError('Failed to load jarvis directory')
+      setError('Failed to load my-jarvis directory')
       console.error(err)
     } finally {
       setLoading(false)
@@ -366,4 +418,6 @@ export const VirtualizedFileTree: React.FC<FileTreeProps> = ({
       </div>
     </div>
   )
-}
+})
+
+VirtualizedFileTree.displayName = 'VirtualizedFileTree'

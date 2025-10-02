@@ -10,6 +10,14 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   - '!src/**/*.ts'
   - '!src/**/tsconfig.json'
+  - '!node_modules/@esbuild/aix-ppc64'
+  - '!node_modules/@esbuild/android-*'
+  - '!node_modules/@esbuild/freebsd-*'
+  - '!node_modules/@esbuild/linux-*'
+  - '!node_modules/@esbuild/netbsd-*'
+  - '!node_modules/@esbuild/openbsd-*'
+  - '!node_modules/@esbuild/sunos-*'
+  - '!node_modules/@esbuild/win32-*'
 asarUnpack:
   - resources/**
 extraResources:

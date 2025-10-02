@@ -1,5 +1,7 @@
 // API configuration - uses absolute URLs for Electron app
-const BASE_URL = "http://127.0.0.1:8081";
+// Use VITE_JARVIS_DEV_PORT for development to avoid conflicts
+const PORT = import.meta.env.VITE_JARVIS_DEV_PORT || "8081";
+const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 export const API_CONFIG = {
   ENDPOINTS: {

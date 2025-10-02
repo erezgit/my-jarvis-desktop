@@ -9,6 +9,7 @@ import {
   isThinkingMessage,
   isTodoMessage,
   isVoiceMessage,
+  isFileOperationMessage,
 } from "../../types";
 import {
   ChatMessageComponent,
@@ -19,6 +20,7 @@ import {
   ThinkingMessageComponent,
   TodoMessageComponent,
   VoiceMessageComponentWrapper,
+  FileOperationMessageComponent,
   LoadingComponent,
 } from "../MessageComponents";
 import { useSettings } from "../../hooks/useSettings";
@@ -74,6 +76,9 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
       if (isThinkingMessage(message)) {
         return <ThinkingMessageComponent key={key} message={message} />;
       }
+      if (isFileOperationMessage(message)) {
+        return <FileOperationMessageComponent key={key} message={message} />;
+      }
       // Hide all technical messages including assistant chat responses
       return null;
     } else if (settings.messageDisplay.mode === "developer") {
@@ -101,6 +106,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
       return <TodoMessageComponent key={key} message={message} />;
     } else if (isVoiceMessage(message)) {
       return <VoiceMessageComponentWrapper key={key} message={message} />;
+    } else if (isFileOperationMessage(message)) {
+      return <FileOperationMessageComponent key={key} message={message} />;
     } else if (isChatMessage(message)) {
       return <ChatMessageComponent key={key} message={message} />;
     }

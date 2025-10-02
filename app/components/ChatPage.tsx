@@ -7,7 +7,7 @@ import type {
   PermissionMode,
 } from "../types";
 import { useClaudeStreaming } from "../hooks/useClaudeStreaming";
-import { useChatState } from "../hooks/chat/useChatState";
+import { useChatStateContext } from "../contexts/ChatStateContext";
 import { usePermissions } from "../hooks/chat/usePermissions";
 import { usePermissionMode } from "../hooks/chat/usePermissionMode";
 import { useAbortController } from "../hooks/chat/useAbortController";
@@ -24,6 +24,8 @@ import { normalizeWindowsPath } from "../utils/pathUtils";
 import type { StreamingContext } from "../hooks/streaming/useMessageProcessor";
 
 export function ChatPage() {
+  console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
+
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -73,7 +75,7 @@ export function ChatPage() {
     sessionId || undefined,
   );
 
-  // Initialize chat state with loaded history
+  // Get chat state from context (single source of truth)
   const {
     messages,
     input,
@@ -82,6 +84,7 @@ export function ChatPage() {
     currentRequestId,
     hasShownInitMessage,
     currentAssistantMessage,
+    setMessages,
     setInput,
     setCurrentSessionId,
     setHasShownInitMessage,
@@ -93,10 +96,20 @@ export function ChatPage() {
     generateRequestId,
     resetRequestState,
     startRequest,
-  } = useChatState({
-    initialMessages: historyMessages,
-    initialSessionId: loadedSessionId || undefined,
-  });
+  } = useChatStateContext();
+
+  // Load history into shared state when it arrives
+  useEffect(() => {
+    if (historyMessages && historyMessages.length > 0) {
+      setMessages(historyMessages);
+    }
+  }, [historyMessages, setMessages]);
+
+  useEffect(() => {
+    if (loadedSessionId) {
+      setCurrentSessionId(loadedSessionId);
+    }
+  }, [loadedSessionId, setCurrentSessionId]);
 
   const {
     allowedTools,

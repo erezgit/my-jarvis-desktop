@@ -1,5 +1,6 @@
 import { BrowserWindow, shell } from 'electron'
 import { join } from 'path'
+import { registerFileHandlers } from '../conveyor/handlers/file-handler'
 
 export async function createAppWindow(): Promise<BrowserWindow> {
   // Create the browser window.
@@ -46,11 +47,15 @@ export async function createAppWindow(): Promise<BrowserWindow> {
     return { action: 'deny' }
   })
 
+  // Register file system handlers
+  registerFileHandlers(mainWindow)
+
   // Load the Claude WebUI server
   // For both development and production, load from the Claude WebUI server
+  const devPort = process.env.JARVIS_DEV_PORT || '8081'
   if (process.env.NODE_ENV === 'development') {
-    // In development, still use the React dev server
-    mainWindow.loadURL('http://localhost:3000')
+    // In development, use the JARVIS_DEV_PORT (8082 by default in dev script)
+    mainWindow.loadURL(`http://127.0.0.1:${devPort}`)
     mainWindow.webContents.openDevTools()
   } else {
     // In production, load from the Claude WebUI server static files

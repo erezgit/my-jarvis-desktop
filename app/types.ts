@@ -111,6 +111,16 @@ export interface VoiceMessage {
   autoPlay?: boolean;        // Default: false for production
 }
 
+// File operation message for file creation/modification notifications
+export interface FileOperationMessage {
+  type: "file_operation";
+  operation: "created" | "modified" | "deleted";
+  path: string;
+  fileName: string;
+  isDirectory: boolean;
+  timestamp: number;
+}
+
 // Thinking content item from Claude SDK
 export interface ThinkingContentItem {
   type: "thinking";
@@ -140,7 +150,8 @@ export type AllMessage =
   | PlanMessage
   | ThinkingMessage
   | TodoMessage
-  | VoiceMessage;
+  | VoiceMessage
+  | FileOperationMessage;
 
 // Type guard functions
 export function isChatMessage(message: AllMessage): message is ChatMessage {
@@ -181,6 +192,10 @@ export function isTodoMessage(message: AllMessage): message is TodoMessage {
 
 export function isVoiceMessage(message: AllMessage): message is VoiceMessage {
   return message.type === "voice";
+}
+
+export function isFileOperationMessage(message: AllMessage): message is FileOperationMessage {
+  return message.type === "file_operation";
 }
 
 // Permission mode types (UI-focused subset of SDK PermissionMode)

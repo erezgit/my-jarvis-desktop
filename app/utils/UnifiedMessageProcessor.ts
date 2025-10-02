@@ -172,9 +172,39 @@ export class UnifiedMessageProcessor {
     const cachedToolInfo = this.getCachedToolInfo(toolUseId);
     const toolName = cachedToolInfo?.name || "Tool";
 
+    console.log('[PROCESS_TOOL_RESULT] Called with toolName:', toolName, 'content:', content.substring(0, 100));
+
     // Don't show tool_result for TodoWrite since we already show TodoMessage from tool_use
     if (toolName === "TodoWrite") {
       return;
+    }
+
+    // Special handling for Write/Edit tool results - file operations
+    if (toolName === "Write" || toolName === "Edit") {
+      // Parse file path from content: "File created successfully at: /path/to/file"
+      const pathMatch = content.match(/at: (.+)$/);
+      console.log('[FILE_OP_DEBUG] Write/Edit tool result, content:', content);
+      console.log('[FILE_OP_DEBUG] Path match:', pathMatch);
+
+      if (pathMatch) {
+        const filePath = pathMatch[1].trim();
+        const fileName = filePath.split('/').pop() || filePath;
+        const operation = toolName === "Write" ? "created" : "modified";
+
+        // Create FileOperationMessage
+        const fileOpMessage = {
+          type: "file_operation" as const,
+          operation: operation as "created" | "modified",
+          path: filePath,
+          fileName,
+          isDirectory: false,
+          timestamp: options.timestamp || Date.now(),
+        };
+
+        console.log('[FILE_OP_DEBUG] Creating FileOperationMessage:', fileOpMessage);
+        context.addMessage(fileOpMessage);
+        // Note: We still create ToolResultMessage too (unlike voice which returns early)
+      }
     }
 
     // Special handling for Bash tool results that are voice scripts
@@ -273,6 +303,10 @@ export class UnifiedMessageProcessor {
         contentItem.input || {},
       );
     }
+
+    // Note: We don't create FileOperationMessage from tool_use anymore
+    // because it happens BEFORE the file is created. We only create it from
+    // tool_result after the file is actually written to disk.
 
     // Generate thinking message before tool execution (for Jarvis mode)
     if (contentItem.name) {
@@ -540,6 +574,9 @@ export class UnifiedMessageProcessor {
 
     const finalOptions = { ...options, timestamp };
 
+    // DEBUG: Log all messages coming through
+    console.log('[PROCESS_MESSAGE] Type:', message.type, 'isStreaming:', options.isStreaming, 'message:', message);
+
     switch (message.type) {
       case "system":
         this.processSystemMessage(message, context, finalOptions);
@@ -553,6 +590,7 @@ export class UnifiedMessageProcessor {
         return [];
 
       case "user":
+        console.log('[PROCESS_MESSAGE] USER message content:', message.message?.content);
         return this.processUserMessage(message, context, finalOptions);
 
       default:
