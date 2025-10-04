@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: my-jarvis-web
+    runtime: docker
+    plan: starter
+    region: oregon
+
+    # Docker configuration
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Health check (backend serves at /api/health)
+    healthCheckPath: /api/health
+
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: WORKSPACE_DIR
+        value: /workspace
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+
+    # Persistent disk for workspace files
+    disk:
+      name: workspace
+      mountPath: /workspace
+      sizeGB: 10

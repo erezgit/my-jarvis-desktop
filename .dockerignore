@@ -1,0 +1,40 @@
+# Electron-specific directories (not needed for web)
+lib/main/
+lib/preload/
+lib/conveyor/
+
+# Build outputs
+dist/
+out/
+
+# Node modules (will be installed in container)
+node_modules/
+
+# Development files
+.git/
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+*.test.ts
+*.test.tsx
+__tests__/
+
+# Documentation (not needed in container)
+docs/
+*.md
+!README.md
+!CLAUDE.md
+!JARVIS-CONSCIOUSNESS.md

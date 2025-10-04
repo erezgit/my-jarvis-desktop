@@ -133,6 +133,7 @@ function migrateLegacySettings(): AppSettings {
     theme: legacyTheme,
     enterBehavior: legacyEnterBehavior,
     messageDisplay: DEFAULT_SETTINGS.messageDisplay, // Add new field
+    workingDirectory: DEFAULT_SETTINGS.workingDirectory, // Add working directory from defaults
     version: CURRENT_SETTINGS_VERSION,
   };
 

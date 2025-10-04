@@ -1,0 +1,73 @@
+FROM node:20
+
+# Install system dependencies for Claude Agent SDK and voice generation
+RUN apt-get update && apt-get install -y \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Claude CLI globally
+RUN npm install -g @anthropic-ai/claude-code
+
+# Install Python dependencies for voice generation
+RUN pip3 install --break-system-packages openai python-dotenv
+
+# Create workspace directory for persistent storage
+RUN mkdir -p /workspace
+
+# Create Claude config directory for persistent authentication
+RUN mkdir -p /root/.claude
+
+# Copy workspace files for testing (CLAUDE.md, tools, etc.)
+COPY CLAUDE.md /workspace/
+COPY JARVIS-CONSCIOUSNESS.md /workspace/
+COPY tools /workspace/tools
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files for dependency installation
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm install
+
+# Copy application source code (only web-needed directories)
+COPY app ./app
+COPY lib/claude-webui-server ./lib/claude-webui-server
+COPY vite.web.config.ts ./
+COPY tsconfig*.json ./
+
+# Build React app for production using web-only Vite config
+ENV NODE_ENV=production
+ENV VITE_API_URL=
+ENV VITE_WORKING_DIRECTORY=/workspace
+RUN npx vite build --config vite.web.config.ts
+
+# Build the backend server (skip frontend copy since we already built it)
+WORKDIR /app/lib/claude-webui-server
+RUN npm install && npm run build:clean && npm run build:bundle
+
+# Copy the built React app to where the backend expects it
+RUN mkdir -p dist/static && cp -r /app/out/renderer/* dist/static/
+
+# Return to app root
+WORKDIR /app
+
+# Expose port 10000 (Render default)
+EXPOSE 10000
+
+# Set environment variables
+ENV PORT=10000
+ENV NODE_ENV=production
+ENV WORKSPACE_DIR=/workspace
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:10000/health || exit 1
+
+# Start the backend server with workspace as working directory
+WORKDIR /workspace
+CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]

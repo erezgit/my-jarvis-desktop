@@ -32,3 +32,6 @@ lib/conveyor/
 
 # OS generated files
 Thumbs.db
+
+# Environment files with secrets
+tools/config/.env

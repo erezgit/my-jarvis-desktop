@@ -39,18 +39,24 @@ async function* executeClaudeCommand(
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
+    // Log the full options being passed to SDK
+    const queryOptions = {
+      abortController,
+      executable: "node" as const, // Use "node" to let SDK find it in PATH (works for both Electron and Docker)
+      executableArgs: [],
+      pathToClaudeCodeExecutable: cliPath,
+      cwd: workingDirectory, // Set working directory for Claude CLI process
+      additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
+      ...(sessionId ? { resume: sessionId } : {}),
+      ...(allowedTools ? { allowedTools } : {}),
+      ...(permissionMode ? { permissionMode } : {}),
+    };
+
+    logger.chat.debug("SDK query options: {queryOptions}", { queryOptions });
+
     for await (const sdkMessage of query({
       prompt: processedMessage,
-      options: {
-        abortController,
-        executable: process.execPath, // CRITICAL: Must use process.execPath for Electron packaging. DO NOT change to "node" - causes spawn ENOENT
-        executableArgs: [],
-        pathToClaudeCodeExecutable: cliPath,
-        ...(sessionId ? { resume: sessionId } : {}),
-        ...(allowedTools ? { allowedTools } : {}),
-        ...(workingDirectory ? { cwd: workingDirectory } : {}),
-        ...(permissionMode ? { permissionMode } : {}),
-      },
+      options: queryOptions,
     })) {
       // Debug logging of raw SDK messages with detailed content
       logger.chat.debug("Claude SDK Message: {sdkMessage}", { sdkMessage });
@@ -101,6 +107,11 @@ export async function handleChatRequest(
     chatRequest as unknown as Record<string, unknown>,
   );
 
+  // Default to current working directory if not specified
+  const workingDirectory = chatRequest.workingDirectory || process.cwd();
+
+  logger.chat.debug("Working directory for Claude CLI: {workingDirectory}", { workingDirectory });
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -111,7 +122,7 @@ export async function handleChatRequest(
           cliPath, // Use detected CLI path from validateClaudeCli
           chatRequest.sessionId,
           chatRequest.allowedTools,
-          chatRequest.workingDirectory,
+          workingDirectory,
           chatRequest.permissionMode,
         )) {
           const data = JSON.stringify(chunk) + "\n";

@@ -37,7 +37,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   messageDisplay: {
     mode: "jarvis"  // Default to consumer experience
   },
-  workingDirectory: "/Users/erezfern/Workspace/my-jarvis",
+  workingDirectory: import.meta.env.VITE_WORKING_DIRECTORY || "/Users/erezfern/Workspace/my-jarvis",
   version: 4,  // Increment for migration
 };
 
