@@ -48,6 +48,12 @@ RUN npx vite build --config vite.web.config.ts
 
 # Build the backend server (skip frontend copy since we already built it)
 WORKDIR /app/lib/claude-webui-server
+
+# Generate version.ts file (auto-generated, not in git)
+RUN echo "// Auto-generated file\nexport const VERSION = \"$(node -p \"require('./package.json').version\")\";
+
+" > cli/version.ts
+
 RUN npm install && npm run build:clean && npm run build:bundle
 
 # Copy the built React app to where the backend expects it
