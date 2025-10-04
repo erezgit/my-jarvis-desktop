@@ -50,9 +50,7 @@ RUN npx vite build --config vite.web.config.ts
 WORKDIR /app/lib/claude-webui-server
 
 # Generate version.ts file (auto-generated, not in git)
-RUN echo "// Auto-generated file\nexport const VERSION = \"$(node -p \"require('./package.json').version\")\";
-
-" > cli/version.ts
+RUN printf '// Auto-generated file\nexport const VERSION = "%s";\n' "$(node -p "require('./package.json').version")" > cli/version.ts
 
 RUN npm install && npm run build:clean && npm run build:bundle
 
