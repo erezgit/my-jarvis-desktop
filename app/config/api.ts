@@ -1,7 +1,12 @@
-// API configuration - uses absolute URLs for Electron app
+// API configuration - uses absolute URLs for Electron app, relative for web
 // Use VITE_JARVIS_DEV_PORT for development to avoid conflicts
 const PORT = import.meta.env.VITE_JARVIS_DEV_PORT || "8081";
-const BASE_URL = `http://127.0.0.1:${PORT}`;
+
+// Check if running in web mode (browser) or Electron
+// In web mode, use relative URLs so they work with any domain
+// In Electron, use absolute localhost URLs
+const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
+const BASE_URL = isElectron ? `http://127.0.0.1:${PORT}` : '';
 
 export const API_CONFIG = {
   ENDPOINTS: {
