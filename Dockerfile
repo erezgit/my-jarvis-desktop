@@ -37,14 +37,14 @@ RUN npm install
 # Copy application source code (only web-needed directories)
 COPY app ./app
 COPY lib/claude-webui-server ./lib/claude-webui-server
-COPY vite.web.config.ts ./
+COPY vite.web.config.mts ./
 COPY tsconfig*.json ./
 
 # Build React app for production using web-only Vite config
 ENV NODE_ENV=production
 ENV VITE_API_URL=
 ENV VITE_WORKING_DIRECTORY=/workspace
-RUN npx vite build --config vite.web.config.ts
+RUN npx vite build --config vite.web.config.mts
 
 # Build the backend server (skip frontend copy since we already built it)
 WORKDIR /app/lib/claude-webui-server
