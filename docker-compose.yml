@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  my-jarvis-web:
+    build: .
+    ports:
+      - "3000:10000"
+    volumes:
+      # Persistent workspace for development testing
+      - ./workspace:/workspace
+    environment:
+      - NODE_ENV=production
+      - PORT=10000
+      - WORKSPACE_DIR=/workspace
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped

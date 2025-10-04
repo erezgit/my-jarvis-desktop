@@ -9,6 +9,7 @@ export interface TokenUsageData {
 interface TokenUsageContextType {
   tokenData: TokenUsageData;
   updateTokenUsage: (newTokens: number) => void;
+  setTokenUsage: (totalTokens: number) => void;
   resetTokenUsage: () => void;
 }
 
@@ -35,12 +36,21 @@ export function TokenUsageProvider({ children }: TokenUsageProviderProps) {
     });
   }, []);
 
+  const setTokenUsage = useCallback((totalTokens: number) => {
+    console.log('[TOKEN_CONTEXT] setTokenUsage called with totalTokens:', totalTokens);
+    setTokenData(prev => {
+      const percentage = (totalTokens / prev.max_tokens) * 100;
+      console.log('[TOKEN_CONTEXT] Setting state - new total:', totalTokens, 'percentage:', percentage);
+      return { ...prev, tokens_used: totalTokens, percentage };
+    });
+  }, []);
+
   const resetTokenUsage = useCallback(() => {
     setTokenData({ tokens_used: 0, max_tokens: 200000, percentage: 0 });
   }, []);
 
   return (
-    <TokenUsageContext.Provider value={{ tokenData, updateTokenUsage, resetTokenUsage }}>
+    <TokenUsageContext.Provider value={{ tokenData, updateTokenUsage, setTokenUsage, resetTokenUsage }}>
       {children}
     </TokenUsageContext.Provider>
   );

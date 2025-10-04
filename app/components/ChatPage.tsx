@@ -552,7 +552,11 @@ export function ChatPage() {
             <TokenContextBar />
 
             {/* Chat Messages */}
-            <ChatMessages messages={messages} isLoading={isLoading} />
+            <ChatMessages
+              messages={messages}
+              isLoading={isLoading}
+              onSendMessage={sendMessage}
+            />
 
             {/* Input */}
             <ChatInput

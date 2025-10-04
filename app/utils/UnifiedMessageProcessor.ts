@@ -500,17 +500,30 @@ export class UnifiedMessageProcessor {
     context.addMessage(resultMessage);
 
     // Extract and update token usage
-    console.log('[TOKEN_DEBUG] processResultMessage called, message:', message);
+    // CRITICAL: We need to understand what we're tracking here
+    // - input_tokens: tokens sent TO Claude (includes full context + current user message)
+    // - output_tokens: tokens Claude generated in THIS response
+    //
+    // Question: Should we ADD (input + output) to accumulator, or should we track differently?
+    console.log('[TOKEN_DEBUG] ========== RESULT MESSAGE ==========');
     console.log('[TOKEN_DEBUG] message.usage:', message.usage);
     console.log('[TOKEN_DEBUG] context.onTokenUpdate exists:', !!context.onTokenUpdate);
 
     if (message.usage && context.onTokenUpdate) {
-      const totalTokens = message.usage.input_tokens + message.usage.output_tokens;
-      console.log('[TOKEN_DEBUG] Calling onTokenUpdate with totalTokens:', totalTokens);
-      context.onTokenUpdate(totalTokens);
+      const inputTokens = message.usage.input_tokens;
+      const outputTokens = message.usage.output_tokens;
+      const sum = inputTokens + outputTokens;
+
+      console.log('[TOKEN_DEBUG] Input tokens:', inputTokens);
+      console.log('[TOKEN_DEBUG] Output tokens:', outputTokens);
+      console.log('[TOKEN_DEBUG] Sum (input + output):', sum);
+      console.log('[TOKEN_DEBUG] Calling updateTokenUsage which will ADD this to the accumulator');
+
+      context.onTokenUpdate(sum);
     } else {
       console.log('[TOKEN_DEBUG] NOT updating tokens - usage:', message.usage, 'callback:', !!context.onTokenUpdate);
     }
+    console.log('[TOKEN_DEBUG] =====================================');
 
     // Clear current assistant message (streaming only)
     if (options.isStreaming) {

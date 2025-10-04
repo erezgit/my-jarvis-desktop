@@ -24,14 +24,16 @@ import {
   LoadingComponent,
 } from "../MessageComponents";
 import { useSettings } from "../../hooks/useSettings";
+import { Greeting } from "../Greeting";
 // import { UI_CONSTANTS } from "../../utils/constants"; // Unused for now
 
 interface ChatMessagesProps {
   messages: AllMessage[];
   isLoading: boolean;
+  onSendMessage?: (message: string) => void;
 }
 
-export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, onSendMessage }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { settings } = useSettings();
@@ -120,7 +122,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
       className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900 py-1 sm:py-4 mb-3 sm:mb-6 flex flex-col"
     >
       {messages.length === 0 ? (
-        <EmptyState />
+        <Greeting onSendMessage={onSendMessage} />
       ) : (
         <>
           {/* Spacer div to push messages to the bottom */}
@@ -130,24 +132,6 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
           <div ref={messagesEndRef} />
         </>
       )}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex-1 flex items-center justify-center text-center text-slate-500 dark:text-slate-400">
-      <div>
-        <div className="text-6xl mb-6 opacity-60">
-          <span role="img" aria-label="chat icon">
-            💬
-          </span>
-        </div>
-        <p className="text-lg font-medium">Start a conversation with Claude</p>
-        <p className="text-sm mt-2 opacity-80">
-          Type your message below to begin
-        </p>
-      </div>
     </div>
   );
 }

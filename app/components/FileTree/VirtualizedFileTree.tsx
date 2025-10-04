@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo, useImperativeHandle, forwardRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
+import { JarvisOrb } from '../JarvisOrb'
 
 interface FileItem {
   name: string
@@ -343,9 +344,10 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   }, [currentPath])
 
   return (
-    <div className={cn("flex flex-col h-full bg-white dark:bg-gray-900", className)}>
+    <div className={cn("flex flex-col h-full bg-neutral-50 dark:bg-neutral-900", className)}>
       {/* Fixed header */}
-      <div className="h-[60px] flex items-center px-4 flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+      <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0">
+        <JarvisOrb />
         <button
           onClick={selectNewDirectory}
           className="text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
