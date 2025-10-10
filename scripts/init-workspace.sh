@@ -31,6 +31,10 @@ if [ "$WORKSPACE_FILES" -eq 0 ]; then
         # Create initialization marker
         echo "Workspace initialized on $(date)" > "$INIT_MARKER"
 
+        # Create Claude config directory for persistent authentication
+        mkdir -p "$WORKSPACE_DIR/.claude"
+        echo "[Init] Created .claude directory for authentication persistence"
+
         echo "[Init] ✅ Workspace initialized successfully"
         echo "[Init] Files copied:"
         ls -la "$WORKSPACE_DIR"
@@ -42,6 +46,10 @@ else
     echo "[Init] Workspace already contains files, preserving existing data"
     echo "[Init] Creating marker file to skip future initialization"
     echo "Workspace preserved on $(date)" > "$INIT_MARKER"
+
+    # Ensure Claude config directory exists even if workspace was preserved
+    mkdir -p "$WORKSPACE_DIR/.claude"
+    echo "[Init] Ensured .claude directory exists for authentication"
 fi
 
 exit 0

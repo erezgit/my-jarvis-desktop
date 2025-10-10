@@ -17,9 +17,6 @@ RUN pip3 install --break-system-packages openai python-dotenv
 # Create workspace directory for persistent storage
 RUN mkdir -p /workspace
 
-# Create Claude config directory for persistent authentication
-RUN mkdir -p /root/.claude
-
 # Copy workspace template (will be copied to persistent /workspace on first startup)
 COPY workspace-template /app/workspace-template
 COPY scripts/init-workspace.sh /app/scripts/init-workspace.sh
@@ -67,6 +64,8 @@ EXPOSE 10000
 ENV PORT=10000
 ENV NODE_ENV=production
 ENV WORKSPACE_DIR=/workspace
+ENV ANTHROPIC_CONFIG_PATH=/workspace/.claude
+ENV CLAUDE_CONFIG_DIR=/workspace/.claude
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
