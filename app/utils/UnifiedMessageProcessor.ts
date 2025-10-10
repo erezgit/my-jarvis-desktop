@@ -231,11 +231,28 @@ export class UnifiedMessageProcessor {
           const messageMatch = command.match(/--voice echo "([^"]+)"/);
           const message = messageMatch ? messageMatch[1] : "Voice message";
 
+          // Generate audioUrl based on deployment mode
+          let audioUrl: string;
+          const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
+
+          if (deploymentMode === 'electron') {
+            // Electron mode: Use file:// protocol for local filesystem access
+            audioUrl = `file://${audioPath}`;
+          } else if (deploymentMode === 'web') {
+            // Web mode: Use HTTP API endpoint to serve voice files
+            // Extract filename from path (e.g., /workspace/tools/voice/file.mp3 -> file.mp3)
+            const filename = audioPath.split('/').pop() || '';
+            audioUrl = `/api/voice/${filename}`;
+          } else {
+            // Fallback to file:// for unknown modes
+            audioUrl = `file://${audioPath}`;
+          }
+
           // Create VoiceMessage instead of ToolResultMessage
           const voiceMessage = {
             type: "voice" as const,
             content: message,
-            audioUrl: `file://${audioPath}`,
+            audioUrl,
             timestamp: options.timestamp || Date.now(),
             autoPlay: true
           };
@@ -499,12 +516,11 @@ export class UnifiedMessageProcessor {
     const resultMessage = convertResultMessage(message, timestamp);
     context.addMessage(resultMessage);
 
-    // Extract and update token usage
-    // CRITICAL: We need to understand what we're tracking here
-    // - input_tokens: tokens sent TO Claude (includes full context + current user message)
-    // - output_tokens: tokens Claude generated in THIS response
-    //
-    // Question: Should we ADD (input + output) to accumulator, or should we track differently?
+    // Extract and set token usage (ABSOLUTE totals, not incremental)
+    // CRITICAL: Claude API returns CUMULATIVE totals, not per-message increments
+    // - input_tokens: TOTAL tokens sent to Claude for the entire conversation
+    // - output_tokens: TOTAL tokens Claude has generated for the entire conversation
+    // Therefore: We must use setTokenUsage (absolute) not updateTokenUsage (incremental)
     console.log('[TOKEN_DEBUG] ========== RESULT MESSAGE ==========');
     console.log('[TOKEN_DEBUG] message.usage:', message.usage);
     console.log('[TOKEN_DEBUG] context.onTokenUpdate exists:', !!context.onTokenUpdate);
@@ -512,14 +528,15 @@ export class UnifiedMessageProcessor {
     if (message.usage && context.onTokenUpdate) {
       const inputTokens = message.usage.input_tokens;
       const outputTokens = message.usage.output_tokens;
-      const sum = inputTokens + outputTokens;
+      const totalTokens = inputTokens + outputTokens;
 
-      console.log('[TOKEN_DEBUG] Input tokens:', inputTokens);
-      console.log('[TOKEN_DEBUG] Output tokens:', outputTokens);
-      console.log('[TOKEN_DEBUG] Sum (input + output):', sum);
-      console.log('[TOKEN_DEBUG] Calling updateTokenUsage which will ADD this to the accumulator');
+      console.log('[TOKEN_DEBUG] Input tokens (TOTAL):', inputTokens);
+      console.log('[TOKEN_DEBUG] Output tokens (TOTAL):', outputTokens);
+      console.log('[TOKEN_DEBUG] Total tokens (ABSOLUTE):', totalTokens);
+      console.log('[TOKEN_DEBUG] Calling onTokenUpdate with ABSOLUTE total');
 
-      context.onTokenUpdate(sum);
+      // Pass the absolute total - the context should handle this as a setTokenUsage call
+      context.onTokenUpdate(totalTokens);
     } else {
       console.log('[TOKEN_DEBUG] NOT updating tokens - usage:', message.usage, 'callback:', !!context.onTokenUpdate);
     }

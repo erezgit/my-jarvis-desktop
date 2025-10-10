@@ -30,6 +30,20 @@ export interface SettingsContextType {
   updateSettings: (updates: Partial<AppSettings>) => void;
 }
 
+// Get default workspace path dynamically based on user's home directory
+function getDefaultWorkspace(): string {
+  // In Electron, we have access to Node.js APIs
+  if (typeof window !== 'undefined' && (window as any).electron) {
+    // Use Electron's API to get user home directory
+    const os = require('os');
+    const path = require('path');
+    return path.join(os.homedir(), 'Documents', 'MyJarvis');
+  }
+
+  // Fallback for web or if Electron API not available
+  return import.meta.env.VITE_WORKING_DIRECTORY || '';
+}
+
 // Default settings
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: "light",
@@ -37,7 +51,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   messageDisplay: {
     mode: "jarvis"  // Default to consumer experience
   },
-  workingDirectory: import.meta.env.VITE_WORKING_DIRECTORY || "/Users/erezfern/Workspace/my-jarvis",
+  workingDirectory: getDefaultWorkspace(),
   version: 4,  // Increment for migration
 };
 

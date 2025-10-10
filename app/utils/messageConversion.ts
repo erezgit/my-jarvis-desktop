@@ -248,10 +248,27 @@ export function createVoiceMessageFromInput(
     return null;
   }
 
+  // Generate audioUrl based on deployment mode
+  let audioUrl: string;
+  const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
+
+  if (deploymentMode === 'electron') {
+    // Electron mode: Use file:// protocol for local filesystem access
+    audioUrl = `file://${audioPath}`;
+  } else if (deploymentMode === 'web') {
+    // Web mode: Use HTTP API endpoint to serve voice files
+    // Extract filename from path (e.g., /workspace/tools/voice/file.mp3 -> file.mp3)
+    const filename = audioPath.split('/').pop() || '';
+    audioUrl = `/api/voice/${filename}`;
+  } else {
+    // Fallback to file:// for unknown modes
+    audioUrl = `file://${audioPath}`;
+  }
+
   return {
     type: "voice",
     content,
-    audioUrl: `file://${audioPath}`,
+    audioUrl,
     timestamp: timestamp || Date.now(),
     autoPlay: false, // Production default
   };

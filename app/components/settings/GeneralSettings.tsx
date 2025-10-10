@@ -7,6 +7,7 @@ import {
   FolderIcon,
 } from "@heroicons/react/24/outline";
 import { useSettings } from "../../hooks/useSettings";
+import { AuthButton } from "../AuthButton";
 
 interface GeneralSettingsProps {
   workingDirectory?: string;
@@ -17,18 +18,25 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
   const { settings, theme, enterBehavior, toggleTheme, toggleEnterBehavior, updateSettings } =
     useSettings();
 
-  const WORKSPACES = [
-    {
-      id: 'my-jarvis',
-      displayName: 'My Jarvis',
-      path: '/Users/erezfern/Workspace/my-jarvis'
-    },
-    {
-      id: 'my-jarvis-onboarding',
-      displayName: 'My Jarvis Onboarding',
-      path: '/Users/erezfern/Workspace/my-jarvis-onboarding'
+  // Handle workspace path selection via Electron dialog
+  const handleSelectWorkspace = async () => {
+    if (!(window as any).electronAPI?.ipcRenderer?.invoke) {
+      console.error('Electron IPC API not available');
+      return;
     }
-  ];
+
+    try {
+      const result = await (window as any).electronAPI.ipcRenderer.invoke('dialog:select-directory');
+
+      if (!result.canceled && result.filePaths.length > 0) {
+        const selectedPath = result.filePaths[0];
+        console.log('[WORKSPACE] Selected path:', selectedPath);
+        onWorkspaceChange?.(selectedPath);
+      }
+    } catch (error) {
+      console.error('Failed to select workspace:', error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -199,47 +207,44 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
           {onWorkspaceChange && (
             <div>
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                Workspaces
+                Workspace Directory
               </label>
               <div className="space-y-2">
-                {WORKSPACES.map((workspace) => (
-                  <div key={workspace.id} className="flex items-center gap-2">
-                    <button
-                      onClick={() => onWorkspaceChange(workspace.path)}
-                      className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
-                      role="radio"
-                      aria-checked={workingDirectory === workspace.path}
-                      aria-label={`${workspace.displayName} workspace`}
-                    >
-                      <FolderIcon className="w-5 h-5 text-green-500" />
-                      <div>
-                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                          {workspace.displayName}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {workspace.path}
-                        </div>
-                      </div>
-                      <div className="ml-auto">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          workingDirectory === workspace.path
-                            ? 'bg-green-500 border-green-500'
-                            : 'border-slate-300 dark:border-slate-600'
-                        }`}>
-                          {workingDirectory === workspace.path && (
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
+                {/* Current workspace display */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg">
+                  <FolderIcon className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      Current Workspace
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 truncate" title={workingDirectory}>
+                      {workingDirectory || 'No workspace selected'}
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Change workspace button */}
+                <button
+                  onClick={handleSelectWorkspace}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 text-blue-700 dark:text-blue-300"
+                >
+                  <FolderIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium">Change Workspace</span>
+                </button>
               </div>
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Switch between different workspace directories. Changing workspace will clear the current session.
+                Select a directory to use as your workspace. All projects and files will be managed within this directory. Changing workspace will clear the current session.
               </div>
             </div>
           )}
+
+          {/* Authentication */}
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+              Authentication
+            </label>
+            <AuthButton />
+          </div>
         </div>
       </div>
     </div>

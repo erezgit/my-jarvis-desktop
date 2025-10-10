@@ -17,6 +17,7 @@ const http2 = require("http2");
 const stream = require("stream");
 const crypto = require("crypto");
 const fs$1 = require("fs");
+const express = require("express");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -36,6 +37,8 @@ function _interopNamespaceDefault(e) {
 const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path);
 const fs__namespace = /* @__PURE__ */ _interopNamespaceDefault(fs);
 const os__namespace = /* @__PURE__ */ _interopNamespaceDefault(os);
+const crypto__namespace = /* @__PURE__ */ _interopNamespaceDefault(crypto);
+const fs__namespace$1 = /* @__PURE__ */ _interopNamespaceDefault(fs$1);
 let handlersRegistered = false;
 const registerFileHandlers = (mainWindow) => {
   if (handlersRegistered) {
@@ -3500,6 +3503,470 @@ async function validateClaudeCli(runtime2, customPath) {
     exit(1);
   }
 }
+const AUTHORIZATION_URL = "https://claude.ai/oauth/authorize";
+const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
+const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+const SCOPES = ["org:create_api_key", "user:profile", "user:inference"];
+let REDIRECT_URI = "";
+let pendingAuth = null;
+let currentSession = null;
+function generateCodeVerifier() {
+  return crypto__namespace.randomBytes(32).toString("base64url");
+}
+function generateCodeChallenge(codeVerifier) {
+  return crypto__namespace.createHash("sha256").update(codeVerifier).digest("base64url");
+}
+function generateState() {
+  return crypto__namespace.randomBytes(16).toString("hex");
+}
+async function startLocalServer() {
+  const app = express();
+  return new Promise((resolve, reject) => {
+    const server = app.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : 0;
+      console.log(`[OAUTH] Local callback server running on http://localhost:${port}`);
+      resolve({ port, server, app });
+    });
+    server.on("error", (error) => {
+      console.error("[OAUTH] Failed to start server:", error);
+      reject(error);
+    });
+  });
+}
+function stopLocalServer(server) {
+  if (server) {
+    server.close(() => {
+      console.log("[OAUTH] Local callback server stopped");
+    });
+  }
+}
+function parseAuthorizationCode(codeInput) {
+  const trimmedInput = codeInput.trim();
+  if (!trimmedInput) {
+    throw new Error("Authorization code cannot be empty");
+  }
+  if (trimmedInput.includes("#")) {
+    const [code, state] = trimmedInput.split("#");
+    if (!code || !state) {
+      throw new Error("Invalid code#state format. Expected format: authorizationCode#stateValue");
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(code)) {
+      throw new Error("Invalid authorization code format in code#state");
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(state)) {
+      throw new Error("Invalid state format in code#state");
+    }
+    return { code, state };
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmedInput)) {
+    throw new Error(
+      "Invalid authorization code format. Please copy the authorization code from the callback page."
+    );
+  }
+  return { code: trimmedInput, state: null };
+}
+async function startOAuthFlow() {
+  return new Promise(async (resolveOAuth, rejectOAuth) => {
+    try {
+      console.log("[OAUTH] Starting Claude OAuth flow with local server...");
+      const { port, server, app } = await startLocalServer();
+      REDIRECT_URI = `http://localhost:${port}/callback`;
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = generateCodeChallenge(codeVerifier);
+      const state = generateState();
+      pendingAuth = {
+        codeVerifier,
+        state,
+        codeChallenge,
+        authUrl: "",
+        server,
+        port
+      };
+      const timeoutId = setTimeout(() => {
+        console.log("[OAUTH] OAuth flow timed out after 5 minutes");
+        stopLocalServer(server);
+        resolveOAuth({
+          success: false,
+          error: "OAuth flow timed out. Please try again."
+        });
+      }, 5 * 60 * 1e3);
+      app.get("/callback", async (req, res) => {
+        try {
+          const { code, state: receivedState } = req.query;
+          if (!code) {
+            res.status(400).send("<h1>Error</h1><p>No authorization code received</p>");
+            clearTimeout(timeoutId);
+            resolveOAuth({
+              success: false,
+              error: "No authorization code received"
+            });
+            return;
+          }
+          if (receivedState && receivedState !== pendingAuth?.state) {
+            console.warn("[OAUTH] State mismatch - received:", receivedState, "expected:", pendingAuth?.state);
+          }
+          console.log("[OAUTH] Authorization code received automatically");
+          const result = await completeOAuthFlowInternal(code, receivedState || pendingAuth?.state || "");
+          if (result.success) {
+            res.send(`
+              <html>
+                <head><title>Authentication Successful</title></head>
+                <body style="font-family: system-ui; text-align: center; padding: 50px;">
+                  <h1>✅ Authentication Successful!</h1>
+                  <p>You can close this window and return to the app.</p>
+                  <script>setTimeout(() => window.close(), 2000)<\/script>
+                </body>
+              </html>
+            `);
+            clearTimeout(timeoutId);
+            setTimeout(() => stopLocalServer(server), 3e3);
+            resolveOAuth({
+              success: true,
+              message: "Authentication completed successfully",
+              session: result.session
+            });
+          } else {
+            res.status(500).send(`
+              <html>
+                <head><title>Authentication Failed</title></head>
+                <body style="font-family: system-ui; text-align: center; padding: 50px;">
+                  <h1>❌ Authentication Failed</h1>
+                  <p>${result.error || "Unknown error"}</p>
+                </body>
+              </html>
+            `);
+            clearTimeout(timeoutId);
+            setTimeout(() => stopLocalServer(server), 3e3);
+            resolveOAuth({
+              success: false,
+              error: result.error || "Authentication failed"
+            });
+          }
+        } catch (error) {
+          console.error("[OAUTH] Callback error:", error);
+          res.status(500).send("<h1>Error</h1><p>Authentication failed</p>");
+          stopLocalServer(server);
+          clearTimeout(timeoutId);
+          resolveOAuth({
+            success: false,
+            error: error instanceof Error ? error.message : "Callback processing failed"
+          });
+        }
+      });
+      const authParams = new URLSearchParams({
+        client_id: CLIENT_ID,
+        response_type: "code",
+        redirect_uri: REDIRECT_URI,
+        scope: SCOPES.join(" "),
+        state,
+        code_challenge: codeChallenge,
+        code_challenge_method: "S256"
+      });
+      const authUrl = `${AUTHORIZATION_URL}?${authParams.toString()}`;
+      pendingAuth.authUrl = authUrl;
+      console.log("[OAUTH] Opening browser for authentication...");
+      console.log("[OAUTH] Callback URL:", REDIRECT_URI);
+      await electron.shell.openExternal(authUrl);
+      console.log("[OAUTH] Waiting for user to complete authentication in browser...");
+    } catch (error) {
+      console.error("[OAUTH] Failed to start OAuth flow:", error);
+      if (pendingAuth?.server) {
+        stopLocalServer(pendingAuth.server);
+      }
+      resolveOAuth({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to start OAuth flow"
+      });
+    }
+  });
+}
+async function completeOAuthFlowInternal(authCode, receivedState) {
+  try {
+    if (!pendingAuth) {
+      throw new Error("No pending authentication flow");
+    }
+    console.log("[OAUTH] Completing OAuth flow with authorization code...");
+    const payload = {
+      grant_type: "authorization_code",
+      code: authCode,
+      redirect_uri: REDIRECT_URI,
+      client_id: CLIENT_ID,
+      code_verifier: pendingAuth.codeVerifier
+    };
+    if (receivedState) {
+      payload.state = receivedState;
+    }
+    const response = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[OAUTH] Token exchange failed:", response.status, errorText);
+      throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
+    }
+    const tokenData = await response.json();
+    console.log("[OAUTH] Token exchange successful");
+    const expiresAt = Date.now() + tokenData.expires_in * 1e3;
+    const session = {
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt,
+      scopes: SCOPES,
+      userId: tokenData.account?.uuid || "unknown",
+      subscriptionType: "unknown",
+      account: {
+        email_address: tokenData.account?.email_address || "unknown",
+        uuid: tokenData.account?.uuid || "unknown"
+      }
+    };
+    currentSession = session;
+    process.env.ANTHROPIC_API_KEY = session.accessToken;
+    console.log("[OAUTH] Set ANTHROPIC_API_KEY environment variable for backend");
+    const credentialsPath = path__namespace.join(os__namespace.homedir(), ".claude-credentials.json");
+    const credentials = {
+      claudeAiOauth: session
+    };
+    fs__namespace$1.writeFileSync(credentialsPath, JSON.stringify(credentials, null, 2), { mode: 384 });
+    const claudeAuthPath = path__namespace.join(os__namespace.homedir(), ".claude", "auth.json");
+    const claudeAuthDir = path__namespace.dirname(claudeAuthPath);
+    if (!fs__namespace$1.existsSync(claudeAuthDir)) {
+      fs__namespace$1.mkdirSync(claudeAuthDir, { recursive: true });
+    }
+    const claudeAuth = {
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+      expires_at: new Date(session.expiresAt).toISOString(),
+      user_email: session.account.email_address
+    };
+    fs__namespace$1.writeFileSync(claudeAuthPath, JSON.stringify(claudeAuth, null, 2), { mode: 384 });
+    console.log("[OAUTH] Saved credentials to:", claudeAuthPath);
+    console.log("[OAUTH] Authentication completed successfully");
+    pendingAuth = null;
+    return {
+      success: true,
+      session
+    };
+  } catch (error) {
+    console.error("[OAUTH] Failed to complete OAuth flow:", error);
+    pendingAuth = null;
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to complete OAuth flow"
+    };
+  }
+}
+async function completeOAuthFlow(authCodeInput) {
+  try {
+    if (!pendingAuth) {
+      throw new Error("No pending authentication flow");
+    }
+    console.log("[OAUTH] Completing OAuth flow with authorization code...");
+    const { code: authCode, state: receivedState } = parseAuthorizationCode(authCodeInput);
+    console.log("[OAUTH] Code length:", authCode.length);
+    console.log("[OAUTH] Code preview:", authCode.substring(0, 10) + "...");
+    if (receivedState && receivedState !== pendingAuth.state) {
+      throw new Error("State parameter mismatch - possible CSRF attack");
+    }
+    const payload = {
+      grant_type: "authorization_code",
+      code: authCode,
+      redirect_uri: REDIRECT_URI,
+      client_id: CLIENT_ID,
+      code_verifier: pendingAuth.codeVerifier,
+      state: receivedState || pendingAuth.state
+    };
+    console.log("[OAUTH] Token exchange payload:", {
+      grant_type: payload.grant_type,
+      redirect_uri: payload.redirect_uri,
+      client_id: payload.client_id,
+      code: payload.code.substring(0, 10) + "...",
+      code_verifier: payload.code_verifier.substring(0, 10) + "...",
+      state: payload.state
+    });
+    const response = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[OAUTH] Token exchange failed:", response.status, errorText);
+      throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
+    }
+    const tokenData = await response.json();
+    console.log("[OAUTH] Token exchange successful");
+    const expiresAt = Date.now() + tokenData.expires_in * 1e3;
+    const session = {
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt,
+      scopes: SCOPES,
+      userId: tokenData.account?.uuid || "unknown",
+      subscriptionType: "unknown",
+      // We'd need to fetch this from profile
+      account: {
+        email_address: tokenData.account?.email_address || "unknown",
+        uuid: tokenData.account?.uuid || "unknown"
+      }
+    };
+    currentSession = session;
+    const credentialsPath = path__namespace.join(os__namespace.homedir(), ".claude-credentials.json");
+    const credentials = {
+      claudeAiOauth: session
+    };
+    fs__namespace$1.writeFileSync(credentialsPath, JSON.stringify(credentials, null, 2), { mode: 384 });
+    const claudeAuthPath = path__namespace.join(os__namespace.homedir(), ".claude", "auth.json");
+    const claudeAuthDir = path__namespace.dirname(claudeAuthPath);
+    if (!fs__namespace$1.existsSync(claudeAuthDir)) {
+      fs__namespace$1.mkdirSync(claudeAuthDir, { recursive: true });
+    }
+    const claudeAuth = {
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+      expires_at: new Date(session.expiresAt).toISOString(),
+      user_email: session.account.email_address
+    };
+    fs__namespace$1.writeFileSync(claudeAuthPath, JSON.stringify(claudeAuth, null, 2), { mode: 384 });
+    console.log("[OAUTH] Saved credentials in Claude CLI format to:", claudeAuthPath);
+    console.log("[OAUTH] Authentication completed successfully");
+    pendingAuth = null;
+    return {
+      success: true,
+      session
+    };
+  } catch (error) {
+    console.error("[OAUTH] Failed to complete OAuth flow:", error);
+    pendingAuth = null;
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to complete OAuth flow"
+    };
+  }
+}
+async function restoreSession() {
+  try {
+    const credentialsPath = path__namespace.join(os__namespace.homedir(), ".claude-credentials.json");
+    if (fs__namespace$1.existsSync(credentialsPath)) {
+      const credentials = JSON.parse(fs__namespace$1.readFileSync(credentialsPath, "utf-8"));
+      const session = credentials.claudeAiOauth;
+      if (session && session.expiresAt > Date.now()) {
+        currentSession = session;
+        process.env.ANTHROPIC_API_KEY = session.accessToken;
+        console.log("[AUTH] Restored session and API key from saved credentials");
+      } else {
+        console.log("[AUTH] Saved session expired, clearing credentials");
+        fs__namespace$1.unlinkSync(credentialsPath);
+      }
+    }
+  } catch (error) {
+    console.error("[AUTH] Failed to restore session:", error);
+  }
+}
+async function checkAuthStatus() {
+  try {
+    console.log("[AUTH] Checking authentication status...");
+    if (currentSession) {
+      const now = Date.now();
+      const expiresAt = currentSession.expiresAt;
+      console.log("[AUTH] Session expires at:", new Date(expiresAt).toISOString());
+      console.log("[AUTH] Current time:", new Date(now).toISOString());
+      console.log("[AUTH] Session valid:", expiresAt > now + 5 * 60 * 1e3);
+      if (expiresAt > now + 5 * 60 * 1e3) {
+        console.log("[AUTH] Returning authenticated session");
+        return {
+          success: true,
+          isAuthenticated: true,
+          session: currentSession
+        };
+      } else {
+        console.log("[AUTH] Session expired");
+        currentSession = null;
+        delete process.env.ANTHROPIC_API_KEY;
+        console.log("[AUTH] Cleared expired ANTHROPIC_API_KEY from environment");
+      }
+    } else {
+      console.log("[AUTH] No stored authentication data found");
+    }
+    return {
+      success: true,
+      isAuthenticated: false,
+      session: null
+    };
+  } catch (error) {
+    console.error("Auth check failed:", error);
+    return {
+      success: false,
+      isAuthenticated: false,
+      error: error instanceof Error ? error.message : "Auth check failed"
+    };
+  }
+}
+async function signOut() {
+  try {
+    currentSession = null;
+    delete process.env.ANTHROPIC_API_KEY;
+    console.log("[AUTH] Cleared ANTHROPIC_API_KEY environment variable");
+    console.log("User signed out");
+    return { success: true };
+  } catch (error) {
+    console.error("Sign out failed:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Sign out failed"
+    };
+  }
+}
+function registerAuthHandlers() {
+  electron.ipcMain.handle("auth:start-oauth", async (_event) => {
+    return await startOAuthFlow();
+  });
+  electron.ipcMain.handle("auth:complete-oauth", async (_event, authCode) => {
+    return await completeOAuthFlow(authCode);
+  });
+  electron.ipcMain.handle("auth:check-status", async (_event) => {
+    return await checkAuthStatus();
+  });
+  electron.ipcMain.handle("auth:sign-out", async (_event) => {
+    return await signOut();
+  });
+  console.log("[AUTH] IPC handlers registered");
+}
+function registerDialogHandlers() {
+  electron.ipcMain.handle("dialog:select-directory", async (_event) => {
+    try {
+      const focusedWindow = electron.BrowserWindow.getFocusedWindow();
+      if (!focusedWindow) {
+        console.error("[DIALOG] No focused window found");
+        return {
+          canceled: true,
+          filePaths: []
+        };
+      }
+      const result = await electron.dialog.showOpenDialog(focusedWindow, {
+        properties: ["openDirectory", "createDirectory"],
+        title: "Select Workspace Directory",
+        buttonLabel: "Select Workspace"
+      });
+      console.log("[DIALOG] Directory selection result:", result);
+      return result;
+    } catch (error) {
+      console.error("[DIALOG] Failed to show directory dialog:", error);
+      return {
+        canceled: true,
+        filePaths: [],
+        error: error instanceof Error ? error.message : "Failed to show dialog"
+      };
+    }
+  });
+  console.log("[DIALOG] IPC handlers registered");
+}
 let runtime = null;
 async function startServer() {
   console.log("Starting Claude WebUI server with jlongster cleanup pattern...");
@@ -3508,9 +3975,9 @@ async function startServer() {
     const commonPaths = [
       "/usr/local/bin",
       "/opt/homebrew/bin",
-      "/Users/erezfern/.bun/bin",
       "/usr/bin",
-      "/bin"
+      "/bin",
+      "/usr/local/share/npm/bin"
     ];
     const pathsToAdd = commonPaths.filter((path2) => !currentPath.includes(path2));
     if (pathsToAdd.length > 0) {
@@ -3538,6 +4005,9 @@ async function startServer() {
 electron.app.whenReady().then(async () => {
   console.log("My Jarvis Desktop starting up");
   utils.electronApp.setAppUserModelId("com.electron");
+  registerAuthHandlers();
+  registerDialogHandlers();
+  await restoreSession();
   await startServer();
   await new Promise((resolve) => setTimeout(resolve, 1e3));
   await createAppWindow();

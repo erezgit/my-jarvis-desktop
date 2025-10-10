@@ -18,6 +18,7 @@ import { handleConversationRequest } from "./handlers/conversations.ts";
 import { handleChatRequest } from "./handlers/chat.ts";
 import { handleAbortRequest } from "./handlers/abort.ts";
 import { handleFilesRequest, handleReadFileRequest } from "./handlers/files.ts";
+import { handleVoiceRequest } from "./handlers/voice.ts";
 import { logger } from "./utils/logger.ts";
 import { readBinaryFile } from "./utils/fs.ts";
 
@@ -84,6 +85,9 @@ export function createApp(
   // File system API routes (for web mode)
   app.get("/api/files", (c) => handleFilesRequest(c));
   app.get("/api/files/read", (c) => handleReadFileRequest(c));
+
+  // Voice file API route (for web mode)
+  app.get("/api/voice/:filename", (c) => handleVoiceRequest(c));
 
   app.post("/api/voice-generate", async (c) => {
     try {
