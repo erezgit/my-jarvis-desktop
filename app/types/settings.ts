@@ -40,8 +40,8 @@ function getDefaultWorkspace(): string {
     return path.join(os.homedir(), 'Documents', 'MyJarvis');
   }
 
-  // Fallback for web or if Electron API not available
-  return import.meta.env.VITE_WORKING_DIRECTORY || '';
+  // For web mode (Docker), default to /workspace/my-jarvis
+  return import.meta.env.VITE_WORKING_DIRECTORY || '/workspace/my-jarvis';
 }
 
 // Default settings
