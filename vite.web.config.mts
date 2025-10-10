@@ -22,5 +22,8 @@ export default defineConfig({
       '@/resources': resolve(__dirname, 'resources'),
     },
   },
+  define: {
+    'import.meta.env.VITE_DEPLOYMENT_MODE': JSON.stringify('web'),
+  },
   plugins: [tailwindcss(), react()],
 })

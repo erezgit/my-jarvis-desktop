@@ -49,6 +49,9 @@ export default defineConfig({
     resolve: {
       alias: aliases,
     },
+    define: {
+      'import.meta.env.VITE_DEPLOYMENT_MODE': JSON.stringify('electron'),
+    },
     plugins: [tailwindcss(), react()],
   },
 })

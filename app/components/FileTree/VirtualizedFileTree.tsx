@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo, useImperativeHa
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
 import { JarvisOrb } from '../JarvisOrb'
+import { isElectronMode, isWebMode } from '@/app/config/deployment'
 
 interface FileItem {
   name: string
@@ -154,50 +155,44 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
       setLoading(true)
       setError(null)
 
-      // Check if window.fileAPI exists, if not use mock data
-      if (typeof window !== 'undefined' && (window as any).fileAPI) {
-        const files = await (window as any).fileAPI.readDirectory(path)
+      let files: any[]
 
-        const formattedItems: FileItem[] = files.map((file: any) => ({
-          ...file,
-          level: 0,
-          isExpanded: false,
-          children: []
-        }))
-
-        setItems(formattedItems)
-        setCurrentPath(path)
+      // Explicit deployment mode detection
+      if (isElectronMode()) {
+        // Electron mode: Use IPC via window.fileAPI
+        if (typeof window !== 'undefined' && (window as any).fileAPI) {
+          files = await (window as any).fileAPI.readDirectory(path)
+        } else {
+          throw new Error('Electron mode but window.fileAPI not available')
+        }
+      } else if (isWebMode()) {
+        // Web mode: Use HTTP API
+        const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load directory')
+        }
+        files = data.files
       } else {
-        // Mock data for testing until fileAPI is set up
-        console.warn('window.fileAPI not available, using mock data')
-        const mockData: FileItem[] = [
-          {
-            name: 'src',
-            path: '/mock/src',
-            isDirectory: true,
-            size: 0,
-            modified: new Date().toISOString(),
-            extension: '',
-            level: 0,
-            isExpanded: false,
-            children: []
-          },
-          {
-            name: 'package.json',
-            path: '/mock/package.json',
-            isDirectory: false,
-            size: 1024,
-            modified: new Date().toISOString(),
-            extension: '.json',
-            level: 0
-          }
-        ]
-        setItems(mockData)
-        setCurrentPath('/mock')
+        throw new Error('Unknown deployment mode')
       }
+
+      // Format items for display
+      const formattedItems: FileItem[] = files.map((file: any) => ({
+        ...file,
+        level: 0,
+        isExpanded: false,
+        children: []
+      }))
+
+      setItems(formattedItems)
+      setCurrentPath(path)
     } catch (err) {
       setError('Failed to load directory')
-      console.error(err)
+      console.error('File tree load error:', err)
     } finally {
       setLoading(false)
     }

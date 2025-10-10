@@ -1,5 +1,6 @@
 import type { AppSettings, Theme, EnterBehavior, MessageDisplaySettings } from "../types/settings";
 import { CURRENT_SETTINGS_VERSION, DEFAULT_SETTINGS } from "../types/settings";
+import { isElectronMode } from '@/app/config/deployment';
 
 export const STORAGE_KEYS = {
   // Unified settings key
@@ -128,12 +129,26 @@ function migrateLegacySettings(): AppSettings {
     "send",
   );
 
+  // Get default workspace path dynamically
+  let defaultWorkspace = DEFAULT_SETTINGS.workingDirectory;
+
+  // For Electron apps, ensure we use the user's home directory
+  if (isElectronMode()) {
+    try {
+      const os = require('os');
+      const path = require('path');
+      defaultWorkspace = path.join(os.homedir(), 'Documents', 'MyJarvis');
+    } catch (error) {
+      console.error('Failed to get home directory:', error);
+    }
+  }
+
   // Create migrated settings with new messageDisplay field
   const migratedSettings: AppSettings = {
     theme: legacyTheme,
     enterBehavior: legacyEnterBehavior,
     messageDisplay: DEFAULT_SETTINGS.messageDisplay, // Add new field
-    workingDirectory: DEFAULT_SETTINGS.workingDirectory, // Add working directory from defaults
+    workingDirectory: defaultWorkspace, // Use dynamic workspace path
     version: CURRENT_SETTINGS_VERSION,
   };
 
