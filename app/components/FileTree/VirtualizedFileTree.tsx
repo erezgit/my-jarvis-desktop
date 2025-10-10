@@ -223,38 +223,41 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
 
   const loadSubdirectory = async (parentItem: FileItem) => {
     try {
-      if (typeof window !== 'undefined' && (window as any).fileAPI) {
-        const files = await (window as any).fileAPI.readDirectory(parentItem.path)
+      let files: any[]
 
-        const children: FileItem[] = files.map((file: any) => ({
-          ...file,
-          level: (parentItem.level || 0) + 1,
-          isExpanded: false,
-          children: [],
-          parent: parentItem
-        }))
-
-        parentItem.children = children
-        return children
+      // Explicit deployment mode detection
+      if (isElectronMode()) {
+        // Electron mode: Use IPC via window.fileAPI
+        if (typeof window !== 'undefined' && (window as any).fileAPI) {
+          files = await (window as any).fileAPI.readDirectory(parentItem.path)
+        } else {
+          throw new Error('Electron mode but window.fileAPI not available')
+        }
+      } else if (isWebMode()) {
+        // Web mode: Use HTTP API
+        const response = await fetch(`/api/files?path=${encodeURIComponent(parentItem.path)}`)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to load subdirectory')
+        }
+        files = data.files
       } else {
-        // Mock subdirectory data
-        const mockChildren: FileItem[] = [
-          {
-            name: 'components',
-            path: `${parentItem.path}/components`,
-            isDirectory: true,
-            size: 0,
-            modified: new Date().toISOString(),
-            extension: '',
-            level: (parentItem.level || 0) + 1,
-            isExpanded: false,
-            children: [],
-            parent: parentItem
-          }
-        ]
-        parentItem.children = mockChildren
-        return mockChildren
+        throw new Error('Unknown deployment mode')
       }
+
+      const children: FileItem[] = files.map((file: any) => ({
+        ...file,
+        level: (parentItem.level || 0) + 1,
+        isExpanded: false,
+        children: [],
+        parent: parentItem
+      }))
+
+      parentItem.children = children
+      return children
     } catch (err) {
       console.error('Failed to load subdirectory:', err)
       return []
