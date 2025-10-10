@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { VoiceMessage } from '../../types';
+import { Slider } from '../ui/slider';
 
 interface VoiceMessageComponentProps {
   message: VoiceMessage;
@@ -8,6 +9,8 @@ interface VoiceMessageComponentProps {
 
 export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const hasAutoPlayedRef = useRef<string | null>(null);
 
@@ -21,6 +24,20 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
     }
   }, [message.autoPlay, message.audioUrl]);
 
+  // Update duration when metadata loads
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  // Update current time as audio plays
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
   const handlePlayPause = () => {
     if (audioRef.current) {
       if (isPlaying) {
@@ -32,25 +49,62 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
     }
   };
 
+  // Handle slider change (seeking)
+  const handleSliderChange = (value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="mb-3 pr-3 pl-0 pt-3 pb-3">
       {/* Plain text message */}
-      <div className="text-gray-900 dark:text-gray-100 text-sm mb-2">
+      <div className="text-gray-900 dark:text-gray-100 text-sm mb-3">
         {message.content}
       </div>
 
-      {/* Small gray play button underneath */}
-      <button
-        onClick={handlePlayPause}
-        className="flex items-center gap-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors text-xs"
-      >
-        {isPlaying ? (
-          <Pause className="w-3 h-3" />
-        ) : (
-          <Play className="w-3 h-3" />
-        )}
-        <span>{isPlaying ? 'Pause' : 'Play'}</span>
-      </button>
+      {/* Audio controls */}
+      <div className="flex items-center gap-3">
+        {/* Play/Pause button */}
+        <button
+          onClick={handlePlayPause}
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+        >
+          {isPlaying ? (
+            <Pause className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+          ) : (
+            <Play className="w-4 h-4 text-gray-700 dark:text-gray-300 ml-0.5" />
+          )}
+        </button>
+
+        {/* Progress slider and time display */}
+        <div className="flex-1 flex items-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[40px]">
+            {formatTime(currentTime)}
+          </span>
+
+          <Slider
+            value={[currentTime]}
+            max={duration || 100}
+            step={0.1}
+            onValueChange={handleSliderChange}
+            className="flex-1"
+          />
+
+          <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[40px]">
+            {formatTime(duration)}
+          </span>
+        </div>
+      </div>
 
       <audio
         ref={audioRef}
@@ -58,7 +112,9 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
         onEnded={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        preload="none"
+        onLoadedMetadata={handleLoadedMetadata}
+        onTimeUpdate={handleTimeUpdate}
+        preload="metadata"
       />
     </div>
   );
