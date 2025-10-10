@@ -4,9 +4,10 @@ set -e
 # Workspace initialization script
 # Copies template files to persistent workspace on first container startup
 
-WORKSPACE_DIR="${WORKSPACE_DIR:-/workspace}"
-TEMPLATE_DIR="/app/workspace-template"
-INIT_MARKER="$WORKSPACE_DIR/.initialized"
+WORKSPACE_PARENT="/workspace"
+WORKSPACE_DIR="${WORKSPACE_DIR:-/workspace/my-jarvis}"
+TEMPLATE_DIR="/app/workspace-template/my-jarvis"
+INIT_MARKER="$WORKSPACE_PARENT/.initialized"
 
 echo "[Init] Checking workspace initialization..."
 
@@ -17,26 +18,32 @@ if [ -f "$INIT_MARKER" ]; then
     exit 0
 fi
 
-# Check if workspace is empty (or only has lost+found from mount)
-WORKSPACE_FILES=$(find "$WORKSPACE_DIR" -mindepth 1 -maxdepth 1 ! -name "lost+found" | wc -l)
+# Check if workspace parent is empty (or only has lost+found from mount)
+WORKSPACE_FILES=$(find "$WORKSPACE_PARENT" -mindepth 1 -maxdepth 1 ! -name "lost+found" | wc -l)
 
 if [ "$WORKSPACE_FILES" -eq 0 ]; then
-    echo "[Init] Workspace is empty, copying template files..."
+    echo "[Init] Workspace is empty, initializing structure..."
 
-    # Copy template files to workspace
+    # Create my-jarvis directory
+    mkdir -p "$WORKSPACE_DIR"
+    echo "[Init] Created $WORKSPACE_DIR"
+
+    # Copy template files to my-jarvis directory
     if [ -d "$TEMPLATE_DIR" ]; then
         echo "[Init] Copying from $TEMPLATE_DIR to $WORKSPACE_DIR"
         cp -r "$TEMPLATE_DIR"/* "$WORKSPACE_DIR/"
 
-        # Create initialization marker
+        # Create initialization marker at parent level
         echo "Workspace initialized on $(date)" > "$INIT_MARKER"
 
-        # Create Claude config directory for persistent authentication
-        mkdir -p "$WORKSPACE_DIR/.claude"
+        # Create Claude config directory at parent level for persistent authentication
+        mkdir -p "$WORKSPACE_PARENT/.claude"
         echo "[Init] Created .claude directory for authentication persistence"
 
         echo "[Init] ✅ Workspace initialized successfully"
-        echo "[Init] Files copied:"
+        echo "[Init] Structure created:"
+        ls -la "$WORKSPACE_PARENT"
+        echo "[Init] Files in my-jarvis:"
         ls -la "$WORKSPACE_DIR"
     else
         echo "[Init] ⚠️  Warning: Template directory not found at $TEMPLATE_DIR"
@@ -47,8 +54,12 @@ else
     echo "[Init] Creating marker file to skip future initialization"
     echo "Workspace preserved on $(date)" > "$INIT_MARKER"
 
-    # Ensure Claude config directory exists even if workspace was preserved
-    mkdir -p "$WORKSPACE_DIR/.claude"
+    # Ensure my-jarvis directory exists
+    mkdir -p "$WORKSPACE_DIR"
+    echo "[Init] Ensured my-jarvis directory exists"
+
+    # Ensure Claude config directory exists at parent level
+    mkdir -p "$WORKSPACE_PARENT/.claude"
     echo "[Init] Ensured .claude directory exists for authentication"
 fi
 
