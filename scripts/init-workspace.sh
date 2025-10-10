@@ -2,26 +2,20 @@
 set -e
 
 # Workspace initialization script
-# FORCE REINITIALIZATION - Clears and rebuilds workspace structure
+# FORCE REINITIALIZATION - Completely wipes and rebuilds workspace structure
 
 WORKSPACE_PARENT="/workspace"
 WORKSPACE_DIR="${WORKSPACE_DIR:-/workspace/my-jarvis}"
 TEMPLATE_DIR="/app/workspace-template/my-jarvis"
 INIT_MARKER="$WORKSPACE_PARENT/.initialized"
 
-echo "[Init] FORCING workspace reinitialization..."
+echo "[Init] FORCING complete workspace cleanup and reinitialization..."
 
-# Remove old marker to force fresh initialization
-if [ -f "$INIT_MARKER" ]; then
-    echo "[Init] Removing old initialization marker"
-    rm -f "$INIT_MARKER"
-fi
+# Clean up ALL files in workspace except .claude directory
+echo "[Init] Removing all workspace contents except .claude"
+find "$WORKSPACE_PARENT" -mindepth 1 -maxdepth 1 ! -name ".claude" ! -name "lost+found" -exec rm -rf {} + 2>/dev/null || true
 
-# Remove old my-jarvis directory to start fresh
-if [ -d "$WORKSPACE_DIR" ]; then
-    echo "[Init] Removing old my-jarvis directory"
-    rm -rf "$WORKSPACE_DIR"
-fi
+echo "[Init] Workspace cleaned successfully"
 
 # Create fresh my-jarvis directory
 mkdir -p "$WORKSPACE_DIR"
