@@ -120,10 +120,33 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
 
     const targetDir = findDirectory(items, path);
 
-    if (targetDir && typeof window !== 'undefined' && (window as any).fileAPI) {
+    if (targetDir) {
       try {
-        // Reload the directory contents
-        const files = await (window as any).fileAPI.readDirectory(path);
+        let files: any[]
+
+        // Explicit deployment mode detection
+        if (isElectronMode()) {
+          // Electron mode: Use IPC via window.fileAPI
+          if (typeof window !== 'undefined' && (window as any).fileAPI) {
+            files = await (window as any).fileAPI.readDirectory(path)
+          } else {
+            throw new Error('Electron mode but window.fileAPI not available')
+          }
+        } else if (isWebMode()) {
+          // Web mode: Use HTTP API
+          const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+          const data = await response.json()
+          if (!data.success) {
+            throw new Error(data.error || 'Failed to load directory')
+          }
+          files = data.files
+        } else {
+          throw new Error('Unknown deployment mode')
+        }
+
         const newChildren: FileItem[] = files.map((file: any) => ({
           ...file,
           level: (targetDir.level || 0) + 1,
@@ -272,15 +295,35 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
       // Read file content if it's a file
       if (!item.isDirectory) {
         try {
-          if (typeof window !== 'undefined' && (window as any).fileAPI) {
-            const fileData = await (window as any).fileAPI.readFile(item.path)
-            if (fileData) {
-              onFileSelect({ ...item, content: fileData.content })
+          let fileContent: string = ''
+
+          // Explicit deployment mode detection
+          if (isElectronMode()) {
+            // Electron mode: Use IPC via window.fileAPI
+            if (typeof window !== 'undefined' && (window as any).fileAPI) {
+              const fileData = await (window as any).fileAPI.readFile(item.path)
+              if (fileData) {
+                fileContent = fileData.content
+              }
+            } else {
+              throw new Error('Electron mode but window.fileAPI not available')
             }
+          } else if (isWebMode()) {
+            // Web mode: Use HTTP API
+            const response = await fetch(`/api/files/read?path=${encodeURIComponent(item.path)}`)
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            }
+            const data = await response.json()
+            if (!data.success) {
+              throw new Error(data.error || 'Failed to read file')
+            }
+            fileContent = data.content
           } else {
-            // Mock file content
-            onFileSelect({ ...item, content: `Mock content for ${item.name}` })
+            throw new Error('Unknown deployment mode')
           }
+
+          onFileSelect({ ...item, content: fileContent })
         } catch (error) {
           console.error('Error reading file:', error)
           onFileSelect(item)
