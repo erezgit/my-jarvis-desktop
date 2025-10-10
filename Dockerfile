@@ -20,10 +20,10 @@ RUN mkdir -p /workspace
 # Create Claude config directory for persistent authentication
 RUN mkdir -p /root/.claude
 
-# Copy workspace files for testing (CLAUDE.md, tools, etc.)
-COPY CLAUDE.md /workspace/
-COPY JARVIS-CONSCIOUSNESS.md /workspace/
-COPY tools /workspace/tools
+# Copy workspace template (will be copied to persistent /workspace on first startup)
+COPY workspace-template /app/workspace-template
+COPY scripts/init-workspace.sh /app/scripts/init-workspace.sh
+RUN chmod +x /app/scripts/init-workspace.sh
 
 # Set working directory
 WORKDIR /app
@@ -74,4 +74,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start the backend server with workspace as working directory
 WORKDIR /workspace
-CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]
+
+# Initialize workspace on startup, then start server
+CMD ["/bin/bash", "-c", "/app/scripts/init-workspace.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]
