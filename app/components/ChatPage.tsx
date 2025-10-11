@@ -462,7 +462,7 @@ export function ChatPage() {
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className="flex flex-col min-w-0 bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
+    <div className="flex flex-col min-w-0 h-full bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
       {/* Zone 1: Token Bar - Fixed height */}
       <TokenContextBar />
 
