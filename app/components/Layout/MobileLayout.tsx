@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Folder, FileText, MessageSquare } from 'lucide-react'
-import { VirtualizedFileTree } from '../FileTree/VirtualizedFileTree'
+import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
 import { ChatPage } from '../ChatPage'
 import { MobileScrollLock } from '../chat/MobileScrollLock'
+import { isFileOperationMessage } from '../../types'
+import { useChatStateContext } from '../../contexts/ChatStateContext'
+import { useSettings } from '../../hooks/useSettings'
 
 type PanelView = 'files' | 'preview' | 'chat'
 
@@ -33,6 +36,74 @@ function cn(...classes: (string | undefined | null | false)[]): string {
 
 export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) {
   const [currentPanel, setCurrentPanel] = useState<PanelView>('chat')
+  const fileTreeRef = useRef<FileTreeRef>(null)
+  const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
+
+  // Get working directory from settings
+  const { workingDirectory } = useSettings()
+
+  // Get messages from shared context
+  const { messages } = useChatStateContext()
+
+  // Listen for file operation messages and refresh file tree (same as desktop)
+  useEffect(() => {
+    // Only check NEW messages that were added since last time
+    if (messages.length <= lastProcessedMessageCount) {
+      return;
+    }
+
+    // Search through only the NEW messages for FileOperationMessage
+    let fileOpMessage = null;
+    for (let i = messages.length - 1; i >= lastProcessedMessageCount; i--) {
+      if (isFileOperationMessage(messages[i])) {
+        fileOpMessage = messages[i];
+        break;
+      }
+    }
+
+    if (fileOpMessage) {
+      // Extract parent directory path
+      const pathParts = fileOpMessage.path.split('/')
+      pathParts.pop() // Remove filename
+      const parentPath = pathParts.join('/')
+
+      // Refresh the parent directory
+      if (fileTreeRef.current && parentPath) {
+        fileTreeRef.current.refreshDirectory(parentPath)
+      }
+
+      // Auto-select the new file and load its content
+      if (typeof window !== 'undefined' && (window as any).fileAPI) {
+        (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
+          if (fileData) {
+            onFileSelect({
+              name: fileOpMessage.fileName,
+              path: fileOpMessage.path,
+              isDirectory: fileOpMessage.isDirectory,
+              size: 0,
+              modified: new Date().toISOString(),
+              extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+              content: fileData.content
+            });
+          }
+        }).catch((error: any) => {
+          console.error('[MOBILE_LAYOUT] Error reading file:', error);
+          // Select without content if read fails
+          onFileSelect({
+            name: fileOpMessage.fileName,
+            path: fileOpMessage.path,
+            isDirectory: fileOpMessage.isDirectory,
+            size: 0,
+            modified: new Date().toISOString(),
+            extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+          });
+        });
+      }
+    }
+
+    // Update last processed count
+    setLastProcessedMessageCount(messages.length);
+  }, [messages, onFileSelect, lastProcessedMessageCount])
 
   return (
     <MobileScrollLock>
@@ -93,7 +164,11 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
           {/* Render only the active panel */}
           {currentPanel === 'files' && (
             <div className="h-full flex flex-col overflow-auto bg-gray-50 dark:bg-gray-900">
-              <VirtualizedFileTree onFileSelect={onFileSelect} />
+              <VirtualizedFileTree
+                ref={fileTreeRef}
+                workingDirectory={workingDirectory}
+                onFileSelect={onFileSelect}
+              />
             </div>
           )}
 
