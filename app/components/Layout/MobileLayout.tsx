@@ -3,6 +3,7 @@ import { Folder, FileText, MessageSquare } from 'lucide-react'
 import { VirtualizedFileTree } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
 import { ChatPage } from '../ChatPage'
+import { MobileScrollLock } from '../chat/MobileScrollLock'
 
 type PanelView = 'files' | 'preview' | 'chat'
 
@@ -34,7 +35,8 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
   const [currentPanel, setCurrentPanel] = useState<PanelView>('chat')
 
   return (
-    <div className="h-dvh flex flex-col">
+    <MobileScrollLock>
+      <div className="flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
       {/* Navigation Bar - sticky at top with white background and shadow */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
         <div className="flex items-center px-2 py-1.5 gap-2">
@@ -108,6 +110,7 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </MobileScrollLock>
   )
 }
