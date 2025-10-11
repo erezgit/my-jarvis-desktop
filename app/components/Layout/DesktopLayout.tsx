@@ -124,57 +124,59 @@ export function DesktopLayout({
   }, [messages, onFileSelect, lastProcessedMessageCount])
 
   return (
-    <PanelGroup direction="horizontal" className="h-full">
-      {/* File Tree Panel - 20% default width */}
-      <Panel
-        defaultSize={20}
-        minSize={15}
-        maxSize={30}
-        className="bg-gray-50 dark:bg-gray-900"
-      >
-        <VirtualizedFileTree
-          ref={fileTreeRef}
-          workingDirectory={workingDirectory}
-          onFileSelect={onFileSelect}
-        />
-      </Panel>
-
-      <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" />
-
-      {/* File Preview Panel - 50% default width */}
-      <Panel
-        defaultSize={50}
-        minSize={25}
-        maxSize={60}
-        className="bg-white dark:bg-gray-900"
-      >
-        <FilePreview file={selectedFile} />
-      </Panel>
-
-      <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" />
-
-      {/* Chat Panel - 30% default width - WITH HEADER AND CONTENT */}
-      <Panel
-        defaultSize={30}
-        minSize={20}
-        maxSize={60}
-        className="bg-white dark:bg-gray-900"
-      >
-        <div className="h-full flex flex-col">
-          {/* ChatHeader toolbar */}
-          <ChatHeader
-            currentView={currentView}
-            onChatClick={onChatClick}
-            onHistoryClick={onHistoryClick}
-            onSettingsClick={onSettingsClick}
+    <div className="h-screen">
+      <PanelGroup direction="horizontal" className="h-full">
+        {/* File Tree Panel - 20% default width */}
+        <Panel
+          defaultSize={20}
+          minSize={15}
+          maxSize={30}
+          className="bg-gray-50 dark:bg-gray-900"
+        >
+          <VirtualizedFileTree
+            ref={fileTreeRef}
+            workingDirectory={workingDirectory}
+            onFileSelect={onFileSelect}
           />
+        </Panel>
 
-          {/* Chat content - fills remaining space */}
-          <div className="flex-1 min-h-0">
-            {chatInterface}
+        <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" />
+
+        {/* File Preview Panel - 50% default width */}
+        <Panel
+          defaultSize={50}
+          minSize={25}
+          maxSize={60}
+          className="bg-white dark:bg-gray-900"
+        >
+          <FilePreview file={selectedFile} />
+        </Panel>
+
+        <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" />
+
+        {/* Chat Panel - 30% default width - WITH HEADER AND CONTENT */}
+        <Panel
+          defaultSize={30}
+          minSize={20}
+          maxSize={60}
+          className="bg-white dark:bg-gray-900"
+        >
+          <div className="h-full flex flex-col">
+            {/* ChatHeader toolbar */}
+            <ChatHeader
+              currentView={currentView}
+              onChatClick={onChatClick}
+              onHistoryClick={onHistoryClick}
+              onSettingsClick={onSettingsClick}
+            />
+
+            {/* Chat content - fills remaining space */}
+            <div className="flex-1 min-h-0">
+              {chatInterface}
+            </div>
           </div>
-        </div>
-      </Panel>
-    </PanelGroup>
+        </Panel>
+      </PanelGroup>
+    </div>
   )
 }
