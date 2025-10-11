@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { Folder, FileText, MessageSquare, Settings } from 'lucide-react'
 import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
-import { MobileScrollLock } from '../chat/MobileScrollLock'
 import { isFileOperationMessage } from '../../types'
 import { useChatStateContext } from '../../contexts/ChatStateContext'
 import { useSettings } from '../../hooks/useSettings'
@@ -118,8 +117,7 @@ export function MobileLayout({
   }, [messages, onFileSelect, lastProcessedMessageCount])
 
   return (
-    <MobileScrollLock>
-      <div className="flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
+      <div className="h-dvh flex flex-col">
       {/* Navigation Bar - sticky at top with white background and shadow */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
         <div className="flex items-center justify-between px-2 py-1.5 gap-2">
@@ -226,6 +224,5 @@ export function MobileLayout({
         </div>
       </div>
       </div>
-    </MobileScrollLock>
   )
 }
