@@ -12,9 +12,6 @@ import { usePermissions } from "../hooks/chat/usePermissions";
 import { usePermissionMode } from "../hooks/chat/usePermissionMode";
 import { useAbortController } from "../hooks/chat/useAbortController";
 import { useAutoHistoryLoader } from "../hooks/useHistoryLoader";
-import { SettingsButton } from "./SettingsButton";
-import { SettingsModal } from "./SettingsModal";
-import { HistoryButton } from "./chat/HistoryButton";
 import { ChatInput } from "./chat/ChatInput";
 import { ChatMessages } from "./chat/ChatMessages";
 import { HistoryView } from "./HistoryView";
@@ -26,21 +23,24 @@ import { TokenContextBar } from "./TokenContextBar";
 import { useTokenUsage } from "../hooks/useTokenUsage";
 import { useSettings } from "../hooks/useSettings";
 
-export function ChatPage() {
+interface ChatPageProps {
+  currentView: 'chat' | 'history';
+  onViewChange: (view: 'chat' | 'history') => void;
+}
+
+export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Token usage tracking - use setTokenUsage for SDK cumulative totals
   const { setTokenUsage } = useTokenUsage();
 
   // Workspace state - read from settings context
-  const { workingDirectory, setWorkingDirectory } = useSettings();
+  const { workingDirectory } = useSettings();
 
-  // Simplified state for Electron - no URL-based navigation
-  const [currentView, setCurrentView] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Use currentView from props
   const isHistoryView = currentView === "history";
   const isLoadedConversation = !!sessionId && !isHistoryView;
 
@@ -377,34 +377,6 @@ export function ChatPage() {
       }
     : undefined;
 
-  const handleHistoryClick = useCallback(() => {
-    setCurrentView("history");
-  }, []);
-
-  const handleSettingsClick = useCallback(() => {
-    setIsSettingsOpen(true);
-  }, []);
-
-  const handleSettingsClose = useCallback(() => {
-    setIsSettingsOpen(false);
-  }, []);
-
-  const handleWorkspaceChange = useCallback((newPath: string) => {
-    if (newPath === workingDirectory) return;
-
-    console.log('[WORKSPACE_SWITCH] Switching workspace from', workingDirectory, 'to', newPath);
-
-    // Update via settings context (persists automatically)
-    setWorkingDirectory(newPath);
-
-    // Clear current session
-    setMessages([]);
-    setCurrentSessionId(null);
-    setSessionId(null);
-
-    // Close settings
-    setIsSettingsOpen(false);
-  }, [workingDirectory, setWorkingDirectory, setMessages, setCurrentSessionId]);
 
   // Load projects to get encodedName mapping
   // Reload when workingDirectory changes to update file tree
@@ -425,28 +397,10 @@ export function ChatPage() {
     loadProjects();
   }, [workingDirectory]);
 
-  const handleBackToChat = useCallback(() => {
-    setCurrentView(null);
-    setSessionId(null);
-  }, []);
-
-  const handleBackToHistory = useCallback(() => {
-    setCurrentView("history");
-  }, []);
-
-  const handleBackToProjects = useCallback(() => {
-    // For Electron app, this would close the app or do nothing
-    console.log("Back to projects - not applicable in Electron app");
-  }, []);
-
-  const handleBackToProjectChat = useCallback(() => {
-    setCurrentView(null);
-  }, []);
-
   const handleConversationSelect = useCallback((sessionId: string) => {
     setSessionId(sessionId);
-    setCurrentView(null); // Exit history view and show the conversation
-  }, []);
+    onViewChange('chat'); // Exit history view and show the conversation
+  }, [onViewChange]);
 
   // Handle global keyboard shortcuts
   useEffect(() => {
@@ -463,30 +417,40 @@ export function ChatPage() {
 
   return (
     <div className="flex flex-col min-w-0 h-full px-4 pb-4 bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
-      {/* Zone 1: Token Bar - Fixed height */}
-      <TokenContextBar />
+      {isHistoryView ? (
+        <HistoryView
+          encodedName={getEncodedName()}
+          onBackToChat={() => onViewChange('chat')}
+          onConversationSelect={handleConversationSelect}
+        />
+      ) : (
+        <>
+          {/* Zone 1: Token Bar - Fixed height */}
+          <TokenContextBar />
 
-      {/* Zone 2: Messages - Flex 1, scrollable */}
-      <ChatMessages
-        messages={messages}
-        isLoading={isLoading}
-        onSendMessage={sendMessage}
-      />
+          {/* Zone 2: Messages - Flex 1, scrollable */}
+          <ChatMessages
+            messages={messages}
+            isLoading={isLoading}
+            onSendMessage={sendMessage}
+          />
 
-      {/* Zone 3: Input - Fixed height */}
-      <ChatInput
-        input={input}
-        isLoading={isLoading}
-        currentRequestId={currentRequestId}
-        onInputChange={setInput}
-        onSubmit={() => sendMessage()}
-        onAbort={handleAbort}
-        permissionMode={permissionMode}
-        onPermissionModeChange={setPermissionMode}
-        showPermissions={isPermissionMode}
-        permissionData={permissionData}
-        planPermissionData={planPermissionData}
-      />
+          {/* Zone 3: Input - Fixed height */}
+          <ChatInput
+            input={input}
+            isLoading={isLoading}
+            currentRequestId={currentRequestId}
+            onInputChange={setInput}
+            onSubmit={() => sendMessage()}
+            onAbort={handleAbort}
+            permissionMode={permissionMode}
+            onPermissionModeChange={setPermissionMode}
+            showPermissions={isPermissionMode}
+            permissionData={permissionData}
+            planPermissionData={planPermissionData}
+          />
+        </>
+      )}
     </div>
   );
 }

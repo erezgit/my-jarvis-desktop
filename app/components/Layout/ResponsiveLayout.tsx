@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
 import { ChatPage } from '../ChatPage'
+import { SettingsModal } from '../SettingsModal'
 
 interface FileItem {
   name: string
@@ -53,20 +54,19 @@ function useIsDesktop() {
 export function ResponsiveLayout() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat')
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const isDesktop = useIsDesktop()
 
-  // Create chat element ONCE (like frontend pattern)
+  // Create chat element with currentView prop (re-creates when view changes)
   const chatElement = useMemo(() => (
-    <ChatPage />
-  ), []);  // Empty array: no dependencies, ChatPage is self-contained
+    <ChatPage currentView={currentView} onViewChange={setCurrentView} />
+  ), [currentView]);
 
   // ChatHeader callbacks - manage view state
   const handleChatClick = () => setCurrentView('chat');
   const handleHistoryClick = () => setCurrentView('history');
-  const handleSettingsClick = () => {
-    // TODO: Implement settings modal or navigation
-    console.log('Settings clicked');
-  };
+  const handleSettingsClick = () => setIsSettingsOpen(true);
+  const handleSettingsClose = () => setIsSettingsOpen(false);
 
   // Conditional rendering - only ONE layout exists in DOM at a time
   return (
@@ -92,6 +92,12 @@ export function ResponsiveLayout() {
           onSettingsClick={handleSettingsClick}
         />
       )}
+
+      {/* Settings Modal - rendered at top level */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={handleSettingsClose}
+      />
     </>
   )
 }
