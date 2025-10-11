@@ -31,13 +31,13 @@ export interface SettingsContextType {
 }
 
 // Get default workspace path dynamically based on user's home directory
+// Note: This function is synchronous but may return a fallback in Electron mode
+// The actual home directory will be set asynchronously when settings load
 function getDefaultWorkspace(): string {
-  // In Electron, we have access to Node.js APIs
+  // In Electron, use a placeholder that will be replaced by actual home dir
   if (typeof window !== 'undefined' && (window as any).electron) {
-    // Use Electron's API to get user home directory
-    const os = require('os');
-    const path = require('path');
-    return path.join(os.homedir(), 'Documents', 'MyJarvis');
+    // Return fallback - will be updated asynchronously via fileAPI.getHomeDir()
+    return '~/Documents/MyJarvis';
   }
 
   // For web mode (Docker), default to /workspace/my-jarvis

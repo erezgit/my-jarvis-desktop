@@ -11,9 +11,26 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize settings on client side (handles migration automatically)
   useEffect(() => {
-    const initialSettings = getSettings();
-    setSettingsState(initialSettings);
-    setIsInitialized(true);
+    async function initializeSettings() {
+      const initialSettings = getSettings();
+
+      // In Electron mode, resolve ~ to actual home directory
+      if (typeof window !== 'undefined' && (window as any).fileAPI && initialSettings.workingDirectory.startsWith('~')) {
+        try {
+          const homeDir = await (window as any).fileAPI.getHomeDir();
+          const resolvedPath = initialSettings.workingDirectory.replace('~', homeDir);
+          initialSettings.workingDirectory = resolvedPath;
+        } catch (error) {
+          console.error('Failed to resolve home directory:', error);
+          // Keep ~ as fallback
+        }
+      }
+
+      setSettingsState(initialSettings);
+      setIsInitialized(true);
+    }
+
+    initializeSettings();
   }, []);
 
   // Apply theme changes to document when settings change

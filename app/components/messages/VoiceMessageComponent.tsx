@@ -31,12 +31,27 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
     }
   };
 
-  // Update current time as audio plays
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
+  // Use requestAnimationFrame for smooth 60 FPS progress updates
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const updateProgress = () => {
+      if (audioRef.current && isPlaying) {
+        setCurrentTime(audioRef.current.currentTime);
+        animationFrameId = requestAnimationFrame(updateProgress);
+      }
+    };
+
+    if (isPlaying) {
+      animationFrameId = requestAnimationFrame(updateProgress);
     }
-  };
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isPlaying]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -113,7 +128,6 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onLoadedMetadata={handleLoadedMetadata}
-        onTimeUpdate={handleTimeUpdate}
         preload="metadata"
       />
     </div>
