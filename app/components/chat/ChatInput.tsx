@@ -223,7 +223,7 @@ export function ChatInput({
             isLoading && currentRequestId ? "Processing..." : "Type message..."
           }
           rows={1}
-          className={`w-full px-4 py-3 pr-20 bg-white/80 dark:bg-slate-800/80 border border-neutral-200 dark:border-neutral-700 rounded-xl transition-all duration-200 backdrop-blur-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-none overflow-hidden min-h-[48px] max-h-[${UI_CONSTANTS.TEXTAREA_MAX_HEIGHT}px] outline-none text-sm`}
+          className={`w-full px-4 py-3 pr-20 bg-white/80 dark:bg-slate-800/80 border border-neutral-200 dark:border-neutral-700 rounded-xl transition-all duration-200 backdrop-blur-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-none overflow-hidden min-h-[48px] max-h-[${UI_CONSTANTS.TEXTAREA_MAX_HEIGHT}px] outline-none text-base`}
           disabled={isLoading}
         />
         <div className="absolute right-2 bottom-3 flex gap-2">
