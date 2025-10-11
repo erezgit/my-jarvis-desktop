@@ -70,7 +70,7 @@ export function ResponsiveLayout() {
 
   // Conditional rendering - only ONE layout exists in DOM at a time
   return (
-    <div className="h-screen">
+    <>
       {isDesktop ? (
         <DesktopLayout
           selectedFile={selectedFile}
@@ -92,6 +92,6 @@ export function ResponsiveLayout() {
           onSettingsClick={handleSettingsClick}
         />
       )}
-    </div>
+    </>
   )
 }
