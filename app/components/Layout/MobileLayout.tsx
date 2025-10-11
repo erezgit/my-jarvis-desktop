@@ -117,7 +117,7 @@ export function MobileLayout({
   }, [messages, onFileSelect, lastProcessedMessageCount])
 
   return (
-      <div className="h-screen flex flex-col">
+      <div className="h-dvh flex flex-col">
       {/* Navigation Bar - sticky at top with white background and shadow */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
         <div className="flex items-center justify-between px-2 py-1.5 gap-2">
