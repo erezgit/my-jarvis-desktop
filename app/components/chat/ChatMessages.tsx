@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useEffect } from "react";
 import type { AllMessage } from "../../types";
 import {
   isChatMessage,
@@ -25,7 +25,7 @@ import {
 } from "../MessageComponents";
 import { useSettings } from "../../hooks/useSettings";
 import { Greeting } from "../Greeting";
-// import { UI_CONSTANTS } from "../../utils/constants"; // Unused for now
+import { useScrollToBottom } from "../../hooks/useScrollToBottom";
 
 interface ChatMessagesProps {
   messages: AllMessage[];
@@ -34,33 +34,13 @@ interface ChatMessagesProps {
 }
 
 export function ChatMessages({ messages, isLoading, onSendMessage }: ChatMessagesProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { settings } = useSettings();
+  const { containerRef, endRef, handleNewMessage } = useScrollToBottom();
 
-  // Auto-scroll to bottom
-  const scrollToBottom = () => {
-    if (messagesEndRef.current && messagesEndRef.current.scrollIntoView) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  // Check if user is near bottom of messages (unused but kept for future use)
-  // const isNearBottom = () => {
-  //   const container = messagesContainerRef.current;
-  //   if (!container) return true;
-
-  //   const { scrollTop, scrollHeight, clientHeight } = container;
-  //   return (
-  //     scrollHeight - scrollTop - clientHeight <
-  //     UI_CONSTANTS.NEAR_BOTTOM_THRESHOLD_PX
-  //   );
-  // };
-
-  // Auto-scroll when messages change
+  // Auto-scroll when messages change, respecting user's scroll position
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    handleNewMessage();
+  }, [messages, handleNewMessage]);
 
   const renderMessage = (message: AllMessage, index: number) => {
     // Use timestamp as key for stable rendering, fallback to index if needed
@@ -118,8 +98,8 @@ export function ChatMessages({ messages, isLoading, onSendMessage }: ChatMessage
 
   return (
     <div
-      ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900 py-1 sm:py-4 mb-3 sm:mb-6 flex flex-col"
+      ref={containerRef}
+      className="flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900 py-1 sm:py-4 flex flex-col"
     >
       {messages.length === 0 ? (
         <Greeting onSendMessage={onSendMessage} />
@@ -129,7 +109,7 @@ export function ChatMessages({ messages, isLoading, onSendMessage }: ChatMessage
           <div className="flex-1" aria-hidden="true"></div>
           {messages.map(renderMessage)}
           {isLoading && <LoadingComponent />}
-          <div ref={messagesEndRef} />
+          <div ref={endRef} className="shrink-0 min-h-[24px]" />
         </>
       )}
     </div>
