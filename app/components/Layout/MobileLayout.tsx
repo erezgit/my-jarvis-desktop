@@ -194,7 +194,7 @@ export function MobileLayout({
       </div>
 
       {/* Panel Container with smooth transitions */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 min-h-0 relative overflow-hidden">
         <div
           className="h-full transition-opacity duration-200 ease-in-out"
           key={currentPanel}
