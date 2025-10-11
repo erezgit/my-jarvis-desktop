@@ -467,7 +467,7 @@ export function ChatPage({ isMobile = false }: ChatPageProps = {}) {
 
   return (
     <div className={isMobile
-      ? "h-full flex flex-col bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
+      ? "h-full flex flex-col overflow-hidden bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
       : "min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
     }>
       <div className={isMobile
