@@ -105,7 +105,7 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
 
           {currentPanel === 'chat' && (
             <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-              <ChatPage />
+              <ChatPage isMobile={true} />
             </div>
           )}
         </div>

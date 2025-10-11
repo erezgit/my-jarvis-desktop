@@ -26,7 +26,11 @@ import { TokenContextBar } from "./TokenContextBar";
 import { useTokenUsage } from "../hooks/useTokenUsage";
 import { useSettings } from "../hooks/useSettings";
 
-export function ChatPage() {
+interface ChatPageProps {
+  isMobile?: boolean;
+}
+
+export function ChatPage({ isMobile = false }: ChatPageProps = {}) {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
@@ -462,8 +466,14 @@ export function ChatPage() {
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col">
+    <div className={isMobile
+      ? "h-full flex flex-col bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
+      : "min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
+    }>
+      <div className={isMobile
+        ? "max-w-6xl mx-auto p-3 sm:p-4 flex-1 flex flex-col w-full"
+        : "max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col"
+      }>
         {/* Header */}
         <div className="flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
