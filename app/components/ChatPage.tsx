@@ -32,8 +32,8 @@ export function ChatPage() {
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Token usage tracking
-  const { updateTokenUsage } = useTokenUsage();
+  // Token usage tracking - use setTokenUsage for SDK cumulative totals
+  const { setTokenUsage } = useTokenUsage();
 
   // Workspace state - read from settings context
   const { workingDirectory, setWorkingDirectory } = useSettings();
@@ -215,7 +215,7 @@ export function ChatPage() {
             shouldAbort = true;
             await createAbortHandler(requestId)();
           },
-          onTokenUpdate: updateTokenUsage,
+          onTokenUpdate: setTokenUsage,
         };
 
         while (true) {

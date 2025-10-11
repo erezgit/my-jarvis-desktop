@@ -2,9 +2,14 @@
 # Jarvis Voice Response System
 # This script standardizes the process of generating voice responses from text
 
+# Detect script directory and workspace root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 # Load environment variables from .env file if it exists
-if [ -f "/Users/erezfern/Workspace/my-jarvis/tools/config/.env" ]; then
-  source "/Users/erezfern/Workspace/my-jarvis/tools/config/.env"
+CONFIG_FILE="$WORKSPACE_ROOT/tools/config/.env"
+if [ -f "$CONFIG_FILE" ]; then
+  source "$CONFIG_FILE"
 fi
 
 # Set variables with defaults
@@ -12,7 +17,7 @@ VOICE="nova"
 MODEL="tts-1"
 FORMAT="mp3"
 SPEED="1.0"
-OUTPUT_DIR="/Users/erezfern/Workspace/my-jarvis/tools/voice"
+OUTPUT_DIR="$WORKSPACE_ROOT/tools/voice"
 MAX_LENGTH="1000"
 
 # Function to show usage information

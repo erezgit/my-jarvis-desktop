@@ -63,7 +63,7 @@ EXPOSE 10000
 # Set environment variables
 ENV PORT=10000
 ENV NODE_ENV=production
-ENV WORKSPACE_DIR=/workspace/my-jarvis
+ENV WORKSPACE_DIR=/workspace
 ENV ANTHROPIC_CONFIG_PATH=/workspace/.claude
 ENV CLAUDE_CONFIG_DIR=/workspace/.claude
 
@@ -71,8 +71,8 @@ ENV CLAUDE_CONFIG_DIR=/workspace/.claude
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:10000/health || exit 1
 
-# Start the backend server with my-jarvis as working directory
-WORKDIR /workspace/my-jarvis
+# Start the backend server with workspace root as working directory
+WORKDIR /workspace
 
 # Initialize workspace on startup, then start server
 CMD ["/bin/bash", "-c", "/app/scripts/init-workspace.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]

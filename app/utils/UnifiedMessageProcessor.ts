@@ -516,29 +516,42 @@ export class UnifiedMessageProcessor {
     const resultMessage = convertResultMessage(message, timestamp);
     context.addMessage(resultMessage);
 
-    // Extract and set token usage (ABSOLUTE totals, not incremental)
-    // CRITICAL: Claude API returns CUMULATIVE totals, not per-message increments
-    // - input_tokens: TOTAL tokens sent to Claude for the entire conversation
-    // - output_tokens: TOTAL tokens Claude has generated for the entire conversation
-    // Therefore: We must use setTokenUsage (absolute) not updateTokenUsage (incremental)
+    // Extract and set token usage from modelUsage (ABSOLUTE totals, not incremental)
+    // CRITICAL: Claude Code SDK uses modelUsage field (not usage) for actual token data
+    // - modelUsage contains per-model token counts with cumulative totals
+    // - We sum across all models to get total conversation usage
     console.log('[TOKEN_DEBUG] ========== RESULT MESSAGE ==========');
-    console.log('[TOKEN_DEBUG] message.usage:', message.usage);
-    console.log('[TOKEN_DEBUG] context.onTokenUpdate exists:', !!context.onTokenUpdate);
 
-    if (message.usage && context.onTokenUpdate) {
-      const inputTokens = message.usage.input_tokens;
-      const outputTokens = message.usage.output_tokens;
-      const totalTokens = inputTokens + outputTokens;
+    if (context.onTokenUpdate) {
+      // Extract tokens from modelUsage field (Claude Code SDK specific)
+      const modelUsage = (message as any).modelUsage;
 
-      console.log('[TOKEN_DEBUG] Input tokens (TOTAL):', inputTokens);
-      console.log('[TOKEN_DEBUG] Output tokens (TOTAL):', outputTokens);
-      console.log('[TOKEN_DEBUG] Total tokens (ABSOLUTE):', totalTokens);
-      console.log('[TOKEN_DEBUG] Calling onTokenUpdate with ABSOLUTE total');
+      if (modelUsage && typeof modelUsage === 'object') {
+        let totalInputTokens = 0;
+        let totalOutputTokens = 0;
 
-      // Pass the absolute total - the context should handle this as a setTokenUsage call
-      context.onTokenUpdate(totalTokens);
-    } else {
-      console.log('[TOKEN_DEBUG] NOT updating tokens - usage:', message.usage, 'callback:', !!context.onTokenUpdate);
+        // Sum tokens across all models used
+        for (const modelName in modelUsage) {
+          const modelData = modelUsage[modelName];
+          if (modelData && typeof modelData === 'object') {
+            totalInputTokens += modelData.inputTokens || 0;
+            totalOutputTokens += modelData.outputTokens || 0;
+          }
+        }
+
+        const totalTokens = totalInputTokens + totalOutputTokens;
+
+        console.log('[TOKEN_DEBUG] modelUsage data:', modelUsage);
+        console.log('[TOKEN_DEBUG] Total input tokens:', totalInputTokens);
+        console.log('[TOKEN_DEBUG] Total output tokens:', totalOutputTokens);
+        console.log('[TOKEN_DEBUG] Total tokens (ABSOLUTE):', totalTokens);
+        console.log('[TOKEN_DEBUG] Calling onTokenUpdate with ABSOLUTE total');
+
+        // Pass the absolute total
+        context.onTokenUpdate(totalTokens);
+      } else {
+        console.log('[TOKEN_DEBUG] No modelUsage data found in result message');
+      }
     }
     console.log('[TOKEN_DEBUG] =====================================');
 

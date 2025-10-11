@@ -19,7 +19,7 @@ services:
       - key: PORT
         value: 10000
       - key: WORKSPACE_DIR
-        value: /workspace
+        value: /workspace/my-jarvis
       - key: ANTHROPIC_API_KEY
         sync: false  # Set manually in Render dashboard
       - key: OPENAI_API_KEY

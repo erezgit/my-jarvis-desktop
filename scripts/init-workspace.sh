@@ -2,49 +2,47 @@
 set -e
 
 # Workspace initialization script
-# Initializes workspace structure only if my-jarvis directory is empty or missing
+# TEMPORARY: Forces clean rebuild of workspace (except .claude directory)
+# TODO: Add back conditional check after first deployment
 
 WORKSPACE_PARENT="/workspace"
-WORKSPACE_DIR="${WORKSPACE_DIR:-/workspace/my-jarvis}"
-TEMPLATE_DIR="/app/workspace-template/my-jarvis"
-INIT_MARKER="$WORKSPACE_PARENT/.initialized"
+TEMPLATE_DIR="/app/workspace-template"
 
-echo "[Init] Checking workspace initialization status..."
+echo "[Init] Starting workspace initialization..."
 
-# Check if my-jarvis directory exists and has files
-if [ -d "$WORKSPACE_DIR" ] && [ -n "$(ls -A "$WORKSPACE_DIR" 2>/dev/null)" ]; then
-    echo "[Init] my-jarvis directory already populated, skipping initialization"
+# Clean workspace (preserve .claude directory for auth persistence)
+echo "[Init] Cleaning workspace (preserving .claude)..."
+find "$WORKSPACE_PARENT" -mindepth 1 -maxdepth 1 ! -name '.claude' -exec rm -rf {} + 2>/dev/null || true
 
-    # Ensure Claude config directory exists
-    mkdir -p "$WORKSPACE_PARENT/.claude"
+# Ensure .claude directory exists
+mkdir -p "$WORKSPACE_PARENT/.claude"
+echo "[Init] Preserved .claude directory for authentication"
 
-    exit 0
-fi
-
-# my-jarvis is empty or missing - initialize it
-echo "[Init] my-jarvis directory is empty or missing, initializing..."
-
-# Create my-jarvis directory
-mkdir -p "$WORKSPACE_DIR"
-echo "[Init] Created $WORKSPACE_DIR"
-
-# Copy template files to my-jarvis directory
+# Copy template files to workspace root
 if [ -d "$TEMPLATE_DIR" ]; then
-    echo "[Init] Copying from $TEMPLATE_DIR to $WORKSPACE_DIR"
-    cp -r "$TEMPLATE_DIR"/* "$WORKSPACE_DIR/"
+    echo "[Init] Copying template files to workspace..."
 
-    # Create initialization marker
-    echo "Workspace initialized on $(date)" > "$INIT_MARKER"
+    # Copy CLAUDE.md to workspace root
+    if [ -f "$TEMPLATE_DIR/CLAUDE.md" ]; then
+        cp "$TEMPLATE_DIR/CLAUDE.md" "$WORKSPACE_PARENT/"
+        echo "[Init] ✅ Copied CLAUDE.md to workspace root"
+    fi
 
-    # Ensure Claude config directory exists at parent level
-    mkdir -p "$WORKSPACE_PARENT/.claude"
-    echo "[Init] Created .claude directory for authentication persistence"
+    # Copy tools directory to workspace root
+    if [ -d "$TEMPLATE_DIR/tools" ]; then
+        cp -r "$TEMPLATE_DIR/tools" "$WORKSPACE_PARENT/"
+        echo "[Init] ✅ Copied tools/ to workspace root"
+    fi
+
+    # Copy my-jarvis project directory
+    if [ -d "$TEMPLATE_DIR/my-jarvis" ]; then
+        cp -r "$TEMPLATE_DIR/my-jarvis" "$WORKSPACE_PARENT/"
+        echo "[Init] ✅ Copied my-jarvis/ project directory"
+    fi
 
     echo "[Init] ✅ Workspace initialized successfully"
-    echo "[Init] Structure created:"
+    echo "[Init] Final structure:"
     ls -la "$WORKSPACE_PARENT"
-    echo "[Init] Files in my-jarvis:"
-    ls -la "$WORKSPACE_DIR"
 else
     echo "[Init] ⚠️  Warning: Template directory not found at $TEMPLATE_DIR"
     exit 1

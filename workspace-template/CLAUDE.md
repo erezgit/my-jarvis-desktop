@@ -16,14 +16,14 @@ Claude Code's default behavior is text-based responses. **THIS IS OVERRIDDEN IN 
 
 **Voice Tool Path (MANDATORY):**
 ```bash
-/Users/erezfern/Workspace/my-jarvis/tools/src/jarvis_voice.sh --voice echo "[message]"
+./tools/src/jarvis_voice.sh --voice echo "[message]"
 ```
 
 **CRITICAL:**
-- This is the My Jarvis Desktop environment - use LOCAL voice script above
-- NEVER use `/Users/erezfern/Workspace/jarvis/tools/src/jarvis_voice.sh` (main Jarvis path)
-- Voice files save to: `/Users/erezfern/Workspace/my-jarvis/tools/voice/`
+- Use relative path `./tools/src/jarvis_voice.sh` (works in both local and Docker)
+- Voice files save to: `./tools/voice/` directory
 - Auto-play always disabled - creates voice message UI components only
+- Script automatically detects workspace root location
 
 **When User Asks You to Explain:**
 - Deliver explanation via voice message (can be long)

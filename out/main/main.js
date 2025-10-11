@@ -11,6 +11,7 @@ const process$1 = require("node:process");
 const logtape = require("@logtape/logtape");
 const pretty = require("@logtape/pretty");
 const claudeCode = require("@anthropic-ai/claude-code");
+const promises = require("node:fs/promises");
 const node_child_process = require("node:child_process");
 const http = require("http");
 const http2 = require("http2");
@@ -2330,7 +2331,7 @@ async function handleChatRequest(c, requestAbortControllers) {
     "Received chat request {*}",
     chatRequest
   );
-  const workingDirectory = chatRequest.workingDirectory || process.cwd();
+  const workingDirectory = chatRequest.workingDirectory || process.env.WORKSPACE_DIR || process.cwd();
   logger.chat.debug("Working directory for Claude CLI: {workingDirectory}", { workingDirectory });
   const stream2 = new ReadableStream({
     async start(controller) {
@@ -2389,6 +2390,141 @@ function handleAbortRequest(c, requestAbortControllers) {
     return c.json({ error: "Request not found or already completed" }, 404);
   }
 }
+async function listDirectoryContents(dirPath) {
+  try {
+    const entries = await promises.readdir(dirPath, { withFileTypes: true });
+    const files = [];
+    for (const entry of entries) {
+      const fullPath = node_path.join(dirPath, entry.name);
+      const stats = await promises.stat(fullPath);
+      const extension = entry.isDirectory() ? "" : entry.name.includes(".") ? entry.name.substring(entry.name.lastIndexOf(".")) : "";
+      files.push({
+        name: entry.name,
+        path: fullPath,
+        isDirectory: entry.isDirectory(),
+        size: stats.size,
+        modified: stats.mtime.toISOString(),
+        extension
+      });
+    }
+    return files.sort((a, b) => {
+      if (a.isDirectory && !b.isDirectory) return -1;
+      if (!a.isDirectory && b.isDirectory) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  } catch (error) {
+    logger.api.error("Error listing directory contents: {error}", { error });
+    throw error;
+  }
+}
+async function handleFilesRequest(c) {
+  try {
+    const requestedPath = c.req.query("path");
+    const workspaceDir = process.env.WORKSPACE_DIR || "/workspace";
+    const targetPath = requestedPath || workspaceDir;
+    logger.api.info("Listing directory: {path}", { path: targetPath });
+    const files = await listDirectoryContents(targetPath);
+    return c.json({
+      success: true,
+      path: targetPath,
+      files
+    });
+  } catch (error) {
+    logger.api.error("Error reading directory: {error}", { error });
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to read directory"
+      },
+      500
+    );
+  }
+}
+async function handleReadFileRequest(c) {
+  try {
+    const filePath = c.req.query("path");
+    if (!filePath) {
+      return c.json({
+        success: false,
+        error: "Path parameter is required"
+      }, 400);
+    }
+    logger.api.info("Reading file: {path}", { path: filePath });
+    const content = await readTextFile(filePath);
+    const stats = await promises.stat(filePath);
+    const extension = filePath.includes(".") ? filePath.substring(filePath.lastIndexOf(".")) : "";
+    return c.json({
+      success: true,
+      content,
+      path: filePath,
+      name: filePath.substring(filePath.lastIndexOf("/") + 1),
+      size: stats.size,
+      modified: stats.mtime.toISOString(),
+      extension
+    });
+  } catch (error) {
+    logger.api.error("Error reading file: {error}", { error });
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to read file"
+      },
+      500
+    );
+  }
+}
+async function handleVoiceRequest(c) {
+  try {
+    const filename = c.req.param("filename");
+    if (!filename) {
+      return c.json({
+        success: false,
+        error: "Filename parameter is required"
+      }, 400);
+    }
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return c.json({
+        success: false,
+        error: "Invalid filename"
+      }, 400);
+    }
+    if (!filename.endsWith(".mp3")) {
+      return c.json({
+        success: false,
+        error: "Only MP3 files are allowed"
+      }, 400);
+    }
+    const workspaceDir = process.env.WORKSPACE_DIR || "/workspace";
+    const voiceDir = node_path.join(workspaceDir, "tools", "voice");
+    const filePath = node_path.join(voiceDir, filename);
+    logger.api.info("Serving voice file: {path}", { path: filePath });
+    const fileContent = await promises.readFile(filePath);
+    const stats = await promises.stat(filePath);
+    c.header("Content-Type", "audio/mpeg");
+    c.header("Content-Length", stats.size.toString());
+    c.header("Accept-Ranges", "bytes");
+    c.header("Cache-Control", "public, max-age=31536000");
+    return c.body(fileContent);
+  } catch (error) {
+    logger.api.error("Error serving voice file: {error}", { error });
+    if (error.code === "ENOENT") {
+      return c.json(
+        {
+          success: false,
+          error: "Voice file not found"
+        },
+        404
+      );
+    }
+    return c.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to serve voice file"
+      },
+      500
+    );
+  }
+}
 function createApp(runtime2, config) {
   const app = new Hono2();
   const requestAbortControllers = /* @__PURE__ */ new Map();
@@ -2429,6 +2565,9 @@ function createApp(runtime2, config) {
     (c) => handleAbortRequest(c, requestAbortControllers)
   );
   app.post("/api/chat", (c) => handleChatRequest(c, requestAbortControllers));
+  app.get("/api/files", (c) => handleFilesRequest(c));
+  app.get("/api/files/read", (c) => handleReadFileRequest(c));
+  app.get("/api/voice/:filename", (c) => handleVoiceRequest(c));
   app.post("/api/voice-generate", async (c) => {
     try {
       const { message } = await c.req.json();
