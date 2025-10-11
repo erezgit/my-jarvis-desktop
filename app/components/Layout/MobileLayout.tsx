@@ -179,7 +179,7 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
           )}
 
           {currentPanel === 'chat' && (
-            <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+            <div className="h-full overflow-hidden bg-white dark:bg-gray-900">
               <ChatPage isMobile={true} />
             </div>
           )}

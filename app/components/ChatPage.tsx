@@ -466,12 +466,15 @@ export function ChatPage({ isMobile = false }: ChatPageProps = {}) {
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className={isMobile
-      ? "h-full flex flex-col overflow-hidden bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
-      : "min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
-    }>
+    <div
+      className={isMobile
+        ? "flex flex-col bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
+        : "min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300"
+      }
+      style={isMobile ? { height: 'calc(var(--vh, 1vh) * 100)' } : undefined}
+    >
       <div className={isMobile
-        ? "max-w-6xl mx-auto p-3 sm:p-4 flex-1 flex flex-col w-full"
+        ? "flex-1 flex flex-col w-full min-h-0"
         : "max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col"
       }>
         {/* Header */}
