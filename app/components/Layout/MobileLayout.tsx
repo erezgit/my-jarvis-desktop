@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { Folder, FileText, MessageSquare } from 'lucide-react'
+import { Folder, FileText, MessageSquare, Settings } from 'lucide-react'
 import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
-import { ChatPage } from '../ChatPage'
 import { MobileScrollLock } from '../chat/MobileScrollLock'
 import { isFileOperationMessage } from '../../types'
 import { useChatStateContext } from '../../contexts/ChatStateContext'
@@ -27,6 +26,11 @@ interface FileItem {
 interface MobileLayoutProps {
   selectedFile: FileItem | null
   onFileSelect: (file: FileItem) => void
+  chatInterface: React.ReactNode
+  currentView: 'chat' | 'history'
+  onChatClick: () => void
+  onHistoryClick: () => void
+  onSettingsClick: () => void
 }
 
 // Utility function to combine class names
@@ -34,7 +38,15 @@ function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
-export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) {
+export function MobileLayout({
+  selectedFile,
+  onFileSelect,
+  chatInterface,
+  currentView,
+  onChatClick,
+  onHistoryClick,
+  onSettingsClick
+}: MobileLayoutProps) {
   const [currentPanel, setCurrentPanel] = useState<PanelView>('chat')
   const fileTreeRef = useRef<FileTreeRef>(null)
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
@@ -110,48 +122,76 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
       <div className="flex flex-col" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
       {/* Navigation Bar - sticky at top with white background and shadow */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
-        <div className="flex items-center px-2 py-1.5 gap-2">
-          {/* Files Button */}
-          <button
-            onClick={() => setCurrentPanel('files')}
-            className={cn(
-              "p-2 h-9 w-9 flex-shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
-              currentPanel === 'files' && "bg-gray-200 dark:bg-gray-700"
-            )}
-          >
-            <Folder className="h-5 w-5" />
-          </button>
+        <div className="flex items-center justify-between px-2 py-1.5 gap-2">
+          {/* Left: Panel switchers */}
+          <div className="flex items-center gap-2">
+            {/* Files Button */}
+            <button
+              onClick={() => setCurrentPanel('files')}
+              className={cn(
+                "p-2 h-9 w-9 flex-shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
+                currentPanel === 'files' && "bg-gray-200 dark:bg-gray-700"
+              )}
+            >
+              <Folder className="h-5 w-5" />
+            </button>
 
-          {/* Preview Button */}
-          <button
-            onClick={() => setCurrentPanel('preview')}
-            className={cn(
-              "p-2 h-9 w-9 flex-shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
-              currentPanel === 'preview' && "bg-gray-200 dark:bg-gray-700"
-            )}
-          >
-            <FileText className="h-5 w-5" />
-          </button>
+            {/* Preview Button */}
+            <button
+              onClick={() => setCurrentPanel('preview')}
+              className={cn(
+                "p-2 h-9 w-9 flex-shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
+                currentPanel === 'preview' && "bg-gray-200 dark:bg-gray-700"
+              )}
+            >
+              <FileText className="h-5 w-5" />
+            </button>
 
-          {/* Chat Button */}
-          <button
-            onClick={() => setCurrentPanel('chat')}
-            className={cn(
-              "p-2 h-9 w-9 flex-shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
-              currentPanel === 'chat' && "bg-gray-200 dark:bg-gray-700"
-            )}
-          >
-            <MessageSquare className="h-5 w-5" />
-          </button>
-
-          {/* Center - File name display if available */}
-          <div className="flex-1 flex justify-center items-center">
-            {selectedFile && !selectedFile.isDirectory && (
-              <span className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                {selectedFile.name}
-              </span>
-            )}
+            {/* Chat Panel Button */}
+            <button
+              onClick={() => setCurrentPanel('chat')}
+              className={cn(
+                "p-2 h-9 w-9 flex-shrink-0 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
+                currentPanel === 'chat' && "bg-gray-200 dark:bg-gray-700"
+              )}
+            >
+              <MessageSquare className="h-5 w-5" />
+            </button>
           </div>
+
+          {/* Right: ChatHeader buttons (only visible when chat panel active) */}
+          {currentPanel === 'chat' && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onChatClick}
+                className={cn(
+                  "px-2 py-1 text-xs rounded transition-colors",
+                  currentView === 'chat'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                )}
+              >
+                Chat
+              </button>
+              <button
+                onClick={onHistoryClick}
+                className={cn(
+                  "px-2 py-1 text-xs rounded transition-colors",
+                  currentView === 'history'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                )}
+              >
+                History
+              </button>
+              <button
+                onClick={onSettingsClick}
+                className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -180,7 +220,7 @@ export function MobileLayout({ selectedFile, onFileSelect }: MobileLayoutProps) 
 
           {currentPanel === 'chat' && (
             <div className="h-full overflow-hidden bg-white dark:bg-gray-900">
-              <ChatPage isMobile={true} />
+              {chatInterface}
             </div>
           )}
         </div>

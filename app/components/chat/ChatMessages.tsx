@@ -31,10 +31,9 @@ interface ChatMessagesProps {
   messages: AllMessage[];
   isLoading: boolean;
   onSendMessage?: (message: string) => void;
-  isMobile?: boolean;
 }
 
-export function ChatMessages({ messages, isLoading, onSendMessage, isMobile = false }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, onSendMessage }: ChatMessagesProps) {
   const { settings } = useSettings();
   const { containerRef, endRef, handleNewMessage } = useScrollToBottom();
 
@@ -100,18 +99,14 @@ export function ChatMessages({ messages, isLoading, onSendMessage, isMobile = fa
   return (
     <div
       ref={containerRef}
-      className={isMobile
-        ? "flex-1 overflow-y-scroll bg-neutral-50 dark:bg-neutral-900"
-        : "flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900"
-      }
+      className="flex-1 overflow-y-scroll bg-neutral-50 dark:bg-neutral-900"
     >
       <div className="flex flex-col py-1 sm:py-4">
         {messages.length === 0 ? (
           <Greeting onSendMessage={onSendMessage} />
         ) : (
           <>
-            {/* Only render spacer for desktop - spacer causes mobile input to disappear */}
-            {!isMobile && <div className="flex-1" aria-hidden="true"></div>}
+            {/* NO SPACER DIV - messages start at top, flex-1 on parent handles scrolling */}
             {messages.map(renderMessage)}
             {isLoading && <LoadingComponent />}
             <div ref={endRef} className="shrink-0 min-h-[24px]" />

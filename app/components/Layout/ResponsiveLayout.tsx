@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
+import { ChatPage } from '../ChatPage'
 
 interface FileItem {
   name: string
@@ -51,7 +52,21 @@ function useIsDesktop() {
 
 export function ResponsiveLayout() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
+  const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat')
   const isDesktop = useIsDesktop()
+
+  // Create chat element ONCE (like frontend pattern)
+  const chatElement = useMemo(() => (
+    <ChatPage />
+  ), []);  // Empty array: no dependencies, ChatPage is self-contained
+
+  // ChatHeader callbacks - manage view state
+  const handleChatClick = () => setCurrentView('chat');
+  const handleHistoryClick = () => setCurrentView('history');
+  const handleSettingsClick = () => {
+    // TODO: Implement settings modal or navigation
+    console.log('Settings clicked');
+  };
 
   // Conditional rendering - only ONE layout exists in DOM at a time
   return (
@@ -60,11 +75,21 @@ export function ResponsiveLayout() {
         <DesktopLayout
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
+          chatInterface={chatElement}
+          currentView={currentView}
+          onChatClick={handleChatClick}
+          onHistoryClick={handleHistoryClick}
+          onSettingsClick={handleSettingsClick}
         />
       ) : (
         <MobileLayout
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
+          chatInterface={chatElement}
+          currentView={currentView}
+          onChatClick={handleChatClick}
+          onHistoryClick={handleHistoryClick}
+          onSettingsClick={handleSettingsClick}
         />
       )}
     </div>

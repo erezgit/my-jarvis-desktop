@@ -6,7 +6,7 @@ import {
 } from 'react-resizable-panels'
 import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
-import { ChatPage } from '../ChatPage'
+import { ChatHeader } from '../chat/ChatHeader'
 import { isFileOperationMessage } from '../../types'
 import { useChatStateContext } from '../../contexts/ChatStateContext'
 import { useSettings } from '../../hooks/useSettings'
@@ -28,9 +28,22 @@ interface FileItem {
 interface DesktopLayoutProps {
   selectedFile: FileItem | null
   onFileSelect: (file: FileItem) => void
+  chatInterface: React.ReactNode
+  currentView: 'chat' | 'history'
+  onChatClick: () => void
+  onHistoryClick: () => void
+  onSettingsClick: () => void
 }
 
-export function DesktopLayout({ selectedFile, onFileSelect }: DesktopLayoutProps) {
+export function DesktopLayout({
+  selectedFile,
+  onFileSelect,
+  chatInterface,
+  currentView,
+  onChatClick,
+  onHistoryClick,
+  onSettingsClick
+}: DesktopLayoutProps) {
   const fileTreeRef = useRef<FileTreeRef>(null)
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
 
@@ -140,14 +153,27 @@ export function DesktopLayout({ selectedFile, onFileSelect }: DesktopLayoutProps
 
       <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" />
 
-      {/* Chat Panel - 30% default width - ChatPage COMPLETELY UNTOUCHED */}
+      {/* Chat Panel - 30% default width - WITH HEADER AND CONTENT */}
       <Panel
         defaultSize={30}
         minSize={20}
         maxSize={60}
         className="bg-white dark:bg-gray-900"
       >
-        <ChatPage />
+        <div className="h-full flex flex-col">
+          {/* ChatHeader toolbar */}
+          <ChatHeader
+            currentView={currentView}
+            onChatClick={onChatClick}
+            onHistoryClick={onHistoryClick}
+            onSettingsClick={onSettingsClick}
+          />
+
+          {/* Chat content - fills remaining space */}
+          <div className="flex-1 min-h-0">
+            {chatInterface}
+          </div>
+        </div>
       </Panel>
     </PanelGroup>
   )
