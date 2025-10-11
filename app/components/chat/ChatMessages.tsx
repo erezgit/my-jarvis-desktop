@@ -101,21 +101,23 @@ export function ChatMessages({ messages, isLoading, onSendMessage, isMobile = fa
     <div
       ref={containerRef}
       className={isMobile
-        ? "flex-1 overflow-y-scroll bg-neutral-50 dark:bg-neutral-900 py-1 sm:py-4 flex flex-col"
-        : "flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900 py-1 sm:py-4 flex flex-col"
+        ? "flex-1 overflow-y-scroll bg-neutral-50 dark:bg-neutral-900"
+        : "flex-1 overflow-y-auto bg-neutral-50 dark:bg-neutral-900"
       }
     >
-      {messages.length === 0 ? (
-        <Greeting onSendMessage={onSendMessage} />
-      ) : (
-        <>
-          {/* Only render spacer for desktop - spacer causes mobile input to disappear */}
-          {!isMobile && <div className="flex-1" aria-hidden="true"></div>}
-          {messages.map(renderMessage)}
-          {isLoading && <LoadingComponent />}
-          <div ref={endRef} className="shrink-0 min-h-[24px]" />
-        </>
-      )}
+      <div className="flex flex-col py-1 sm:py-4">
+        {messages.length === 0 ? (
+          <Greeting onSendMessage={onSendMessage} />
+        ) : (
+          <>
+            {/* Only render spacer for desktop - spacer causes mobile input to disappear */}
+            {!isMobile && <div className="flex-1" aria-hidden="true"></div>}
+            {messages.map(renderMessage)}
+            {isLoading && <LoadingComponent />}
+            <div ref={endRef} className="shrink-0 min-h-[24px]" />
+          </>
+        )}
+      </div>
     </div>
   );
 }
