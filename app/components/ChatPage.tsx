@@ -566,6 +566,7 @@ export function ChatPage({ isMobile = false }: ChatPageProps = {}) {
               messages={messages}
               isLoading={isLoading}
               onSendMessage={sendMessage}
+              isMobile={isMobile}
             />
 
             {/* Input */}
