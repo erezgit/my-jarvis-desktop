@@ -25,7 +25,6 @@ import type { StreamingContext } from "../hooks/streaming/useMessageProcessor";
 import { TokenContextBar } from "./TokenContextBar";
 import { useTokenUsage } from "../hooks/useTokenUsage";
 import { useSettings } from "../hooks/useSettings";
-import { MobileScrollLock } from "./chat/MobileScrollLock";
 
 export function ChatPage() {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
@@ -463,8 +462,8 @@ export function ChatPage() {
   }, [isLoading, currentRequestId, handleAbort]);
 
   return (
-    <div className="h-full bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300 flex flex-col">
-      <div className="max-w-6xl mx-auto p-3 sm:p-4 flex-1 flex flex-col w-full">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto p-3 sm:p-4 h-screen flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -583,7 +582,7 @@ export function ChatPage() {
           workingDirectory={workingDirectory}
           onWorkspaceChange={handleWorkspaceChange}
         />
-      </div>
+        </div>
     </div>
   );
 }
