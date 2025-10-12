@@ -2,27 +2,40 @@
 set -e
 
 # Workspace initialization script
-# TEMPORARY: Forces clean rebuild of workspace (except .claude directory)
-# TODO: Add back conditional check after first deployment
+# Only initializes workspace on FIRST deployment (when CLAUDE.md doesn't exist)
+# Preserves user-created files on subsequent deployments
 
 WORKSPACE_PARENT="/workspace"
 TEMPLATE_DIR="/app/workspace-template"
+MARKER_FILE="$WORKSPACE_PARENT/CLAUDE.md"
 
 echo "[Init] Starting workspace initialization..."
 
-# Clean workspace (preserve .claude directory for auth persistence)
-echo "[Init] Cleaning workspace (preserving .claude)..."
-find "$WORKSPACE_PARENT" -mindepth 1 -maxdepth 1 ! -name '.claude' -exec rm -rf {} + 2>/dev/null || true
+# Check if workspace is already initialized (CLAUDE.md exists)
+if [ -f "$MARKER_FILE" ]; then
+    echo "[Init] ✅ Workspace already initialized - preserving user files"
+    echo "[Init] Skipping template copy to preserve user data"
+
+    # Ensure .claude directory exists for auth
+    mkdir -p "$WORKSPACE_PARENT/.claude"
+
+    echo "[Init] Current workspace structure:"
+    ls -la "$WORKSPACE_PARENT"
+    exit 0
+fi
+
+# First run: Initialize workspace from template
+echo "[Init] 🚀 First run detected - initializing workspace from template..."
 
 # Ensure .claude directory exists
 mkdir -p "$WORKSPACE_PARENT/.claude"
-echo "[Init] Preserved .claude directory for authentication"
+echo "[Init] Created .claude directory for authentication"
 
 # Copy template files to workspace root
 if [ -d "$TEMPLATE_DIR" ]; then
     echo "[Init] Copying template files to workspace..."
 
-    # Copy CLAUDE.md to workspace root
+    # Copy CLAUDE.md to workspace root (marker file)
     if [ -f "$TEMPLATE_DIR/CLAUDE.md" ]; then
         cp "$TEMPLATE_DIR/CLAUDE.md" "$WORKSPACE_PARENT/"
         echo "[Init] ✅ Copied CLAUDE.md to workspace root"
