@@ -64,7 +64,9 @@ export function usePermissions(options: UsePermissionsOptions = {}) {
   const allowToolTemporary = useCallback(
     (pattern: string, baseTools?: string[]) => {
       const currentAllowedTools = baseTools || allowedTools;
-      return [...currentAllowedTools, pattern];
+      const updatedAllowedTools = [...currentAllowedTools, pattern];
+      setAllowedTools(updatedAllowedTools);
+      return updatedAllowedTools;
     },
     [allowedTools],
   );
