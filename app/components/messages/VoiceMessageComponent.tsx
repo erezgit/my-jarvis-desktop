@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { VoiceMessage } from '../../types';
 import { Slider } from '../ui/slider';
+import { voicePlayedTracker } from '../../lib/voice-played-tracker';
 
 interface VoiceMessageComponentProps {
   message: VoiceMessage;
@@ -12,15 +13,22 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const hasAutoPlayedRef = useRef<string | null>(null);
 
-  // Auto-play if enabled - but only once per unique message
+  // Auto-play if enabled - using global tracker to prevent replay on remount
   useEffect(() => {
-    if (message.autoPlay && audioRef.current && hasAutoPlayedRef.current !== message.audioUrl) {
-      hasAutoPlayedRef.current = message.audioUrl;
-      audioRef.current.play().catch((error) => {
-        console.warn('Auto-play failed:', error);
-      });
+    if (message.autoPlay && audioRef.current && !voicePlayedTracker.hasPlayed(message.audioUrl)) {
+      console.log('[VoiceMessage] Auto-playing:', message.audioUrl);
+      voicePlayedTracker.markAsPlaying(message.audioUrl);
+
+      audioRef.current.play()
+        .then(() => {
+          console.log('[VoiceMessage] Auto-play started successfully');
+          voicePlayedTracker.markAsPlayed(message.audioUrl);
+        })
+        .catch((error) => {
+          console.warn('[VoiceMessage] Auto-play failed:', error);
+          voicePlayedTracker.markAsFailed(message.audioUrl);
+        });
     }
   }, [message.autoPlay, message.audioUrl]);
 

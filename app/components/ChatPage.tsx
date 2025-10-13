@@ -22,6 +22,7 @@ import type { StreamingContext } from "../hooks/streaming/useMessageProcessor";
 import { TokenContextBar } from "./TokenContextBar";
 import { useTokenUsage } from "../hooks/useTokenUsage";
 import { useSettings } from "../hooks/useSettings";
+import { voicePlayedTracker } from "../lib/voice-played-tracker";
 
 interface ChatPageProps {
   currentView: 'chat' | 'history';
@@ -34,8 +35,8 @@ export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // Token usage tracking - use setTokenUsage for SDK cumulative totals
-  const { setTokenUsage } = useTokenUsage();
+  // Token usage tracking - accumulate tokens from each result message
+  const { updateTokenUsage, resetTokenUsage } = useTokenUsage();
 
   // Workspace state - read from settings context
   const { workingDirectory } = useSettings();
@@ -116,6 +117,12 @@ export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
       setCurrentSessionId(loadedSessionId);
     }
   }, [loadedSessionId, setCurrentSessionId]);
+
+  // Reset tokens when session ID changes (new conversation or switching conversations)
+  useEffect(() => {
+    console.log('[TOKEN_RESET] Session ID changed:', currentSessionId);
+    resetTokenUsage();
+  }, [currentSessionId, resetTokenUsage]);
 
   const {
     allowedTools,
@@ -215,7 +222,7 @@ export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
             shouldAbort = true;
             await createAbortHandler(requestId)();
           },
-          onTokenUpdate: setTokenUsage,
+          onTokenUpdate: updateTokenUsage,
         };
 
         while (true) {
@@ -398,9 +405,13 @@ export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
   }, [workingDirectory]);
 
   const handleConversationSelect = useCallback((sessionId: string) => {
+    // Reset tokens when switching to a different conversation
+    resetTokenUsage();
+    // Clear voice message tracking to prevent cross-conversation playback
+    voicePlayedTracker.clearAll();
     setSessionId(sessionId);
     onViewChange('chat'); // Exit history view and show the conversation
-  }, [onViewChange]);
+  }, [onViewChange, resetTokenUsage]);
 
   // Handle global keyboard shortcuts
   useEffect(() => {
