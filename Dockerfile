@@ -34,6 +34,9 @@ COPY package*.json ./
 # Install Node.js dependencies
 RUN npm install
 
+# Rebuild native modules for the Docker Node.js version
+RUN npm rebuild node-pty
+
 # Copy application source code (only web-needed directories)
 COPY app ./app
 COPY lib/claude-webui-server ./lib/claude-webui-server
@@ -53,7 +56,11 @@ WORKDIR /app/lib/claude-webui-server
 # Generate version.ts file (auto-generated, not in git)
 RUN printf '// Auto-generated file\nexport const VERSION = "%s";\n' "$(node -p "require('./package.json').version")" > cli/version.ts
 
-RUN npm install && npm run build:clean && npm run build:bundle
+# Install backend dependencies and rebuild native modules
+RUN npm install && npm rebuild node-pty
+
+# Build backend bundle
+RUN npm run build:clean && npm run build:bundle
 
 # Copy the built React app to where the backend expects it
 RUN mkdir -p dist/static && cp -r /app/out/renderer/* dist/static/
