@@ -24,14 +24,14 @@ export function Terminal(props: TerminalProps) {
   const getWebSocketUrl = (): string => {
     if (props.wsUrl) return props.wsUrl
 
-    if (typeof window === 'undefined') return 'ws://localhost:3001'
+    if (typeof window === 'undefined') return 'ws://localhost:10000/terminal'
 
-    // Use current hostname with WebSocket protocol
+    // Use current page URL with /terminal path
+    // WebSocket shares the same port as HTTP server
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const hostname = window.location.hostname
-    const port = import.meta.env.DEV ? '3001' : '3001' // Port 3001 for terminal WebSocket
+    const host = window.location.host // Includes hostname and port
 
-    return `${protocol}//${hostname}:${port}`
+    return `${protocol}//${host}/terminal`
   }
 
   // Log for debugging
