@@ -14,7 +14,8 @@ import { setupLogger, logger } from "../utils/logger.ts";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { exit } from "../utils/os.ts";
-import { createTerminalServer } from "../../terminal/terminal-websocket-server.js";
+import { createTerminalHandler } from "../../terminal/terminal-handler-http.js";
+import type { Server } from "node:http";
 
 async function main(runtime: NodeRuntime) {
   // Parse CLI arguments
@@ -43,18 +44,18 @@ async function main(runtime: NodeRuntime) {
     cliPath,
   });
 
-  // Start terminal WebSocket server on port 3001
-  const terminalPort = parseInt(process.env.TERMINAL_WS_PORT || '3001', 10);
-  try {
-    createTerminalServer(terminalPort);
-    logger.cli.info(`🖥️  Terminal WebSocket server started on port ${terminalPort}`);
-  } catch (error) {
-    logger.cli.warn(`⚠️  Terminal WebSocket server failed to start: ${error}`);
-  }
-
-  // Start server (only show this message when everything is ready)
+  // Start server and attach terminal WebSocket handler
   logger.cli.info(`🚀 Server starting on ${args.host}:${args.port}`);
-  runtime.serve(args.port, args.host, app.fetch);
+  runtime.serve(args.port, args.host, app.fetch, (server: Server) => {
+    // Attach terminal WebSocket handler to the HTTP server
+    // This allows WebSocket and HTTP to share the same port
+    try {
+      createTerminalHandler(server);
+      logger.cli.info(`🖥️  Terminal WebSocket handler registered at /terminal`);
+    } catch (error) {
+      logger.cli.warn(`⚠️  Terminal WebSocket handler failed to register: ${error}`);
+    }
+  });
 }
 
 // Run the application

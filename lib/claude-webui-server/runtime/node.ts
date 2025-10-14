@@ -109,6 +109,7 @@ export class NodeRuntime implements Runtime {
     port: number,
     hostname: string,
     handler: (req: Request) => Response | Promise<Response>,
+    onServerCreated?: (server: any) => void,
   ): void {
     // Use Hono with Node.js server to handle Web API Request/Response
     const app = new Hono();
@@ -120,11 +121,16 @@ export class NodeRuntime implements Runtime {
     });
 
     // Start the server using @hono/node-server
-    serve({
+    const server = serve({
       fetch: app.fetch,
       port,
       hostname,
     });
+
+    // Notify caller with the HTTP server instance for WebSocket upgrade
+    if (onServerCreated && server) {
+      onServerCreated(server);
+    }
 
     console.log(`Listening on http://${hostname}:${port}/`);
   }
