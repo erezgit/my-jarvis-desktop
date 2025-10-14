@@ -24,10 +24,12 @@ export interface SettingsContextType {
   theme: Theme;
   enterBehavior: EnterBehavior;
   workingDirectory: string;
+  isTerminalOpen: boolean;
   toggleTheme: () => void;
   toggleEnterBehavior: () => void;
   setWorkingDirectory: (path: string) => void;
   updateSettings: (updates: Partial<AppSettings>) => void;
+  toggleTerminal: () => void;
 }
 
 // Get default workspace path dynamically based on user's home directory

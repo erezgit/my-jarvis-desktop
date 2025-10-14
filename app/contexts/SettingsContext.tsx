@@ -8,6 +8,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     getSettings(),
   );
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
 
   // Initialize settings on client side (handles migration automatically)
   useEffect(() => {
@@ -69,18 +70,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     updateSettings({ workingDirectory: path });
   }, [updateSettings]);
 
+  const toggleTerminal = useCallback(() => {
+    setIsTerminalOpen(prev => !prev);
+  }, []);
+
   const value = useMemo(
     (): SettingsContextType => ({
       settings,
       theme: settings.theme,
       enterBehavior: settings.enterBehavior,
       workingDirectory: settings.workingDirectory,
+      isTerminalOpen,
       toggleTheme,
       toggleEnterBehavior,
       setWorkingDirectory,
       updateSettings,
+      toggleTerminal,
     }),
-    [settings, toggleTheme, toggleEnterBehavior, setWorkingDirectory, updateSettings],
+    [settings, isTerminalOpen, toggleTheme, toggleEnterBehavior, setWorkingDirectory, updateSettings, toggleTerminal],
   );
 
   return (

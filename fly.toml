@@ -1,0 +1,42 @@
+# fly.toml for My Jarvis Desktop Web Deployment
+
+app = "my-jarvis-desktop"
+primary_region = "sjc"
+
+[build]
+
+[env]
+  PORT = "10000"
+  TERMINAL_WS_PORT = "3001"
+  NODE_ENV = "production"
+  WORKSPACE_DIR = "/workspace"
+
+[http_service]
+  internal_port = 10000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[services]]
+  internal_port = 3001
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 3001
+    handlers = []
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[mounts]
+  source = "workspace_data"
+  destination = "/workspace"

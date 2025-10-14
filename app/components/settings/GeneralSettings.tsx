@@ -15,7 +15,7 @@ interface GeneralSettingsProps {
 }
 
 export function GeneralSettings({ workingDirectory, onWorkspaceChange }: GeneralSettingsProps = {}) {
-  const { settings, theme, enterBehavior, toggleTheme, toggleEnterBehavior, updateSettings } =
+  const { settings, theme, enterBehavior, toggleTheme, toggleEnterBehavior, updateSettings, toggleTerminal } =
     useSettings();
 
   // Handle workspace path selection via Electron dialog
@@ -237,6 +237,31 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
               </div>
             </div>
           )}
+
+          {/* Terminal */}
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
+              Terminal
+            </label>
+            <button
+              onClick={toggleTerminal}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left"
+              aria-label="Open integrated terminal"
+            >
+              <CommandLineIcon className="w-5 h-5 text-green-500" />
+              <div>
+                <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  Integrated Terminal
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Access command line directly in My Jarvis
+                </div>
+              </div>
+            </button>
+            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Opens a full-screen terminal overlay. Press ESC or click the X to close.
+            </div>
+          </div>
 
           {/* Authentication */}
           <div>

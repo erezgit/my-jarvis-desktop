@@ -1,11 +1,14 @@
 FROM node:20
 
-# Install system dependencies for Claude Agent SDK and voice generation
+# Install system dependencies for Claude Agent SDK, voice generation, and node-pty compilation
 RUN apt-get update && apt-get install -y \
     git \
     python3 \
     python3-pip \
     curl \
+    build-essential \
+    make \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude CLI globally
@@ -34,6 +37,7 @@ RUN npm install
 # Copy application source code (only web-needed directories)
 COPY app ./app
 COPY lib/claude-webui-server ./lib/claude-webui-server
+COPY lib/terminal ./lib/terminal
 COPY vite.web.config.mts ./
 COPY tsconfig*.json ./
 
@@ -57,11 +61,13 @@ RUN mkdir -p dist/static && cp -r /app/out/renderer/* dist/static/
 # Return to app root
 WORKDIR /app
 
-# Expose port 10000 (Render default)
+# Expose ports
 EXPOSE 10000
+EXPOSE 3001
 
 # Set environment variables
 ENV PORT=10000
+ENV TERMINAL_WS_PORT=3001
 ENV NODE_ENV=production
 ENV WORKSPACE_DIR=/workspace
 ENV ANTHROPIC_CONFIG_PATH=/workspace/.claude
