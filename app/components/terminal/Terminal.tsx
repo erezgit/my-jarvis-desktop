@@ -20,9 +20,26 @@ export function Terminal(props: TerminalProps) {
   // Use your existing platform detection
   const isElectron = isElectronMode()
 
+  // Generate WebSocket URL based on current location (for web mode)
+  const getWebSocketUrl = (): string => {
+    if (props.wsUrl) return props.wsUrl
+
+    if (typeof window === 'undefined') return 'ws://localhost:3001'
+
+    // Use current hostname with WebSocket protocol
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const hostname = window.location.hostname
+    const port = import.meta.env.DEV ? '3001' : '3001' // Port 3001 for terminal WebSocket
+
+    return `${protocol}//${hostname}:${port}`
+  }
+
   // Log for debugging
   if (typeof window !== 'undefined' && import.meta.env.DEV) {
     console.log(`[Terminal] Rendering ${isElectron ? 'Electron' : 'Web'} terminal`)
+    if (!isElectron) {
+      console.log(`[Terminal] WebSocket URL: ${getWebSocketUrl()}`)
+    }
   }
 
   // Render appropriate terminal based on platform
@@ -34,7 +51,7 @@ export function Terminal(props: TerminalProps) {
   ) : (
     <WebTerminal
       className={props.className}
-      wsUrl={props.wsUrl}
+      wsUrl={getWebSocketUrl()}
     />
   )
 }
