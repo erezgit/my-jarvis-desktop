@@ -249,12 +249,13 @@ export class UnifiedMessageProcessor {
           }
 
           // Create VoiceMessage instead of ToolResultMessage
+          // Only auto-play during streaming (first creation), never during history load
           const voiceMessage = {
             type: "voice" as const,
             content: message,
             audioUrl,
             timestamp: options.timestamp || Date.now(),
-            autoPlay: true
+            autoPlay: options.isStreaming || false
           };
 
           context.addMessage(voiceMessage);
