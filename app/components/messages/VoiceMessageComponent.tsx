@@ -16,19 +16,32 @@ export function VoiceMessageComponent({ message }: VoiceMessageComponentProps) {
 
   // Auto-play if enabled - using global tracker to prevent replay on remount
   useEffect(() => {
+    console.log('[VoiceMessage] useEffect running - Component mount/update');
+    console.log('[VoiceMessage] message.autoPlay:', message.autoPlay);
+    console.log('[VoiceMessage] message.audioUrl:', message.audioUrl);
+    console.log('[VoiceMessage] Tracker state:', voicePlayedTracker.getState());
+    console.log('[VoiceMessage] hasPlayed check:', voicePlayedTracker.hasPlayed(message.audioUrl));
+
     if (message.autoPlay && audioRef.current && !voicePlayedTracker.hasPlayed(message.audioUrl)) {
-      console.log('[VoiceMessage] Auto-playing:', message.audioUrl);
+      console.log('[VoiceMessage] ✅ PLAYING - All conditions met');
       voicePlayedTracker.markAsPlaying(message.audioUrl);
 
       audioRef.current.play()
         .then(() => {
-          console.log('[VoiceMessage] Auto-play started successfully');
+          console.log('[VoiceMessage] ✅ Auto-play started successfully');
           voicePlayedTracker.markAsPlayed(message.audioUrl);
+          console.log('[VoiceMessage] Tracker state after play:', voicePlayedTracker.getState());
         })
         .catch((error) => {
-          console.warn('[VoiceMessage] Auto-play failed:', error);
+          console.warn('[VoiceMessage] ❌ Auto-play failed:', error);
           voicePlayedTracker.markAsFailed(message.audioUrl);
         });
+    } else {
+      console.log('[VoiceMessage] ⏭️  SKIPPING play - Conditions not met:', {
+        autoPlay: message.autoPlay,
+        hasAudioRef: !!audioRef.current,
+        hasPlayed: voicePlayedTracker.hasPlayed(message.audioUrl)
+      });
     }
   }, [message.autoPlay, message.audioUrl]);
 

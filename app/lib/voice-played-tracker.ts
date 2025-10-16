@@ -17,7 +17,12 @@ class VoicePlayedTracker {
    * Check if a message has already been played or is currently playing
    */
   hasPlayed(messageId: string): boolean {
-    return this.playedMessages.has(messageId) || this.playingMessages.has(messageId);
+    const result = this.playedMessages.has(messageId) || this.playingMessages.has(messageId);
+    console.log('[VoicePlayedTracker] hasPlayed check for:', messageId);
+    console.log('[VoicePlayedTracker] - In played set?', this.playedMessages.has(messageId));
+    console.log('[VoicePlayedTracker] - In playing set?', this.playingMessages.has(messageId));
+    console.log('[VoicePlayedTracker] - Result:', result);
+    return result;
   }
 
   /**
