@@ -1,0 +1,254 @@
+# Ticket #043: Add Workspace to Settings Context & Update File Tree
+
+<TicketStack tickets={[
+  {
+    id: "043",
+    title: "Add Workspace to Settings Context & Update File Tree",
+    status: "active",
+    confidence: 9,
+    productRequirements: `Make the file tree automatically update when switching workspaces by adding workspace management to the SettingsContext.
+
+Key User Stories:
+- As a user, when I switch workspaces in Settings, the file tree updates to show the new workspace files
+- As a user, the app remembers my workspace choice across restarts
+- As a user, I see a consistent loading experience when switching workspaces
+
+Success Criteria:
+- WorkingDirectory added to SettingsContext as persistent user preference
+- File tree automatically reloads when workspace changes
+- No prop drilling - components read from context
+- Workspace persists to localStorage like other settings
+- Clean separation: Settings for config, ChatState for conversation`,
+    architecture: `Settings Context Extension:
+- Add workingDirectory to SettingsContext state
+- Add setWorkingDirectory and getWorkingDirectory methods
+- Save to localStorage alongside theme/enterBehavior
+- Default to /Users/erezfern/Workspace/my-jarvis
+
+ChatPage Updates:
+- Remove local workingDirectory state
+- Read from SettingsContext instead
+- Use context setter when switching workspaces
+- Remove localStorage logic (now in context)
+
+FileTree Updates:
+- Accept workingDirectory as prop from parent
+- Add useEffect dependency on workingDirectory
+- Reload directory when workingDirectory changes
+- Remove hardcoded path
+
+DesktopLayout Updates:
+- Read workingDirectory from SettingsContext
+- Pass to VirtualizedFileTree as prop
+- No state management needed - just pass-through
+
+Architecture Benefits:
+- Workspace is a setting, stored with other settings
+- File tree reactively updates via props
+- ChatPage and FileTree both read from same source
+- Follows existing patterns in the codebase`,
+    implementation: [
+      { name: "Add workingDirectory to SettingsContext types and state", done: true },
+      { name: "Add localStorage persistence for workingDirectory in SettingsContext", done: true },
+      { name: "Update ChatPage to use workingDirectory from SettingsContext", done: true },
+      { name: "Update handleWorkspaceChange to use context setter", done: true },
+      { name: "Add workingDirectory prop to VirtualizedFileTree", done: true },
+      { name: "Update FileTree to reload on workingDirectory change", done: true },
+      { name: "Update DesktopLayout to pass workingDirectory to FileTree", done: true },
+      { name: "Test workspace switching updates file tree", done: false },
+      { name: "Clean up debug console logs from previous implementation", done: false },
+    ],
+    nextAction: "Build and test workspace switching - file tree should update automatically"
+  }
+]} />
+
+---
+
+## Implementation Plan
+
+### Phase 1: Update SettingsContext
+
+#### 1.1 Update Settings Types
+In `app/types/settings.ts`:
+```typescript
+export interface AppSettings {
+  theme: 'light' | 'dark';
+  enterBehavior: 'send' | 'newline';
+  messageDisplay: {
+    mode: 'jarvis' | 'developer';
+  };
+  workingDirectory: string; // Add this
+}
+
+export interface SettingsContextType {
+  settings: AppSettings;
+  theme: 'light' | 'dark';
+  enterBehavior: 'send' | 'newline';
+  workingDirectory: string; // Add this
+  isInitialized: boolean;
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  toggleTheme: () => void;
+  toggleEnterBehavior: () => void;
+  setWorkingDirectory: (path: string) => void; // Add this
+}
+```
+
+#### 1.2 Update SettingsContext Provider
+In `app/contexts/SettingsContext.tsx`:
+- Add default workingDirectory to initial settings
+- Add setWorkingDirectory callback
+- Ensure localStorage saves workingDirectory
+
+```typescript
+const setWorkingDirectory = useCallback((path: string) => {
+  updateSettings({ workingDirectory: path });
+}, [updateSettings]);
+```
+
+#### 1.3 Update Storage Utilities
+Ensure `app/utils/storage.ts` includes workingDirectory in default settings:
+```typescript
+const defaultSettings: AppSettings = {
+  theme: 'light',
+  enterBehavior: 'send',
+  messageDisplay: { mode: 'jarvis' },
+  workingDirectory: '/Users/erezfern/Workspace/my-jarvis'
+};
+```
+
+### Phase 2: Update ChatPage
+
+#### 2.1 Replace Local State with Context
+Remove:
+```typescript
+const [workingDirectory, setWorkingDirectory] = useState<string>(getInitialWorkspace());
+```
+
+Add:
+```typescript
+const { workingDirectory, setWorkingDirectory } = useSettings();
+```
+
+#### 2.2 Simplify handleWorkspaceChange
+Remove localStorage logic, just update context:
+```typescript
+const handleWorkspaceChange = useCallback((newPath: string) => {
+  if (newPath === workingDirectory) return;
+
+  console.log('[WORKSPACE_SWITCH] Switching workspace from', workingDirectory, 'to', newPath);
+
+  // Update via context (persists automatically)
+  setWorkingDirectory(newPath);
+
+  // Clear current session
+  setMessages([]);
+  setCurrentSessionId(null);
+  setSessionId(null);
+
+  // Close settings
+  setIsSettingsOpen(false);
+}, [workingDirectory, setWorkingDirectory, setMessages, setCurrentSessionId]);
+```
+
+#### 2.3 Remove Workspace Helper Functions
+Delete:
+- `WORKSPACES` constant (keep in GeneralSettings)
+- `WORKSPACE_STORAGE_KEY`
+- `getInitialWorkspace()`
+- `saveWorkspace()`
+
+### Phase 3: Update FileTree
+
+#### 3.1 Add workingDirectory Prop
+In `VirtualizedFileTree.tsx`:
+```typescript
+interface FileTreeProps {
+  workingDirectory: string; // Add this
+  onFileSelect?: (file: FileItem) => void;
+  className?: string;
+}
+```
+
+#### 3.2 Replace Hardcoded Path
+Remove `loadMyJarvisDirectory()` function and replace initial effect:
+```typescript
+useEffect(() => {
+  if (workingDirectory) {
+    loadDirectory(workingDirectory);
+  }
+}, [workingDirectory]); // Reload when workspace changes
+```
+
+### Phase 4: Update DesktopLayout
+
+#### 4.1 Read from Context and Pass Down
+```typescript
+import { useSettings } from '../../hooks/useSettings';
+
+export function DesktopLayout({ selectedFile, onFileSelect }: DesktopLayoutProps) {
+  const { workingDirectory } = useSettings();
+  const fileTreeRef = useRef<FileTreeRef>(null);
+
+  // ... existing code ...
+
+  return (
+    <PanelGroup direction="horizontal" className="h-full">
+      <Panel>
+        <VirtualizedFileTree
+          ref={fileTreeRef}
+          workingDirectory={workingDirectory}
+          onFileSelect={onFileSelect}
+        />
+      </Panel>
+      {/* ... rest of panels ... */}
+    </PanelGroup>
+  );
+}
+```
+
+### Phase 5: Cleanup
+
+- Remove debug console.logs from workspace switching
+- Remove unused WORKSPACES constant from ChatPage
+- Verify localStorage key consistency
+
+---
+
+## Testing Checklist
+
+- [ ] Switch workspace in Settings → file tree updates to show new workspace
+- [ ] Restart app → workspace persists and file tree loads correct workspace
+- [ ] Switch workspace → chat messages clear
+- [ ] Switch workspace → Claude runs in correct directory
+- [ ] File operations still work (create/edit files refresh tree)
+- [ ] No console errors or warnings
+- [ ] No infinite render loops
+- [ ] Settings persist across app restarts
+
+---
+
+## Architecture Notes
+
+**Why SettingsContext?**
+- WorkingDirectory is a persistent user preference, not ephemeral conversation state
+- It affects multiple parts of the app (chat, file tree)
+- It should persist across sessions
+- SettingsContext already handles similar concerns (theme, enter behavior)
+
+**Data Flow:**
+1. User clicks workspace in Settings
+2. Settings component calls `setWorkingDirectory()` from context
+3. SettingsContext updates state and persists to localStorage
+4. ChatPage reads workingDirectory from context, updates Claude working directory
+5. DesktopLayout reads workingDirectory from context, passes to FileTree
+6. FileTree receives new workingDirectory prop, triggers reload effect
+
+**Alternative Considered:**
+- Adding to ChatStateContext: Rejected because workspace isn't conversation state
+- Prop drilling: Rejected because it's too coupled and verbose
+- Separate WorkspaceContext: Rejected because SettingsContext already exists for this purpose
+
+---
+
+## Version
+Created in My Jarvis Desktop session - October 2025

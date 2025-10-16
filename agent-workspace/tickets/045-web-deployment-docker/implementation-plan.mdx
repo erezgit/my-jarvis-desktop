@@ -1,0 +1,141 @@
+# Web Deployment - Docker & Render ✅ COMPLETED
+
+Successfully deployed My Jarvis Desktop to Render.com with full Claude Agent SDK functionality.
+
+**Live URL**: https://my-jarvis-desktop.onrender.com
+
+<TicketStack tickets={[
+  {
+    id: "045",
+    title: "Web Deployment for Mobile Access",
+    status: "completed",
+    confidence: 10,
+    productRequirements: `Enable access to My Jarvis Desktop from mobile devices and any browser without duplicating code.
+
+Key User Stories:
+- As a user, I want to access My Jarvis from my phone when away from my desktop
+- As a user, I want the same features and interface whether on desktop or web
+- As a developer, I want to maintain one codebase for both desktop and web deployments
+
+Success Criteria:
+- URL accessible from mobile browser shows full My Jarvis interface
+- Claude Agent SDK works correctly in cloud environment with authentication
+- File operations persist across deployments using Render persistent disk
+- Desktop and web versions share 100% of React and backend code`,
+
+    architecture: `Deployment Strategy: Monorepo with Conditional Packaging
+
+Same Source Code, Different Packaging:
+- Desktop: Electron → DMG (uses local Claude CLI authentication)
+- Web: Docker → Container (needs authentication method for Claude API)
+
+Environment Variables:
+- VITE_WORKING_DIRECTORY=/workspace (sets default workspace in Docker)
+- VITE_API_URL='' (empty = same origin for web)
+- ANTHROPIC_API_KEY (required for Claude CLI in container)`,
+
+    implementation: [
+      { name: "Create Dockerfile with Node.js, Claude CLI, and workspace setup", done: true },
+      { name: "Configure Vite build with VITE_WORKING_DIRECTORY environment variable", done: true },
+      { name: "Fix settings migration to include workingDirectory from defaults", done: true },
+      { name: "Change SDK executable from process.execPath to 'node' (matches Cloud Code Web UI)", done: true },
+      { name: "Fix Tailwind v4 ESM compatibility by renaming vite.web.config.ts to .mts", done: true },
+      { name: "Fix API URLs to use relative paths in web mode vs localhost in Electron", done: true },
+      { name: "Configure Render persistent disk at /root/.claude for authentication", done: true },
+      { name: "Authenticate Claude CLI using 'claude login' in Render shell", done: true },
+      { name: "Deploy to Render and verify full functionality", done: true },
+    ],
+
+    nextAction: "Test voice functionality and other features in production"
+  }
+]} />
+
+## ✅ DEPLOYMENT COMPLETE - October 4, 2025
+
+### What Works ✅
+1. **Docker Container**: Builds and runs successfully on Render
+2. **Frontend**: React app loads with full styling (Tailwind v4)
+3. **File Tree**: Displays workspace files correctly
+4. **Working Directory**: SDK receives `cwd: "/workspace"` correctly
+5. **Claude CLI**: Authenticated and working at `/usr/local/bin/claude`
+6. **API Routing**: Frontend correctly routes to backend via relative URLs
+7. **Claude Agent**: Full conversation functionality verified on mobile
+
+### Final Solution: Interactive Login with Persistent Disk ✅
+
+**Authentication Method**: Used `claude login` in Render shell with persistent disk
+
+**Setup Steps**:
+1. Added Render persistent disk mounted at `/root/.claude`
+2. Opened Render web shell
+3. Ran `claude login` and completed interactive authentication
+4. Credentials now persist across deployments
+
+**Why This Works**:
+- Claude CLI stores auth tokens in `~/.claude/` directory
+- Render persistent disk keeps this directory across container restarts
+- Server process inherits authentication from persistent directory
+- Uses existing Claude subscription (no API key costs)
+
+## Implementation Log
+
+**Session 1: Initial Docker Setup**
+1. Created Dockerfile, copied workspace files → ✅
+2. Fixed React build (electron-vite → vite.web.config.ts) → ✅
+3. Fixed static file serving path → ✅
+4. Installed Claude CLI globally → ✅
+5. Added VITE_WORKING_DIRECTORY env var → ✅
+6. Fixed migrateLegacySettings to include workingDirectory → ✅
+7. Changed executable from process.execPath to "node" → ✅
+
+**Session 2: Render Deployment & Fixes**
+1. Pushed to GitHub, Render auto-deployed → ✅
+2. **Issue**: Tailwind styling not working in production
+3. **Cause**: vite.web.config.ts not compatible with ESM-only Tailwind v4
+4. **Fix**: Renamed to vite.web.config.mts to force ESM mode → ✅
+5. **Issue**: Frontend trying to call localhost instead of Render backend
+6. **Cause**: Hardcoded `http://127.0.0.1:8081` in API config
+7. **Fix**: Made API URLs conditional - relative for web, absolute for Electron → ✅
+8. **Issue**: "Invalid API key" after authentication
+9. **Cause**: Ephemeral file system - credentials lost on redeploy
+10. **Fix**: Added Render persistent disk at `/root/.claude` → ✅
+11. Ran `claude login` in Render shell → ✅
+12. **SUCCESS**: Full functionality verified on mobile → ✅
+
+## Files Modified
+
+1. **Dockerfile**:
+   - Added `ENV VITE_WORKING_DIRECTORY=/workspace`
+   - Added `mkdir -p /root/.claude` for persistent auth
+   - Generate version.ts during build
+
+2. **vite.web.config.mts** (renamed from .ts):
+   - Force ESM mode for Tailwind v4 compatibility
+   - Restored `@tailwindcss/vite` plugin
+
+3. **app/config/api.ts**:
+   - Detect Electron vs web mode
+   - Use relative URLs in web, absolute in Electron
+
+4. **app/types/settings.ts**:
+   - Use `import.meta.env.VITE_WORKING_DIRECTORY`
+
+5. **app/utils/storage.ts**:
+   - Include `workingDirectory` in migration
+
+6. **lib/claude-webui-server/handlers/chat.ts**:
+   - Changed `executable: "node"`
+
+## Deployment Configuration
+
+**Render Settings**:
+- Plan: Starter ($7/month, 512MB RAM)
+- Runtime: Docker
+- Auto-deploy: Enabled (on git push)
+- Persistent Disk: 1GB mounted at `/root/.claude`
+
+## Known Limitations
+
+1. **Voice generation**: Not yet tested in production
+2. **File operations**: Write operations work in `/workspace` (ephemeral)
+3. **Performance**: 512MB RAM may be limiting for large conversations

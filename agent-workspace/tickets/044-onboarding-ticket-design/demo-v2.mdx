@@ -1,0 +1,93 @@
+# Onboarding Ticket Design - Variant 2
+
+## Icon-Driven Storytelling Theme
+
+This variant uses a **visual journey metaphor** with icons and milestone markers:
+- ⚪ → 🔵 → ✅ **Status progression** with emoji states
+- 🔑 🎙️ 🤖 **Task icons** for quick visual recognition
+- **Vertical journey path** connecting all milestones
+- **Celebration elements** for completed tasks
+
+### Features
+- **Journey visualization** with connecting path line
+- **Large milestone circles** with status emoji
+- **Individual task icons** for personality
+- **Active task highlighting** with ring animation
+- **Completion celebration** message when done
+- **Emoji progress tracker** at the top
+
+---
+
+<OnboardingTicketV2
+  title="Welcome to My Jarvis Desktop"
+  description="Follow this visual journey to set up your AI agent platform. Each milestone brings you closer to unleashing the power of personalized AI."
+  currentStep={2}
+  tasks={[
+    {
+      name: "Set up your Claude API key",
+      done: true,
+      description: "Connect your Anthropic API key to enable AI capabilities. You'll find this in your Anthropic Console.",
+      icon: "🔑"
+    },
+    {
+      name: "Configure your first workspace",
+      done: true,
+      description: "Create a workspace for your first project. Workspaces help organize your agents and files.",
+      icon: "📁"
+    },
+    {
+      name: "Test the voice system",
+      done: false,
+      description: "Try the voice message feature to hear Jarvis respond to your questions naturally.",
+      icon: "🎙️"
+    },
+    {
+      name: "Explore the MDX preview",
+      done: false,
+      description: "View rich markdown files with interactive components and see how documentation comes alive.",
+      icon: "📄"
+    },
+    {
+      name: "Create your first agent",
+      done: false,
+      description: "Build a custom AI agent tailored to your specific workflow and needs.",
+      icon: "🤖"
+    }
+  ]}
+/>
+
+---
+
+## Design Notes
+
+### Journey Metaphor
+The design uses a **vertical journey path** that connects all tasks:
+- Gradient-colored line showing progress direction
+- Each task is a **milestone** along the journey
+- Status circles have border rings on the active task
+- Completion brings a celebratory finish message
+
+### Icon System
+**Status Icons:**
+- ✅ Green: Task completed
+- 🔵 Blue: Current active task
+- ⚪ Gray: Not started
+
+**Task Icons:**
+- Each task has a unique emoji representing its purpose
+- Icons are slightly grayed out when not complete
+- Helps with quick visual scanning
+
+### Visual Flow
+1. **Header** with rocket emoji and gradient background
+2. **Progress tracker** showing emoji sequence
+3. **Journey path** with connected milestones
+4. **Completion message** appears when all done
+
+### Animation Details
+- Active task milestone scales up + gets ring border
+- Hover on any status icon scales it up 125%
+- Completed tasks show bounce animation 🎉
+- Smooth transitions between states
+
+This design tells a **visual story** and makes onboarding feel like an exciting journey rather than a checklist.

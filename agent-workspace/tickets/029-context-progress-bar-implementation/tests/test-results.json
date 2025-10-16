@@ -1,0 +1,144 @@
+{
+  "summary": {
+    "totalTests": 30,
+    "totalPassed": 30,
+    "totalFailed": 0,
+    "successRate": "100.0%",
+    "executionTime": "148.90ms",
+    "overallSuccess": true
+  },
+  "systemInfo": {
+    "nodeVersion": "v18.4.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 10,
+    "memory": {
+      "total": "16384 MB",
+      "free": "202 MB"
+    },
+    "timestamp": "2025-10-04T22:09:32.828Z"
+  },
+  "testSuites": [
+    {
+      "testSuite": "Empty Conversation",
+      "passed": 3,
+      "total": 3,
+      "success": true,
+      "details": {
+        "Initial State": true,
+        "Component Rendering": true,
+        "Message Processor": true
+      }
+    },
+    {
+      "testSuite": "Large Conversation",
+      "passed": 5,
+      "total": 5,
+      "success": true,
+      "details": {
+        "Token Accumulation": {
+          "passed": true,
+          "totalTokens": 174257,
+          "percentage": 87.1285,
+          "duration": 2,
+          "updatesPerformed": 1000
+        },
+        "Percentage Accuracy": true,
+        "High Usage Gradients": true,
+        "Token Overflow": {
+          "passed": true,
+          "actualPercentage": 125,
+          "clampedWidth": 100
+        },
+        "Rapid Updates Performance": {
+          "passed": true,
+          "duration": 12.802165985107422,
+          "updatesPerSecond": 781117.8211275231,
+          "finalTokens": 100000
+        }
+      }
+    },
+    {
+      "testSuite": "Cache Token Handling",
+      "passed": 7,
+      "total": 7,
+      "success": true,
+      "details": {
+        "Standard Message": true,
+        "Cache Read": true,
+        "Cache Write": true,
+        "Cache Read/Write": true,
+        "Large Cache Usage": true,
+        "Mixed Cache Messages": true,
+        "Missing Cache Fields": true
+      },
+      "recommendations": [
+        "CRITICAL: Current implementation only counts input + output tokens toward progress bar",
+        "Cache tokens are tracked but not included in usage percentage calculation",
+        "Consider if cache tokens should be counted differently (e.g., discounted rate)",
+        "Large cache usage scenarios may show misleadingly low progress percentages",
+        "Missing cache fields are handled gracefully with default values"
+      ]
+    },
+    {
+      "testSuite": "Missing Fields & Robustness",
+      "passed": 9,
+      "total": 9,
+      "success": true,
+      "details": {
+        "No Usage Field": true,
+        "Null/Undefined Usage": true,
+        "Missing Token Fields": true,
+        "Invalid Token Types": true,
+        "Negative Tokens": true,
+        "Special Number Values": true,
+        "Zero Tokens": true,
+        "Floating Point Tokens": true,
+        "Context Provider Error": true
+      },
+      "recommendations": [
+        "CRITICAL: Implement robust token extraction with fallbacks in UnifiedMessageProcessor",
+        "Add validation for token values before updating state",
+        "Handle string-to-number conversion gracefully",
+        "Provide meaningful warnings for malformed data",
+        "Consider implementing a TokenValidator utility class",
+        "Add error boundaries around TokenContextBar component"
+      ]
+    },
+    {
+      "testSuite": "Extreme Edge Cases",
+      "passed": 6,
+      "total": 6,
+      "success": true,
+      "details": {
+        "Percentage Overflow": true,
+        "Rapid Updates": {
+          "passed": true,
+          "performance": {
+            "duration": 27.93499994277954,
+            "updatesPerSecond": 1789869.34320448,
+            "memoryIncrease": 0
+          },
+          "stability": {
+            "errors": 0,
+            "corruptions": 0
+          }
+        },
+        "State Consistency": true,
+        "UI Rendering Edge Cases": true,
+        "Maximum Limits": true,
+        "Concurrent Updates": true
+      },
+      "recommendations": [
+        "CRITICAL: Progress bar width clamping works correctly for overflow scenarios",
+        "Performance is adequate for rapid updates but monitor memory usage",
+        "State consistency is maintained across different update patterns",
+        "UI handles extreme percentage values gracefully",
+        "System remains stable at maximum numeric limits",
+        "Consider implementing debouncing for very rapid updates",
+        "Add memory usage monitoring in production"
+      ]
+    }
+  ],
+  "timestamp": "2025-10-04T22:09:32.828Z"
+}

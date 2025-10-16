@@ -1,0 +1,199 @@
+# MDX Component Showcase
+
+Welcome to the **My Jarvis Desktop** MDX preview system! This document demonstrates our React components.
+
+## Task Progress Component
+
+Here's a live task progress tracker:
+
+<TaskProgress tasks={[
+  { name: "Setup Electron app", done: true },
+  { name: "Implement terminal integration", done: true },
+  { name: "Add MDX support", done: true },
+  { name: "Create custom components", done: true },
+  { name: "Test React components in MDX", done: false },
+  { name: "Build template system", done: false }
+]} />
+
+## Interactive Architecture Diagram
+
+Hover over the nodes to see the data flow connections light up:
+
+<ArchitectureDiagram />
+
+This custom diagram component shows:
+- **Interactive nodes** with hover effects
+- **Animated data flow** between components
+- **Theme-aware colors** that adapt to dark/light mode
+- **Icon integration** using Lucide React
+- **Pure React/SVG** - no external dependencies needed!
+
+## Agent Status Component
+
+Monitor your AI agents:
+
+<AgentStatus 
+  name="Desktop Architect" 
+  status="active" 
+  message="Building your knowledge amplification system"
+/>
+
+<AgentStatus 
+  name="File Worker" 
+  status="idle" 
+  message="Waiting for file operations"
+/>
+
+## Metric Cards
+
+<MetricCard 
+  title="Build Performance" 
+  value="1.4.0" 
+  label="Current Version"
+/>
+
+<MetricCard 
+  title="Terminal Sessions" 
+  value="2" 
+  label="Active Terminals"
+/>
+
+<MetricCard 
+  title="Files Loaded" 
+  value="42" 
+  label="In Current Session"
+/>
+
+## Rich Markdown Features
+
+### Code with Syntax Highlighting
+
+```typescript
+interface JarvisDesktop {
+  terminal: 'xterm.js';
+  preview: 'MDX';
+  framework: 'Electron + React 19';
+  status: 'working';
+}
+
+const features = {
+  dualTerminal: true,
+  fileExplorer: true,
+  mdxComponents: ['TaskProgress', 'AgentStatus', 'MetricCard'],
+  clickToRefresh: true
+};
+```
+
+### Tables
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Terminal Integration | ✅ | Full xterm.js with PTY |
+| MDX Preview | ✅ | React components in documents |
+| File Explorer | ✅ | Click-to-refresh system |
+| Voice Integration | 🚧 | Coming next |
+
+### Task Lists
+
+- [x] Electron setup complete
+- [x] React 19 with TypeScript
+- [x] MDX rendering system
+- [x] Custom React components
+- [ ] Live data binding
+- [ ] Component documentation
+
+### Blockquotes
+
+> "Amplify your capability, not your complexity."
+> 
+> My Jarvis Desktop brings AI collaboration directly to your desktop with beautiful, interactive documents.
+
+## Interactive Elements
+
+### Inline Styles (React JSX in MDX)
+
+<div style={{
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: '20px',
+  borderRadius: '12px',
+  color: 'white',
+  textAlign: 'center',
+  marginBottom: '20px'
+}}>
+  <h3 style={{ margin: '0 0 10px 0' }}>🚀 MDX is Working!</h3>
+  <p style={{ margin: 0 }}>This is a React component with inline styles rendered in MDX</p>
+</div>
+
+### Custom Component Testing
+
+<div className="custom-cards" style={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: '16px',
+  marginTop: '20px'
+}}>
+  <div className="feature-card" style={{
+    padding: '16px',
+    borderRadius: '8px',
+    border: '1px solid transparent'
+  }}>
+    <div style={{
+      padding: '16px',
+      background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(14, 165, 233, 0.05))',
+      borderLeft: '4px solid #0ea5e9',
+      borderRadius: '4px',
+      backdropFilter: 'blur(10px)'
+    }}>
+      <strong style={{ color: '#0ea5e9' }}>Feature Complete</strong>
+      <p style={{ marginTop: '8px', opacity: 0.9 }}>MDX rendering with React components</p>
+    </div>
+  </div>
+  <div className="progress-card" style={{
+    padding: '16px',
+    borderRadius: '8px',
+    border: '1px solid transparent'
+  }}>
+    <div style={{
+      padding: '16px',
+      background: 'linear-gradient(135deg, rgba(250, 204, 21, 0.1), rgba(250, 204, 21, 0.05))',
+      borderLeft: '4px solid #facc15',
+      borderRadius: '4px',
+      backdropFilter: 'blur(10px)'
+    }}>
+      <strong style={{ color: '#facc15' }}>In Progress</strong>
+      <p style={{ marginTop: '8px', opacity: 0.9 }}>Live data updates and bindings</p>
+    </div>
+  </div>
+  <div className="next-card" style={{
+    padding: '16px',
+    borderRadius: '8px',
+    border: '1px solid transparent'
+  }}>
+    <div style={{
+      padding: '16px',
+      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05))',
+      borderLeft: '4px solid #22c55e',
+      borderRadius: '4px',
+      backdropFilter: 'blur(10px)'
+    }}>
+      <strong style={{ color: '#22c55e' }}>Next Up</strong>
+      <p style={{ marginTop: '8px', opacity: 0.9 }}>Voice-driven document creation</p>
+    </div>
+  </div>
+</div>
+
+---
+
+## Summary
+
+This MDX file demonstrates that our system can:
+1. **Render custom React components** (TaskProgress, AgentStatus, MetricCard)
+2. **Support inline JSX** with styles and interactivity
+3. **Display rich markdown** with syntax highlighting
+4. **Mix content types** seamlessly
+
+The MDX preview system is fully operational and ready for building amazing interactive documents!
+
+---
+
+*Last updated: {new Date().toLocaleDateString()}*

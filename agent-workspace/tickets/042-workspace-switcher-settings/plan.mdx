@@ -1,0 +1,185 @@
+# Ticket #042: Workspace Switcher in Settings
+
+<TicketStack tickets={[
+  {
+    id: "042",
+    title: "Workspace Switcher in Settings",
+    status: "active",
+    confidence: 8,
+    productRequirements: `Add workspace switching capability to the Settings panel, allowing users to switch between My Jarvis workspace and My Jarvis Onboarding workspace.
+
+Key User Stories:
+- As a user, I want to switch between workspaces from the Settings panel
+- As a user, I want to see which workspace I'm currently in
+- As a user, I want the app to reload with the new workspace context when I switch
+
+Success Criteria:
+- Settings panel has a "Workspaces" section
+- Two workspace options displayed: "My Jarvis" and "My Jarvis Onboarding"
+- Clicking a workspace switches the working directory and reloads the file tree
+- Current workspace is visually indicated
+- App remembers selected workspace across restarts`,
+    architecture: `Settings Panel Extension:
+- Add "Workspaces" section to existing Settings component
+- Radio button or highlighted selection UI for workspace choice
+
+Workspace Registry:
+- Define workspace list with { name, displayName, path }
+- My Jarvis: /Users/erezfern/Workspace/my-jarvis
+- My Jarvis Onboarding: /Users/erezfern/Workspace/my-jarvis-onboarding
+
+State Management:
+- Move workingDirectory from hardcoded const to React state
+- Add workspace state to ChatPage component
+- Persist selected workspace to localStorage
+
+Switching Logic:
+- On workspace change:
+  1. Update workingDirectory state
+  2. Clear current messages/session
+  3. Trigger file tree reload
+  4. Save to localStorage
+
+File Changes:
+- app/components/ChatPage.tsx - Make workingDirectory stateful
+- app/components/Settings.tsx - Add workspace switcher UI
+- Potentially: shared/types.ts - Add workspace type definitions`,
+    implementation: [
+      { name: "Define workspace registry structure and data", done: true },
+      { name: "Convert workingDirectory to React state in ChatPage", done: true },
+      { name: "Add workspace state persistence to localStorage", done: true },
+      { name: "Create workspace switcher UI in Settings component", done: true },
+      { name: "Implement workspace switching logic with file tree reload", done: true },
+      { name: "Test switching between workspaces", done: true },
+      { name: "Test persistence across app restarts", done: true },
+    ],
+    nextAction: "Complete - workspace switching working, Claude runs in correct directory"
+  }
+]} />
+
+---
+
+## Implementation Plan
+
+### Phase 1: Data Structure & State Management
+
+#### 1.1 Define Workspace Registry
+Create workspace configuration:
+```typescript
+interface Workspace {
+  id: string;
+  displayName: string;
+  path: string;
+}
+
+const WORKSPACES: Workspace[] = [
+  {
+    id: 'my-jarvis',
+    displayName: 'My Jarvis',
+    path: '/Users/erezfern/Workspace/my-jarvis'
+  },
+  {
+    id: 'my-jarvis-onboarding',
+    displayName: 'My Jarvis Onboarding',
+    path: '/Users/erezfern/Workspace/my-jarvis-onboarding'
+  }
+];
+```
+
+#### 1.2 Convert to Stateful Working Directory
+In `ChatPage.tsx`:
+- Replace `const workingDirectory = "/Users/erezfern/Workspace/my-jarvis";` (line 38)
+- Add state: `const [workingDirectory, setWorkingDirectory] = useState<string>(getInitialWorkspace());`
+- Create `getInitialWorkspace()` helper that reads from localStorage or defaults to my-jarvis
+
+#### 1.3 Add Persistence
+```typescript
+const WORKSPACE_STORAGE_KEY = 'my-jarvis-current-workspace';
+
+function getInitialWorkspace(): string {
+  const saved = localStorage.getItem(WORKSPACE_STORAGE_KEY);
+  return saved || '/Users/erezfern/Workspace/my-jarvis';
+}
+
+function saveWorkspace(path: string) {
+  localStorage.setItem(WORKSPACE_STORAGE_KEY, path);
+}
+```
+
+### Phase 2: Settings UI
+
+#### 2.1 Add Workspaces Section to Settings
+In `Settings.tsx`, add new section after permission modes:
+```tsx
+<div className="mb-6">
+  <h3 className="text-sm font-semibold mb-3">Workspaces</h3>
+  <div className="space-y-2">
+    {WORKSPACES.map(workspace => (
+      <button
+        key={workspace.id}
+        onClick={() => handleWorkspaceSwitch(workspace.path)}
+        className={`w-full text-left p-3 rounded ${
+          currentWorkspace === workspace.path
+            ? 'bg-green-100 dark:bg-green-900'
+            : 'bg-gray-50 dark:bg-gray-800'
+        }`}
+      >
+        {workspace.displayName}
+      </button>
+    ))}
+  </div>
+</div>
+```
+
+### Phase 3: Switching Logic
+
+#### 3.1 Implement Workspace Switch Handler
+```typescript
+const handleWorkspaceSwitch = (newPath: string) => {
+  if (newPath === workingDirectory) return;
+
+  // 1. Save to localStorage
+  saveWorkspace(newPath);
+
+  // 2. Update state
+  setWorkingDirectory(newPath);
+
+  // 3. Clear current session
+  setMessages([]);
+  setSessionId(null);
+
+  // 4. Close settings
+  setShowSettings(false);
+
+  // 5. File tree reload should happen automatically via workingDirectory change
+};
+```
+
+#### 3.2 Pass Down to Settings Component
+Update Settings component props to receive:
+- `currentWorkingDirectory: string`
+- `onWorkspaceChange: (path: string) => void`
+
+### Phase 4: Testing
+
+- [ ] Verify workspace switch updates working directory
+- [ ] Verify file tree reloads with new workspace files
+- [ ] Verify messages clear on switch
+- [ ] Verify localStorage persistence
+- [ ] Verify app restart loads correct workspace
+- [ ] Test in both light and dark mode
+
+---
+
+## Technical Notes
+
+**File Tree Reload**: The file tree should automatically reload when `workingDirectory` changes because it's used in the `getEncodedName()` callback (line 53-70). Verify this works or add explicit reload logic.
+
+**Session State**: Ensure all session-related state clears on workspace switch to prevent context mixing.
+
+**Path Validation**: Consider adding validation to ensure workspace paths exist before switching.
+
+---
+
+## Version
+Created in My Jarvis Desktop session - October 2025
