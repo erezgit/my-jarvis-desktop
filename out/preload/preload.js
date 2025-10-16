@@ -35,6 +35,23 @@ if (process.contextIsolated) {
           return await electron.ipcRenderer.invoke("auth:sign-out");
         }
       },
+      // Terminal IPC methods
+      send: (channel, data) => {
+        const terminalChannels = ["terminal-create", "terminal-data", "terminal-resize"];
+        if (terminalChannels.includes(channel)) {
+          electron.ipcRenderer.send(channel, data);
+        }
+      },
+      on: (channel, func) => {
+        if (channel.startsWith("terminal-data-") || channel.startsWith("terminal-exit-")) {
+          electron.ipcRenderer.on(channel, (_event, ...args) => func(...args));
+        }
+      },
+      removeAllListeners: (channel) => {
+        if (channel.startsWith("terminal-data-") || channel.startsWith("terminal-exit-")) {
+          electron.ipcRenderer.removeAllListeners(channel);
+        }
+      },
       // IPC renderer for additional operations
       ipcRenderer: {
         invoke: async (channel, ...args) => {

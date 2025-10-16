@@ -19,6 +19,7 @@ const stream = require("stream");
 const crypto = require("crypto");
 const fs$1 = require("fs");
 const express = require("express");
+const pty = require("node-pty");
 function _interopNamespaceDefault(e) {
   const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
   if (e) {
@@ -40,6 +41,7 @@ const fs__namespace = /* @__PURE__ */ _interopNamespaceDefault(fs);
 const os__namespace = /* @__PURE__ */ _interopNamespaceDefault(os);
 const crypto__namespace = /* @__PURE__ */ _interopNamespaceDefault(crypto);
 const fs__namespace$1 = /* @__PURE__ */ _interopNamespaceDefault(fs$1);
+const pty__namespace = /* @__PURE__ */ _interopNamespaceDefault(pty);
 let handlersRegistered = false;
 const registerFileHandlers = (mainWindow) => {
   if (handlersRegistered) {
@@ -4106,6 +4108,63 @@ function registerDialogHandlers() {
   });
   console.log("[DIALOG] IPC handlers registered");
 }
+const terminals = {};
+const registerTerminalHandlers = (mainWindow) => {
+  electron.ipcMain.on("terminal-create", (event, id) => {
+    let shell;
+    let shellArgs = [];
+    if (os__namespace.platform() === "win32") {
+      shell = "powershell.exe";
+    } else {
+      shell = process.env.SHELL || "/bin/zsh";
+      shellArgs = ["-l"];
+    }
+    const ptyProcess = pty__namespace.spawn(shell, shellArgs, {
+      name: "xterm-256color",
+      cols: 80,
+      rows: 30,
+      cwd: process.env.HOME,
+      env: process.env
+    });
+    terminals[id] = ptyProcess;
+    ptyProcess.on("data", (data) => {
+      try {
+        event.reply("terminal-data-" + id, data);
+      } catch (error) {
+        if (error.code !== "EPIPE") {
+          console.error("[Terminal Handler] Error sending data:", error);
+        }
+      }
+    });
+    ptyProcess.on("exit", () => {
+      delete terminals[id];
+      try {
+        event.reply("terminal-exit-" + id);
+      } catch (error) {
+      }
+    });
+  });
+  electron.ipcMain.on("terminal-data", (event, { id, data }) => {
+    if (terminals[id]) {
+      terminals[id].write(data);
+    }
+  });
+  electron.ipcMain.on("terminal-resize", (event, { id, cols, rows }) => {
+    if (terminals[id]) {
+      terminals[id].resize(cols, rows);
+    }
+  });
+  mainWindow.on("closed", () => {
+    Object.keys(terminals).forEach((id) => {
+      try {
+        terminals[id].kill();
+      } catch (error) {
+      }
+      delete terminals[id];
+    });
+  });
+};
+let clientWin = null;
 let runtime = null;
 async function startServer() {
   console.log("Starting Claude WebUI server with jlongster cleanup pattern...");
@@ -4149,13 +4208,14 @@ electron.app.whenReady().then(async () => {
   await restoreSession();
   await startServer();
   await new Promise((resolve) => setTimeout(resolve, 1e3));
-  await createAppWindow();
+  clientWin = await createAppWindow();
+  registerTerminalHandlers(clientWin);
   electron.app.on("browser-window-created", (_, window) => {
     utils.optimizer.watchWindowShortcuts(window);
   });
   electron.app.on("activate", async function() {
     if (electron.BrowserWindow.getAllWindows().length === 0) {
-      await createAppWindow();
+      clientWin = await createAppWindow();
     }
   });
 });
