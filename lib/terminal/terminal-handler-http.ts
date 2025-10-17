@@ -3,9 +3,15 @@ import * as pty from 'node-pty'
 import * as os from 'os'
 import type { Server } from 'node:http'
 
+// Heartbeat configuration
+const HEARTBEAT_INTERVAL = 30000 // 30 seconds
+const HEARTBEAT_TIMEOUT = 10000  // 10 seconds
+
 interface TerminalSession {
   pty: pty.IPty
   ws: WSWebSocket
+  heartbeatInterval?: NodeJS.Timeout
+  heartbeatTimeout?: NodeJS.Timeout
 }
 
 /**
@@ -69,6 +75,9 @@ export class TerminalHandler {
       // Store terminal session
       this.terminals.set(termId, { pty: ptyProcess, ws })
 
+      // Setup heartbeat mechanism
+      this.setupHeartbeat(ws, termId)
+
       // Forward PTY output to WebSocket
       ptyProcess.on('data', (data) => {
         if (ws.readyState === WSWebSocket.OPEN) {
@@ -122,6 +131,7 @@ export class TerminalHandler {
       // Handle WebSocket close
       ws.on('close', () => {
         console.log('[Terminal] Connection closed:', termId)
+        this.cleanupHeartbeat(termId)
         ptyProcess.kill()
         this.terminals.delete(termId)
       })
@@ -143,10 +153,76 @@ export class TerminalHandler {
     return 'term-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
   }
 
+  /**
+   * Setup heartbeat mechanism for WebSocket connection
+   * Sends ping every 30 seconds, expects pong within 10 seconds
+   * Automatically closes zombie connections that don't respond
+   */
+  private setupHeartbeat(ws: WSWebSocket, termId: string) {
+    const session = this.terminals.get(termId)
+    if (!session) return
+
+    // Send ping every 30 seconds
+    const interval = setInterval(() => {
+      if (ws.readyState === WSWebSocket.OPEN) {
+        console.log(`[Terminal] Sending ping to ${termId}`)
+        ws.ping()
+
+        // Set timeout - if no pong in 10 seconds, connection is dead
+        const timeout = setTimeout(() => {
+          console.log(`[Terminal] No pong received from ${termId}, closing zombie connection`)
+          ws.terminate() // Force close without waiting for close handshake
+          this.cleanupHeartbeat(termId)
+          session.pty.kill()
+          this.terminals.delete(termId)
+        }, HEARTBEAT_TIMEOUT)
+
+        // Clear timeout when pong received
+        ws.once('pong', () => {
+          clearTimeout(timeout)
+          console.log(`[Terminal] Pong received from ${termId}`)
+        })
+
+        // Store timeout reference for cleanup
+        session.heartbeatTimeout = timeout
+      } else {
+        // Connection already closed, cleanup
+        console.log(`[Terminal] Connection already closed for ${termId}, cleaning up heartbeat`)
+        this.cleanupHeartbeat(termId)
+      }
+    }, HEARTBEAT_INTERVAL)
+
+    // Store interval reference for cleanup
+    session.heartbeatInterval = interval
+    console.log(`[Terminal] Heartbeat mechanism enabled for ${termId}`)
+  }
+
+  /**
+   * Clean up heartbeat timers for a terminal session
+   */
+  private cleanupHeartbeat(termId: string) {
+    const session = this.terminals.get(termId)
+    if (!session) return
+
+    if (session.heartbeatInterval) {
+      clearInterval(session.heartbeatInterval)
+      session.heartbeatInterval = undefined
+      console.log(`[Terminal] Cleared heartbeat interval for ${termId}`)
+    }
+
+    if (session.heartbeatTimeout) {
+      clearTimeout(session.heartbeatTimeout)
+      session.heartbeatTimeout = undefined
+    }
+  }
+
   close() {
     console.log('[Terminal] Shutting down...')
-    // Clean up all terminals
-    this.terminals.forEach(({ pty }) => pty.kill())
+    // Clean up all terminals and heartbeats
+    this.terminals.forEach((session, termId) => {
+      this.cleanupHeartbeat(termId)
+      session.pty.kill()
+    })
     this.terminals.clear()
     this.wss.close()
   }
