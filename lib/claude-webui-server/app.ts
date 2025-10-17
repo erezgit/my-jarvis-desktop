@@ -19,6 +19,7 @@ import { handleChatRequest } from "./handlers/chat.ts";
 import { handleAbortRequest } from "./handlers/abort.ts";
 import { handleFilesRequest, handleReadFileRequest } from "./handlers/files.ts";
 import { handleVoiceRequest } from "./handlers/voice.ts";
+import { handleUploadRequest } from "./handlers/upload.ts";
 import { logger } from "./utils/logger.ts";
 import { readBinaryFile } from "./utils/fs.ts";
 
@@ -81,6 +82,9 @@ export function createApp(
   );
 
   app.post("/api/chat", (c) => handleChatRequest(c, requestAbortControllers));
+
+  // Document upload route
+  app.post("/api/upload-document", (c) => handleUploadRequest(c));
 
   // File system API routes (for web mode)
   app.get("/api/files", (c) => handleFilesRequest(c));

@@ -27,9 +27,10 @@ import { voicePlayedTracker } from "../lib/voice-played-tracker";
 interface ChatPageProps {
   currentView: 'chat' | 'history';
   onViewChange: (view: 'chat' | 'history') => void;
+  onFileUploadReady?: (handler: (file: File) => void) => void;
 }
 
-export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
+export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatPageProps) {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
@@ -280,6 +281,50 @@ export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
     abortRequest(currentRequestId, isLoading, resetRequestState);
   }, [abortRequest, currentRequestId, isLoading, resetRequestState]);
 
+  const handleFileUpload = useCallback(async (file: File) => {
+    console.log('[FILE_UPLOAD] Starting upload:', file.name);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload-document', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      console.log('[FILE_UPLOAD] Success:', result);
+
+      // Add a system message to the chat
+      addMessage({
+        type: 'chat',
+        role: 'assistant',
+        content: `File "${file.name}" uploaded successfully to ${result.path}. You can now ask me to process it and create a knowledge base.`,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error('[FILE_UPLOAD] Error:', error);
+      addMessage({
+        type: 'chat',
+        role: 'assistant',
+        content: `Error uploading file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: Date.now(),
+      });
+    }
+  }, [addMessage]);
+
+  // Expose file upload handler to parent via callback
+  useEffect(() => {
+    if (onFileUploadReady) {
+      onFileUploadReady(handleFileUpload);
+    }
+  }, [onFileUploadReady, handleFileUpload]);
+
   // Permission request handlers
   const handlePermissionAllow = useCallback(() => {
     if (!permissionRequest) return;
@@ -454,6 +499,7 @@ export function ChatPage({ currentView, onViewChange }: ChatPageProps) {
             onInputChange={setInput}
             onSubmit={() => sendMessage()}
             onAbort={handleAbort}
+            onFileUpload={handleFileUpload}
             permissionMode={permissionMode}
             onPermissionModeChange={setPermissionMode}
             showPermissions={isPermissionMode}

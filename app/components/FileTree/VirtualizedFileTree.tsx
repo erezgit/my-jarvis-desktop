@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo, useImperativeHa
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
 import { JarvisOrb } from '../JarvisOrb'
+import { FileUploadButton } from '../chat/FileUploadButton'
 import { isElectronMode, isWebMode } from '@/app/config/deployment'
 
 interface FileItem {
@@ -21,6 +22,7 @@ interface FileItem {
 interface FileTreeProps {
   workingDirectory: string
   onFileSelect?: (file: FileItem) => void
+  onFileUpload?: (file: File) => void
   className?: string
 }
 
@@ -86,6 +88,7 @@ export interface FileTreeRef {
 export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   workingDirectory,
   onFileSelect,
+  onFileUpload,
   className
 }, ref) => {
   const [currentPath, setCurrentPath] = useState<string>('')
@@ -387,14 +390,22 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   return (
     <div className={cn("flex flex-col h-full bg-neutral-50 dark:bg-neutral-900", className)}>
       {/* Fixed header */}
-      <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0">
-        <JarvisOrb />
-        <button
-          onClick={selectNewDirectory}
-          className="text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
-        >
-          {folderName}
-        </button>
+      <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0 justify-between">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <JarvisOrb />
+          <button
+            onClick={selectNewDirectory}
+            className="text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left truncate"
+          >
+            {folderName}
+          </button>
+        </div>
+        {onFileUpload && (
+          <FileUploadButton
+            onFileSelect={onFileUpload}
+            disabled={false}
+          />
+        )}
       </div>
 
       {/* Error display */}

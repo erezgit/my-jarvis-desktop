@@ -4,6 +4,7 @@ import { UI_CONSTANTS, KEYBOARD_SHORTCUTS } from "../../utils/constants";
 import { useEnterBehavior, useSettings } from "../../hooks/useSettings";
 import { PermissionInputPanel } from "./PermissionInputPanel";
 import { PlanPermissionInputPanel } from "./PlanPermissionInputPanel";
+import { FileUploadButton } from "./FileUploadButton";
 import type { PermissionMode } from "../../types";
 
 interface PermissionData {
@@ -44,6 +45,7 @@ interface ChatInputProps {
   onInputChange: (value: string) => void;
   onSubmit: () => void;
   onAbort: () => void;
+  onFileUpload?: (file: File) => void;
   // Permission mode props
   permissionMode: PermissionMode;
   onPermissionModeChange: (mode: PermissionMode) => void;
@@ -59,6 +61,7 @@ export function ChatInput({
   onInputChange,
   onSubmit,
   onAbort,
+  onFileUpload,
   permissionMode,
   onPermissionModeChange,
   showPermissions = false,
@@ -227,6 +230,12 @@ export function ChatInput({
           disabled={isLoading}
         />
         <div className="absolute right-2 bottom-3 flex gap-2">
+          {onFileUpload && (
+            <FileUploadButton
+              onFileSelect={onFileUpload}
+              disabled={isLoading}
+            />
+          )}
           {isLoading && currentRequestId && (
             <button
               type="button"

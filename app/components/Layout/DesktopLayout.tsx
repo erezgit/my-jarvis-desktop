@@ -28,6 +28,7 @@ interface FileItem {
 interface DesktopLayoutProps {
   selectedFile: FileItem | null
   onFileSelect: (file: FileItem) => void
+  onFileUpload?: (file: File) => void
   chatInterface: React.ReactNode
   currentView: 'chat' | 'history'
   onChatClick: () => void
@@ -38,6 +39,7 @@ interface DesktopLayoutProps {
 export function DesktopLayout({
   selectedFile,
   onFileSelect,
+  onFileUpload,
   chatInterface,
   currentView,
   onChatClick,
@@ -137,6 +139,7 @@ export function DesktopLayout({
             ref={fileTreeRef}
             workingDirectory={workingDirectory}
             onFileSelect={onFileSelect}
+            onFileUpload={onFileUpload}
           />
         </Panel>
 

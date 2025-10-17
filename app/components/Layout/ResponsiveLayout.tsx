@@ -55,11 +55,16 @@ export function ResponsiveLayout() {
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [fileUploadHandler, setFileUploadHandler] = useState<((file: File) => void) | null>(null)
   const isDesktop = useIsDesktop()
 
   // Create chat element with currentView prop (re-creates when view changes)
   const chatElement = useMemo(() => (
-    <ChatPage currentView={currentView} onViewChange={setCurrentView} />
+    <ChatPage
+      currentView={currentView}
+      onViewChange={setCurrentView}
+      onFileUploadReady={(handler) => setFileUploadHandler(() => handler)}
+    />
   ), [currentView]);
 
   // ChatHeader callbacks - manage view state
@@ -75,6 +80,7 @@ export function ResponsiveLayout() {
         <DesktopLayout
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
+          onFileUpload={fileUploadHandler || undefined}
           chatInterface={chatElement}
           currentView={currentView}
           onChatClick={handleChatClick}
@@ -85,6 +91,7 @@ export function ResponsiveLayout() {
         <MobileLayout
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
+          onFileUpload={fileUploadHandler || undefined}
           chatInterface={chatElement}
           currentView={currentView}
           onChatClick={handleChatClick}
