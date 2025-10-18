@@ -102,6 +102,23 @@ export async function* readDir(path: string): AsyncIterable<DirectoryEntry> {
 }
 
 /**
+ * Write binary content to file
+ */
+export async function writeFile(
+  path: string,
+  content: Buffer | Uint8Array,
+): Promise<void> {
+  await fs.writeFile(path, content);
+}
+
+/**
+ * Ensure directory exists, creating it if necessary
+ */
+export async function ensureDir(path: string): Promise<void> {
+  await fs.mkdir(path, { recursive: true });
+}
+
+/**
  * Execute callback with a temporary directory that gets cleaned up
  */
 export async function withTempDir<T>(
