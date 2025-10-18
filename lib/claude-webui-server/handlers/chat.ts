@@ -147,7 +147,9 @@ export async function handleChatRequest(
     headers: {
       "Content-Type": "application/x-ndjson",
       "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      // CRITICAL FIX: Remove Connection: keep-alive to prevent zombie connections
+      // After streaming completes, connection should close to free up connection slots
+      // This prevents connection pool exhaustion (Fly.io 25 connection limit)
     },
   });
 }
