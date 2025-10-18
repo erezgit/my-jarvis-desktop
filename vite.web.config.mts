@@ -1,4 +1,5 @@
 import { resolve } from 'path'
+import { copyFileSync } from 'fs'
 import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
@@ -25,5 +26,17 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_DEPLOYMENT_MODE': JSON.stringify('web'),
   },
-  plugins: [tailwindcss(), react()],
+  plugins: [
+    tailwindcss(),
+    react(),
+    // Copy PDF.js worker to output directory
+    {
+      name: 'copy-pdf-worker',
+      closeBundle() {
+        const workerSrc = resolve(__dirname, 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs')
+        const workerDest = resolve(__dirname, 'out/renderer/pdf.worker.min.mjs')
+        copyFileSync(workerSrc, workerDest)
+      },
+    },
+  ],
 })
