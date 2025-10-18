@@ -300,6 +300,14 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
     if (onFileSelect) {
       // Read file content if it's a file
       if (!item.isDirectory) {
+        // Skip content loading for binary files like PDFs - they'll be streamed directly
+        const binaryExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.zip', '.tar', '.gz']
+        if (binaryExtensions.includes(item.extension.toLowerCase())) {
+          // Pass item without content - FilePreview will handle streaming
+          onFileSelect(item)
+          return
+        }
+
         try {
           let fileContent: string = ''
 
