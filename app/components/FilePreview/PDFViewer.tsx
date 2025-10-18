@@ -15,6 +15,7 @@ interface PDFViewerProps {
 export function PDFViewer({ fileUrl, fileName, className = '' }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
   const [scale, setScale] = useState(1.0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +32,35 @@ export function PDFViewer({ fileUrl, fileName, className = '' }: PDFViewerProps)
   }
 
   const goToPrevPage = () => {
-    setPageNumber((prev) => Math.max(1, prev - 1));
+    setPageNumber((prev) => {
+      const newPage = Math.max(1, prev - 1);
+      setPageInput(newPage.toString());
+      return newPage;
+    });
   };
 
   const goToNextPage = () => {
-    setPageNumber((prev) => Math.min(numPages || 1, prev + 1));
+    setPageNumber((prev) => {
+      const newPage = Math.min(numPages || 1, prev + 1);
+      setPageInput(newPage.toString());
+      return newPage;
+    });
+  };
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInput, 10);
+    if (!isNaN(page) && numPages) {
+      const validPage = Math.max(1, Math.min(page, numPages));
+      setPageNumber(validPage);
+      setPageInput(validPage.toString());
+    } else {
+      setPageInput(pageNumber.toString());
+    }
   };
 
   const zoomIn = () => {
@@ -81,9 +106,20 @@ export function PDFViewer({ fileUrl, fileName, className = '' }: PDFViewerProps)
           >
             Previous
           </button>
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">
-            {loading ? '...' : `Page ${pageNumber} of ${numPages || '?'}`}
-          </span>
+          <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">Page</span>
+            <input
+              type="text"
+              value={pageInput}
+              onChange={handlePageInputChange}
+              onBlur={handlePageInputSubmit}
+              disabled={loading}
+              className="w-12 px-2 py-1 text-sm text-center bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">
+              of {numPages || '?'}
+            </span>
+          </form>
           <button
             onClick={goToNextPage}
             disabled={!numPages || pageNumber >= numPages}
