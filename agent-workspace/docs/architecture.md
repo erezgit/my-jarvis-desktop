@@ -7,6 +7,263 @@
 - **Current Version**: 1.10.0
 - **Status**: ✅ Production-Ready AI Chat Application with Workspace Management
 
+## Git & SSH Configuration
+
+### SSH Key Setup (Required for Committing & Pushing)
+
+**SSH Key Location**: `/workspace/.ssh/`
+- Private key: `/workspace/.ssh/id_ed25519`
+- Public key: `/workspace/.ssh/id_ed25519.pub`
+- SSH config: `/workspace/.ssh/config`
+
+**Key Fingerprint**: `SHA256:zSMN1dRfGRVc8J6exCYGvXFXeo9jNqs0SxzwHxbOeH4`
+
+#### SSH Configuration File
+
+The SSH config at `/workspace/.ssh/config` is set up to use the custom SSH key location:
+
+```
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile /workspace/.ssh/id_ed25519
+    IdentitiesOnly yes
+    StrictHostKeyChecking accept-new
+```
+
+#### Git Configuration
+
+The repository is configured to use SSH with a custom config file path:
+
+```bash
+# Remote URL (SSH)
+git remote -v
+# origin  git@github.com:erezgit/my-jarvis-desktop.git (fetch)
+# origin  git@github.com:erezgit/my-jarvis-desktop.git (push)
+
+# SSH command configuration
+git config core.sshCommand "ssh -F /workspace/.ssh/config"
+```
+
+**Why custom SSH config path is needed**: SSH normally looks in `/root/.ssh/` by default, but our keys are in `/workspace/.ssh/`. The git config setting tells git to use our custom location.
+
+### Testing SSH Connection
+
+Before committing/pushing, verify SSH connection to GitHub:
+
+```bash
+# Test connection (should show success message)
+ssh -F /workspace/.ssh/config -T git@github.com
+
+# Expected output:
+# Hi erezgit! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+### Complete Commit & Push Workflow
+
+#### Step 1: Check Repository Status
+
+```bash
+cd /workspace/my-jarvis/projects/my-jarvis-desktop
+
+# Check current status
+git status
+
+# See recent commits
+git log --oneline -5
+
+# Check remote tracking
+git log --oneline --graph --all --decorate -10
+```
+
+#### Step 2: Stage Changes
+
+```bash
+# Stage specific files
+git add path/to/file1.tsx path/to/file2.ts
+
+# Or stage all changes
+git add .
+
+# Review staged changes
+git diff --cached
+```
+
+#### Step 3: Commit Changes
+
+```bash
+# Commit with message
+git commit -m "feat: Add new feature description
+
+Detailed explanation of changes if needed.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+**Commit Message Format**:
+- First line: Type + brief description (e.g., `feat:`, `fix:`, `chore:`)
+- Blank line
+- Detailed explanation (optional)
+- Blank line
+- Claude Code attribution (standard)
+
+#### Step 4: Handle Diverged Branches (If Needed)
+
+If your branch and origin have diverged:
+
+```bash
+# Check divergence
+git status
+# Output: "Your branch and 'origin/main' have diverged..."
+
+# Option 1: Pull with rebase (creates linear history)
+git pull --rebase origin main
+
+# Option 2: Pull with merge (creates merge commit)
+git pull origin main
+```
+
+**Rebase vs Merge**:
+- **Rebase**: Puts your commits on top of remote commits (cleaner history)
+- **Merge**: Creates a merge commit (preserves parallel development)
+
+**When to use rebase**:
+- Your commits haven't been pushed yet
+- You want a clean linear history
+- No conflicts expected
+
+#### Step 5: Push to GitHub
+
+```bash
+# Push to remote
+git push origin main
+
+# Expected output:
+# To github.com:erezgit/my-jarvis-desktop.git
+#    abc1234..def5678  main -> main
+```
+
+### Common Git Operations
+
+#### Amending Last Commit
+
+```bash
+# Add forgotten changes to last commit
+git add forgotten-file.ts
+git commit --amend --no-edit
+
+# Or amend commit message
+git commit --amend -m "Updated commit message"
+```
+
+**⚠️ Warning**: Only amend commits that haven't been pushed yet!
+
+#### Stashing Changes
+
+```bash
+# Save current changes temporarily
+git stash
+
+# List stashed changes
+git stash list
+
+# Apply most recent stash
+git stash pop
+
+# Apply specific stash
+git stash apply stash@{0}
+```
+
+#### Viewing History
+
+```bash
+# Graphical log
+git log --oneline --graph --all --decorate
+
+# Show file changes in commit
+git show --stat <commit-hash>
+
+# Show full diff for commit
+git show <commit-hash>
+```
+
+#### Undoing Changes
+
+```bash
+# Discard uncommitted changes to file
+git restore path/to/file.ts
+
+# Unstage file (keep changes)
+git restore --staged path/to/file.ts
+
+# Discard all uncommitted changes
+git restore .
+```
+
+### Troubleshooting
+
+#### SSH Connection Fails
+
+**Problem**: `Permission denied (publickey)`
+
+**Solution**:
+1. Verify SSH key is added to GitHub account
+2. Check key fingerprint matches:
+   ```bash
+   ssh-keygen -lf /workspace/.ssh/id_ed25519.pub
+   # Should show: SHA256:zSMN1dRfGRVc8J6exCYGvXFXeo9jNqs0SxzwHxbOeH4
+   ```
+3. Test with verbose output:
+   ```bash
+   ssh -F /workspace/.ssh/config -vvv -T git@github.com
+   ```
+
+#### Can't Push - "Updates were rejected"
+
+**Problem**: Remote has commits you don't have
+
+**Solution**:
+```bash
+# Pull latest changes first
+git pull --rebase origin main
+
+# Then push
+git push origin main
+```
+
+#### Merge Conflicts During Pull
+
+**Problem**: Conflicting changes in same files
+
+**Solution**:
+1. Git will mark conflict files
+2. Edit files to resolve conflicts (look for `<<<<<<<`, `=======`, `>>>>>>>`)
+3. Stage resolved files:
+   ```bash
+   git add resolved-file.ts
+   ```
+4. Continue rebase:
+   ```bash
+   git rebase --continue
+   ```
+5. Push changes:
+   ```bash
+   git push origin main
+   ```
+
+### Best Practices
+
+1. **Pull before starting work**: Always `git pull` to get latest changes
+2. **Commit often**: Make small, focused commits
+3. **Test before committing**: Verify code works before committing
+4. **Write clear commit messages**: Describe what and why, not how
+5. **Review before pushing**: Use `git log` and `git diff` to review
+6. **Keep commits atomic**: One logical change per commit
+7. **Don't commit node_modules**: They're in .gitignore
+8. **Branch for experiments**: Use feature branches for major changes
+
 ## Overview
 My Jarvis Desktop is a production-ready AI-powered Electron desktop application featuring a sophisticated **three-panel IDE-like interface** with integrated Claude AI capabilities. The application combines a file tree browser, file preview system, and Claude chat interface in a responsive, resizable layout. Built on the claude-code-webui foundation with extensive customizations, it provides comprehensive AI assistance with voice message support, environment isolation, and cross-platform deployment capabilities.
 

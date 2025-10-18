@@ -1,5 +1,6 @@
 import { MarkdownRenderer } from './mdx/MarkdownRenderer';
 import { MDXRenderer } from './mdx/MDXRenderer';
+import { PDFViewer } from './PDFViewer';
 
 interface FileItem {
   name: string;
@@ -60,17 +61,15 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
 
   // Handle different file types based on extension
 
-  // PDF files - use streaming endpoint to avoid loading entire file into memory
+  // PDF files - use react-pdf viewer with streaming support
   if (file.extension === '.pdf') {
     const streamUrl = `/api/stream-file?path=${encodeURIComponent(file.path)}`;
     return (
-      <div className={`h-full w-full bg-white dark:bg-gray-900 ${className}`}>
-        <iframe
-          src={streamUrl}
-          className="w-full h-full border-0"
-          title={`PDF Preview: ${file.name}`}
-        />
-      </div>
+      <PDFViewer
+        fileUrl={streamUrl}
+        fileName={file.name}
+        className={className}
+      />
     );
   }
 

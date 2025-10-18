@@ -6,7 +6,7 @@ import { stat } from "node:fs/promises";
 
 /**
  * Stream a file from the workspace without loading it into memory
- * This prevents OOM crashes when serving large PDFs or other files
+ * Supports HTTP range requests for progressive PDF loading
  */
 export async function handleStreamFileRequest(c: Context<ConfigContext>) {
   try {
@@ -23,23 +23,52 @@ export async function handleStreamFileRequest(c: Context<ConfigContext>) {
 
     // Get file stats for content length
     const fileStats = await stat(filePath);
+    const fileSize = fileStats.size;
 
     // Determine content type based on extension
     const ext = filePath.split('.').pop()?.toLowerCase();
     const contentType = getContentType(ext || '');
 
-    logger.app.info(`Streaming file: ${filePath} (${fileStats.size} bytes)`);
+    // Check if range request
+    const range = c.req.header('Range');
 
-    // Create read stream
-    const stream = createReadStream(filePath);
+    if (range) {
+      // Parse range header (format: "bytes=start-end")
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunkSize = (end - start) + 1;
 
-    // Set headers
-    c.header('Content-Type', contentType);
-    c.header('Content-Length', fileStats.size.toString());
-    c.header('Accept-Ranges', 'bytes');
+      logger.app.info(`Streaming file range: ${filePath} (${start}-${end}/${fileSize})`);
 
-    // Stream the file
-    return c.body(stream as any);
+      // Create read stream with range
+      const stream = createReadStream(filePath, { start, end });
+
+      // Set headers for partial content
+      c.header('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+      c.header('Accept-Ranges', 'bytes');
+      c.header('Content-Length', chunkSize.toString());
+      c.header('Content-Type', contentType);
+
+      // CORS headers for cross-origin requests
+      c.header('Access-Control-Expose-Headers', 'Accept-Ranges, Content-Range, Content-Length, Content-Encoding');
+
+      // Return 206 Partial Content
+      return c.body(stream as any, 206);
+    } else {
+      // Normal full file request
+      logger.app.info(`Streaming file: ${filePath} (${fileSize} bytes)`);
+
+      const stream = createReadStream(filePath);
+
+      // Set headers for full content
+      c.header('Content-Type', contentType);
+      c.header('Content-Length', fileSize.toString());
+      c.header('Accept-Ranges', 'bytes');
+      c.header('Access-Control-Expose-Headers', 'Accept-Ranges, Content-Length');
+
+      return c.body(stream as any);
+    }
   } catch (error) {
     logger.app.error("Stream file error: {error}", { error });
     return c.json({
