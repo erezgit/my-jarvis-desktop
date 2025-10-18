@@ -59,6 +59,20 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
   }
 
   // Handle different file types based on extension
+
+  // PDF files - use iframe with browser's built-in PDF viewer
+  if (file.extension === '.pdf') {
+    return (
+      <div className={`h-full w-full bg-white dark:bg-gray-900 ${className}`}>
+        <iframe
+          src={file.path}
+          className="w-full h-full border-0"
+          title={`PDF Preview: ${file.name}`}
+        />
+      </div>
+    );
+  }
+
   if (file.content) {
     // Rich markdown rendering
     if (file.extension === '.md') {
