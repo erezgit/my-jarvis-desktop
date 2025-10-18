@@ -58,6 +58,21 @@ async function main(runtime: NodeRuntime) {
   });
 }
 
+// Global error handlers to prevent server crashes
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  // Don't exit - log and continue
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error);
+  // Don't exit - log and continue (unless it's a critical error)
+  if (error.message?.includes("EADDRINUSE") || error.message?.includes("EACCES")) {
+    console.error("💥 Critical error - server cannot continue");
+    exit(1);
+  }
+});
+
 // Run the application
 const runtime = new NodeRuntime();
 main(runtime).catch((error) => {

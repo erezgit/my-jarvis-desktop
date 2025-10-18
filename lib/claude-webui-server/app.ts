@@ -59,7 +59,17 @@ export function createApp(
     }),
   );
 
-  // API routes
+  // Health check endpoints
+  // Fly.io health check endpoint (simpler path)
+  app.get("/health", (c) => {
+    return c.json({
+      status: "ok",
+      timestamp: Date.now(),
+      uptime: process.uptime()
+    });
+  });
+
+  // API health check endpoint (for frontend)
   app.get("/api/health", (c) => {
     return c.json({
       status: "ok",
