@@ -13,9 +13,9 @@ export async function handleUploadRequest(c: Context<ConfigContext>) {
       return c.json({ error: 'No file provided' }, 400);
     }
 
-    // Get workspace directory (use cwd as workspace root)
+    // Save files to my-jarvis/docs directory (fixed path)
     const workspaceRoot = process.cwd();
-    const uploadsDir = join(workspaceRoot, 'workspace', 'uploads');
+    const uploadsDir = join(workspaceRoot, 'my-jarvis', 'docs');
 
     // Ensure uploads directory exists
     await ensureDir(uploadsDir);
