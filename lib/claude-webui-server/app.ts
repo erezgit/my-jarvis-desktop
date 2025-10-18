@@ -135,6 +135,21 @@ export function createApp(
   });
   app.use("/assets/*", serveStatic);
 
+  // Serve PDF.js worker with correct MIME type
+  app.get("/pdf.worker.min.mjs", async (c) => {
+    try {
+      const workerPath = `${config.staticPath}/pdf.worker.min.mjs`;
+      const workerFile = await readBinaryFile(workerPath);
+      return c.body(workerFile, 200, {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=31536000",
+      });
+    } catch (error) {
+      logger.app.error("Error serving PDF worker: {error}", { error });
+      return c.text("Not found", 404);
+    }
+  });
+
   // SPA fallback - serve index.html for all unmatched routes (except API routes)
   app.get("*", async (c) => {
     const path = c.req.path;
