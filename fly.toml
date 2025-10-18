@@ -20,9 +20,9 @@ primary_region = "sjc"
   processes = ["app"]
 
   [http_service.concurrency]
-    type = "connections"
-    hard_limit = 25
-    soft_limit = 20
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
 
 [[services]]
   internal_port = 3001
