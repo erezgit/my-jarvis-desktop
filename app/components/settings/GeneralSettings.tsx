@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useSettings } from "../../hooks/useSettings";
 import { AuthButton } from "../AuthButton";
+import { isWebMode } from "@/app/config/deployment";
 
 interface GeneralSettingsProps {
   workingDirectory?: string;
@@ -209,31 +210,106 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
                 Workspace Directory
               </label>
-              <div className="space-y-2">
-                {/* Current workspace display */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg">
-                  <FolderIcon className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      Current Workspace
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 truncate" title={workingDirectory}>
-                      {workingDirectory || 'No workspace selected'}
-                    </div>
+
+              {isWebMode() ? (
+                // Web mode: Show radio button selector
+                <div className="space-y-2">
+                  {/* Workspace option */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onWorkspaceChange('/workspace')}
+                      className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
+                      role="radio"
+                      aria-checked={workingDirectory === '/workspace'}
+                      aria-label="Workspace - Root workspace directory"
+                    >
+                      <FolderIcon className="w-5 h-5 text-green-500" />
+                      <div>
+                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                          Workspace
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          Root workspace directory (/workspace)
+                        </div>
+                      </div>
+                      <div className="ml-auto">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          workingDirectory === '/workspace'
+                            ? 'bg-green-500 border-green-500'
+                            : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                          {workingDirectory === '/workspace' && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* My Jarvis option */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onWorkspaceChange('/workspace/my-jarvis')}
+                      className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
+                      role="radio"
+                      aria-checked={workingDirectory === '/workspace/my-jarvis'}
+                      aria-label="My Jarvis - My Jarvis project directory"
+                    >
+                      <FolderIcon className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                          My Jarvis
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          My Jarvis project directory (/workspace/my-jarvis)
+                        </div>
+                      </div>
+                      <div className="ml-auto">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          workingDirectory === '/workspace/my-jarvis'
+                            ? 'bg-blue-500 border-blue-500'
+                            : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                          {workingDirectory === '/workspace/my-jarvis' && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
+              ) : (
+                // Electron mode: Show directory picker
+                <div className="space-y-2">
+                  {/* Current workspace display */}
+                  <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg">
+                    <FolderIcon className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        Current Workspace
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate" title={workingDirectory}>
+                        {workingDirectory || 'No workspace selected'}
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Change workspace button */}
-                <button
-                  onClick={handleSelectWorkspace}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 text-blue-700 dark:text-blue-300"
-                >
-                  <FolderIcon className="w-5 h-5" />
-                  <span className="text-sm font-medium">Change Workspace</span>
-                </button>
-              </div>
+                  {/* Change workspace button */}
+                  <button
+                    onClick={handleSelectWorkspace}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 text-blue-700 dark:text-blue-300"
+                  >
+                    <FolderIcon className="w-5 h-5" />
+                    <span className="text-sm font-medium">Change Workspace</span>
+                  </button>
+                </div>
+              )}
+
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Select a directory to use as your workspace. All projects and files will be managed within this directory. Changing workspace will clear the current session.
+                {isWebMode()
+                  ? "Select which directory to display in the file tree. Claude Code will continue to run from /workspace."
+                  : "Select a directory to use as your workspace. All projects and files will be managed within this directory. Changing workspace will clear the current session."
+                }
               </div>
             </div>
           )}
