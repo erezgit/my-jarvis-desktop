@@ -20,6 +20,7 @@ import { handleAbortRequest } from "./handlers/abort.ts";
 import { handleFilesRequest, handleReadFileRequest } from "./handlers/files.ts";
 import { handleVoiceRequest } from "./handlers/voice.ts";
 import { handleUploadRequest } from "./handlers/upload.ts";
+import { handleStreamFileRequest } from "./handlers/stream-file.ts";
 import { logger } from "./utils/logger.ts";
 import { readBinaryFile } from "./utils/fs.ts";
 
@@ -89,6 +90,9 @@ export function createApp(
   // File system API routes (for web mode)
   app.get("/api/files", (c) => handleFilesRequest(c));
   app.get("/api/files/read", (c) => handleReadFileRequest(c));
+
+  // File streaming route (streams files without loading into memory)
+  app.get("/api/stream-file", (c) => handleStreamFileRequest(c));
 
   // Voice file API route (for web mode)
   app.get("/api/voice/:filename", (c) => handleVoiceRequest(c));

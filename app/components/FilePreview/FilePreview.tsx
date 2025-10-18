@@ -60,12 +60,13 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
 
   // Handle different file types based on extension
 
-  // PDF files - use iframe with browser's built-in PDF viewer
+  // PDF files - use streaming endpoint to avoid loading entire file into memory
   if (file.extension === '.pdf') {
+    const streamUrl = `/api/stream-file?path=${encodeURIComponent(file.path)}`;
     return (
       <div className={`h-full w-full bg-white dark:bg-gray-900 ${className}`}>
         <iframe
-          src={file.path}
+          src={streamUrl}
           className="w-full h-full border-0"
           title={`PDF Preview: ${file.name}`}
         />
