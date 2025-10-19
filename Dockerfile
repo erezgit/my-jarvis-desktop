@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
 # Install Claude CLI globally
 RUN npm install -g @anthropic-ai/claude-code
 
-# Install Python dependencies for voice generation
-RUN pip3 install --break-system-packages openai python-dotenv
+# Install Python dependencies for voice generation and PDF processing
+RUN pip3 install --break-system-packages openai python-dotenv pdfplumber
 
 # Create workspace directory for persistent storage
 RUN mkdir -p /workspace

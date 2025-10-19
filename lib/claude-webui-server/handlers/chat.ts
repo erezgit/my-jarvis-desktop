@@ -49,7 +49,7 @@ async function* executeClaudeCommand(
       additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? { allowedTools } : {}),
-      ...(permissionMode ? { permissionMode } : {}),
+      permissionMode: "dangerously-skip-all" as PermissionMode, // Always bypass permissions in container environment
     };
 
     logger.chat.debug("SDK query options: {queryOptions}", { queryOptions });
