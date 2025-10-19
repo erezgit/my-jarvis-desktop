@@ -1,0 +1,46 @@
+[DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.7223.1760858881243
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32299 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.7223.1760858881243 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.7223.1760858881247
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32299 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.7223.1760858881247 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Looking for shell config file: /root/.bashrc
+[DEBUG] Snapshots directory: /workspace/.claude/shell-snapshots
+[DEBUG] Creating snapshot at: /workspace/.claude/shell-snapshots/snapshot-bash-1760858881346-hhxurf.sh
+[DEBUG] Shell binary exists: true
+[DEBUG] Execution timeout: 10000ms
+[DEBUG] Writing to temp file: /workspace/.claude/todos/019c492b-7a09-4e76-92ea-1b1f7d9a7c79-agent-019c492b-7a09-4e76-92ea-1b1f7d9a7c79.json.tmp.7223.1760858881352
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /workspace/.claude/todos/019c492b-7a09-4e76-92ea-1b1f7d9a7c79-agent-019c492b-7a09-4e76-92ea-1b1f7d9a7c79.json.tmp.7223.1760858881352 to /workspace/.claude/todos/019c492b-7a09-4e76-92ea-1b1f7d9a7c79-agent-019c492b-7a09-4e76-92ea-1b1f7d9a7c79.json
+[DEBUG] File /workspace/.claude/todos/019c492b-7a09-4e76-92ea-1b1f7d9a7c79-agent-019c492b-7a09-4e76-92ea-1b1f7d9a7c79.json written atomically
+[DEBUG] Registered 0 hooks from 0 plugins
+[DEBUG] Loading skills from directories: managed=/etc/claude-code/.claude/skills, user=/workspace/.claude/skills, project=/workspace/.claude/skills
+[DEBUG] Total plugin agents loaded: 0
+[DEBUG] Loaded 0 skills total (managed: 0, user: 0, project: 0)
+[DEBUG] Total plugin commands loaded: 0
+[DEBUG] Total plugin skills loaded: 0
+[DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/usr/local/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg)
+[DEBUG] Shell snapshot created successfully (1690 bytes)
+[DEBUG] Summarizing last 5 of 492 messages (~127012 tokens)
+[ERROR] "AxiosError: AxiosError: Request failed with status code 401\n    at AO (file:///usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js:24:1136)\n    at IncomingMessage.<anonymous> (file:///usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js:29:9845)\n    at IncomingMessage.emit (node:events:536:35)\n    at IncomingMessage.emit (node:domain:489:12)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)\n    at H81.request (file:///usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js:31:2129)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async UMA (file:///usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js:280:34283)"
+[DEBUG] Failed to fetch Grove notice config: AxiosError: Request failed with status code 401
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.7223.1760858881690
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32299 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.7223.1760858881690 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Slash commands included in SlashCommand tool:
+[DEBUG] Executing hooks for SessionStart:resume
+[DEBUG] Getting matching hook commands for SessionStart with query: resume
+[DEBUG] Found 0 hook matchers in settings
+[DEBUG] Matched 0 unique hooks for query "resume" (0 before deduplication)
+[DEBUG] Found 0 hook commands to execute

@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Distribution files (build outputs)
+dist/
+build/
+out/
+# Only ignore specific build outputs, not the entire lib directory
+lib/main/
+lib/preload/
+lib/utils/
+lib/conveyor/
+
+# Deployment artifacts (should only exist in project directories, not workspace root)
+/app/
+/lib/
+/node_modules/
+/.dockerignore
+/.env.development
+/.env.production
+/docker-compose.yml
+/Dockerfile
+/electron-builder.yml
+/electron.vite.config.ts
+/fly.toml
+/package.json
+/package-lock.json
+/tsconfig*.json
+/vite*.config.*
+/postcss.config.*
+/tailwind.config.*
+/render.yaml
+
+# Development files
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+Thumbs.db
+
+# Environment files with secrets
+tools/config/.env

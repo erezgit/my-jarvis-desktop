@@ -1,0 +1,150 @@
+[DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Looking for shell config file: /root/.bashrc
+[DEBUG] Snapshots directory: /workspace/.claude/shell-snapshots
+[DEBUG] Creating snapshot at: /workspace/.claude/shell-snapshots/snapshot-bash-1760608315166-5p24nx.sh
+[DEBUG] Shell binary exists: true
+[DEBUG] Execution timeout: 10000ms
+[DEBUG] Writing to temp file: /workspace/.claude/todos/a393de84-0139-4cf0-b449-89dfa2b8a5ab-agent-a393de84-0139-4cf0-b449-89dfa2b8a5ab.json.tmp.708.1760608315172
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /workspace/.claude/todos/a393de84-0139-4cf0-b449-89dfa2b8a5ab-agent-a393de84-0139-4cf0-b449-89dfa2b8a5ab.json.tmp.708.1760608315172 to /workspace/.claude/todos/a393de84-0139-4cf0-b449-89dfa2b8a5ab-agent-a393de84-0139-4cf0-b449-89dfa2b8a5ab.json
+[DEBUG] File /workspace/.claude/todos/a393de84-0139-4cf0-b449-89dfa2b8a5ab-agent-a393de84-0139-4cf0-b449-89dfa2b8a5ab.json written atomically
+[DEBUG] Registered 0 hooks from 0 plugins
+[DEBUG] Loading skills from directories: managed=/etc/claude-code/.claude/skills, user=/workspace/.claude/skills, project=/root/.claude/skills
+[DEBUG] Total plugin agents loaded: 0
+[DEBUG] Loaded 0 skills total (managed: 0, user: 0, project: 0)
+[DEBUG] Total plugin commands loaded: 0
+[DEBUG] Total plugin skills loaded: 0
+[DEBUG] Ripgrep first use test: PASSED (mode=builtin, path=/usr/local/lib/node_modules/@anthropic-ai/claude-code/vendor/ripgrep/x64-linux/rg)
+[DEBUG] Shell snapshot created successfully (1690 bytes)
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608315781
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 302 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608315781 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608315786
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 332 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608315786 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608315850
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 30937 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608315850 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608316715
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 30937 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608316715 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608316718
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 30937 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608316718 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] BigQuery metrics exporter flush complete
+[DEBUG] Telemetry flushed successfully
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608331086
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 30937 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608331086 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608331089
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 30937 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608331089 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608331233
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31207 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608331233 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608331529
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31304 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608331529 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608331534
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31342 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608331534 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608331926
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31365 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608331926 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Getting matching hook commands for Notification with query: undefined
+[DEBUG] Found 0 hook matchers in settings
+[DEBUG] Matched 0 unique hooks for query "no match query" (0 before deduplication)
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608333742
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31436 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608333742 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608334888
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31467 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608334888 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608334891
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31487 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608334891 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Executing hooks for SessionStart:startup
+[DEBUG] Getting matching hook commands for SessionStart with query: startup
+[DEBUG] Found 0 hook matchers in settings
+[DEBUG] Matched 0 unique hooks for query "startup" (0 before deduplication)
+[DEBUG] Found 0 hook commands to execute
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608334964
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31487 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608334964 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608334968
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31523 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608334968 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608334971
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 31974 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608334971 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] AutoUpdaterWrapper: Installation type: npm-global, using native: false
+[DEBUG] performStartupChecks called, ENABLE_PLUGINS=true
+[DEBUG] Trust not accepted for current directory - skipping plugin installations
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608334993
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32079 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608334993 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Slash commands included in SlashCommand tool:
+[DEBUG] Loaded plugins - Enabled: 0, Disabled: 0, Commands: 0, Agents: 0, Errors: 0
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.708.1760608335108
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32079 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.708.1760608335108 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] AutoUpdater: Detected installation type: npm-global
+[DEBUG] AutoUpdater: Using global update method
