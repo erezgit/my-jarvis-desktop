@@ -39,14 +39,9 @@ async function* executeClaudeCommand(
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
-    // Log the full options being passed to SDK
+    // Build SDK options according to official documentation
     const queryOptions = {
-      abortController,
-      executable: "node" as const, // Use "node" to let SDK find it in PATH (works for both Electron and Docker)
-      executableArgs: [],
-      pathToClaudeCodeExecutable: cliPath,
-      cwd: workingDirectory, // Set working directory for Claude CLI process
-      additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
+      cwd: workingDirectory, // Working directory for Claude CLI process
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? { allowedTools } : {}),
       permissionMode: "bypassPermissions" as PermissionMode, // Always bypass permissions in container environment
