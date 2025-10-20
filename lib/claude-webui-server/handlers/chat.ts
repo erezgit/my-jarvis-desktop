@@ -39,12 +39,15 @@ async function* executeClaudeCommand(
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
-    // Build SDK options according to official documentation
+    // Build SDK options with all documented parameters from sdk.d.ts
     const queryOptions = {
       cwd: workingDirectory, // Working directory for Claude CLI process
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? { allowedTools } : {}),
       permissionMode: "bypassPermissions" as PermissionMode, // Always bypass permissions in container environment
+      executable: "node" as const, // Specify Node.js runtime for CLI subprocess (from Options.executable)
+      pathToClaudeCodeExecutable: cliPath, // Path to Claude Code CLI binary (from Options.pathToClaudeCodeExecutable)
+      abortController, // Pass abort controller for cancellation support (from Options.abortController)
     };
 
     logger.chat.debug("SDK query options: {queryOptions}", { queryOptions });
