@@ -10,5 +10,5 @@ export FLY_API_TOKEN="FlyV1 fm2_lJPECAAAAAAACWXAxBD4wZLjdy0KH/gHVY07T1amwrVodHRw
 if [ "$1" == "scale" ]; then
     /root/.fly/bin/flyctl scale memory 2048 --app my-jarvis-erez-dev
 else
-    /root/.fly/bin/flyctl deploy --app my-jarvis-erez-dev --update-only
+    /root/.fly/bin/flyctl deploy --app my-jarvis-erez-dev
 fi

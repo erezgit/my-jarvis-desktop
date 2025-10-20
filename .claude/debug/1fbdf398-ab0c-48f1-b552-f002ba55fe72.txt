@@ -1,0 +1,35 @@
+[DEBUG] Found 0 plugins (0 enabled, 0 disabled)
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.23359.1760981761406
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32888 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.23359.1760981761406 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Writing to temp file: /workspace/.claude/.claude.json.tmp.23359.1760981761410
+[DEBUG] Preserving file permissions: 100600
+[DEBUG] Temp file written successfully, size: 32888 bytes
+[DEBUG] Applied original permissions to temp file
+[DEBUG] Renaming /workspace/.claude/.claude.json.tmp.23359.1760981761410 to /workspace/.claude/.claude.json
+[DEBUG] File /workspace/.claude/.claude.json written atomically
+[DEBUG] Creating shell snapshot for bash (/bin/bash)
+[DEBUG] Looking for shell config file: /root/.bashrc
+[DEBUG] Snapshots directory: /workspace/.claude/shell-snapshots
+[DEBUG] Creating snapshot at: /workspace/.claude/shell-snapshots/snapshot-bash-1760981761622-4u9o8e.sh
+[DEBUG] Shell binary exists: true
+[DEBUG] Execution timeout: 10000ms
+[DEBUG] Writing to temp file: /workspace/.claude/todos/1fbdf398-ab0c-48f1-b552-f002ba55fe72-agent-1fbdf398-ab0c-48f1-b552-f002ba55fe72.json.tmp.23359.1760981761628
+[DEBUG] Temp file written successfully, size: 2 bytes
+[DEBUG] Renaming /workspace/.claude/todos/1fbdf398-ab0c-48f1-b552-f002ba55fe72-agent-1fbdf398-ab0c-48f1-b552-f002ba55fe72.json.tmp.23359.1760981761628 to /workspace/.claude/todos/1fbdf398-ab0c-48f1-b552-f002ba55fe72-agent-1fbdf398-ab0c-48f1-b552-f002ba55fe72.json
+[DEBUG] File /workspace/.claude/todos/1fbdf398-ab0c-48f1-b552-f002ba55fe72-agent-1fbdf398-ab0c-48f1-b552-f002ba55fe72.json written atomically
+[DEBUG] Registered 0 hooks from 0 plugins
+[DEBUG] Loading skills from directories: managed=/etc/claude-code/.claude/skills, user=/workspace/.claude/skills, project=/workspace/.claude/skills
+[DEBUG] Total plugin agents loaded: 0
+[DEBUG] Loaded 0 skills total (managed: 0, user: 0, project: 0)
+[DEBUG] Total plugin commands loaded: 0
+[DEBUG] Total plugin skills loaded: 0
+[DEBUG] Shell snapshot created successfully (1690 bytes)
+[DEBUG] Executing hooks for SessionStart:resume
+[DEBUG] Getting matching hook commands for SessionStart with query: resume
+[DEBUG] Found 0 hook matchers in settings
+[DEBUG] Matched 0 unique hooks for query "resume" (0 before deduplication)
+[DEBUG] Found 0 hook commands to execute
