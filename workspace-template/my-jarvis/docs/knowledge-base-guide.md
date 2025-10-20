@@ -106,7 +106,7 @@ Each document has a `metadata.json` file with processing details:
 
 ### Processing Script
 
-**Location**: `lib/claude-webui-server/scripts/process_document.py`
+**Location**: `tools/scripts/process_document.py`
 
 **Dependencies**:
 - Python 3
@@ -137,7 +137,7 @@ The upload handler automatically:
 If you need to manually process a PDF:
 
 ```bash
-python3 lib/claude-webui-server/scripts/process_document.py \
+python3 tools/scripts/process_document.py \
   /path/to/document.pdf \
   /workspace/my-jarvis \
   document-name
@@ -255,7 +255,7 @@ docker logs [container-id] | grep "PDF processing"
 | View document chunks | `ls my-jarvis/knowledge-base/[document-name]/chunks/` |
 | Read chunk | `cat my-jarvis/knowledge-base/[document-name]/chunks/chunk-XXX.md` |
 | Check metadata | `cat my-jarvis/knowledge-base/[document-name]/metadata.json` |
-| Manual processing | `python3 lib/claude-webui-server/scripts/process_document.py [pdf] [workspace] [name]` |
+| Manual processing | `python3 tools/scripts/process_document.py [pdf] [workspace] [name]` |
 
 ---
 
