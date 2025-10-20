@@ -9,6 +9,7 @@
  * - npm package support via CDN
  * - TypeScript support
  * - Light theme matching app design
+ * - Uses h-full to match panel architecture
  */
 
 import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout } from "@codesandbox/sandpack-react";
