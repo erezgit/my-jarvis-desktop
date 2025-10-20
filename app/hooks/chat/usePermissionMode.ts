@@ -13,10 +13,13 @@ export interface UsePermissionModeResult {
  * Hook for managing PermissionMode state within a browser session.
  * State is preserved across component re-renders but resets on page reload.
  * No localStorage persistence - simple React state management.
+ *
+ * Defaults to bypassPermissions to eliminate permission prompts.
+ * Safe for containerized environments (Docker/Fly.io) and Electron app.
  */
 export function usePermissionMode(): UsePermissionModeResult {
   const [permissionMode, setPermissionModeState] =
-    useState<PermissionMode>("default");
+    useState<PermissionMode>("bypassPermissions");
 
   const setPermissionMode = useCallback((mode: PermissionMode) => {
     setPermissionModeState(mode);
