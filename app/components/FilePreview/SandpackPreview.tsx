@@ -11,7 +11,7 @@
  * - Light theme matching app design
  */
 
-import { Sandpack } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout } from "@codesandbox/sandpack-react";
 
 interface SandpackPreviewProps {
   filePath: string;
@@ -21,8 +21,8 @@ interface SandpackPreviewProps {
 
 export function SandpackPreview({ filePath, content, className = "" }: SandpackPreviewProps) {
   return (
-    <div className={`h-full w-full bg-white ${className}`}>
-      <Sandpack
+    <div className={`h-full w-full bg-white ${className}`} style={{ height: '100%', width: '100%' }}>
+      <SandpackProvider
         template="react-ts"
         files={{
           "/App.tsx": content
@@ -35,17 +35,19 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
           }
         }}
         options={{
-          showNavigator: false,
-          showTabs: false,
-          showLineNumbers: false,
-          showInlineErrors: true,
-          showRefreshButton: true,
-          editorHeight: "100%",
           autorun: true,
           autoReload: true
         }}
         theme="light"
-      />
+      >
+        <SandpackLayout style={{ height: '100%' }}>
+          <SandpackPreviewComponent
+            showOpenInCodeSandbox={false}
+            showRefreshButton={false}
+            style={{ height: '100%' }}
+          />
+        </SandpackLayout>
+      </SandpackProvider>
     </div>
   );
 }
