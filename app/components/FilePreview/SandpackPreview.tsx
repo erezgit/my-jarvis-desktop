@@ -65,7 +65,7 @@ function SandpackPreviewInner() {
         key={key}
         showOpenInCodeSandbox={false}
         showRefreshButton={true}
-        showErrorScreen={false}
+        showSandpackErrorOverlay={false}
         style={{ height: '100%', width: '100%' }}
       />
     </SandpackLayout>
