@@ -14,12 +14,12 @@ export interface UsePermissionModeResult {
  * State is preserved across component re-renders but resets on page reload.
  * No localStorage persistence - simple React state management.
  *
- * Defaults to bypassPermissions to eliminate permission prompts.
- * Safe for containerized environments (Docker/Fly.io) and Electron app.
+ * Defaults to acceptEdits mode to auto-approve file operations while maintaining safety.
+ * Works in Docker containers as root user (unlike bypassPermissions which is blocked).
  */
 export function usePermissionMode(): UsePermissionModeResult {
   const [permissionMode, setPermissionModeState] =
-    useState<PermissionMode>("bypassPermissions");
+    useState<PermissionMode>("acceptEdits");
 
   const setPermissionMode = useCallback((mode: PermissionMode) => {
     setPermissionModeState(mode);
