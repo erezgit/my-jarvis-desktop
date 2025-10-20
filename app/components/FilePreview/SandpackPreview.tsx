@@ -21,7 +21,7 @@ interface SandpackPreviewProps {
 
 export function SandpackPreview({ filePath, content, className = "" }: SandpackPreviewProps) {
   return (
-    <div className={`h-full w-full bg-white ${className}`} style={{ height: '100%', width: '100%' }}>
+    <div className={`h-full w-full bg-white ${className}`}>
       <SandpackProvider
         template="react-ts"
         files={{
@@ -40,11 +40,11 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
         }}
         theme="light"
       >
-        <SandpackLayout style={{ height: '100%' }}>
+        <SandpackLayout style={{ height: '100%', width: '100%' }}>
           <SandpackPreviewComponent
             showOpenInCodeSandbox={false}
             showRefreshButton={false}
-            style={{ height: '100%' }}
+            style={{ height: '100%', width: '100%' }}
           />
         </SandpackLayout>
       </SandpackProvider>
