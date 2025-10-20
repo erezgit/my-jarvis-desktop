@@ -26,19 +26,36 @@ function SandpackPreviewInner() {
   const [key, setKey] = useState(0);
 
   useEffect(() => {
+    // Override the internal error handler to filter telemetry errors
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      // Suppress telemetry fetch errors
+      const message = args.join(' ');
+      if (message.includes('col.csbops.io') || message.includes('Failed to fetch')) {
+        return; // Silently ignore
+      }
+      originalConsoleError.apply(console, args);
+    };
+
     const stopListening = listen((message) => {
       // Log all messages for debugging
       console.log('[Sandpack Message]', message);
 
-      // If we detect an error, try to recover by forcing a refresh
-      if (message.type === 'error' || message.type === 'action' && message.action === 'show-error') {
-        console.log('[Sandpack] Error detected, attempting recovery...');
-        // Don't actually refresh, just ignore the error
+      // Completely ignore telemetry-related errors
+      if (message.type === 'error' && message.message?.includes('Failed to fetch')) {
+        console.log('[Sandpack] Telemetry error suppressed');
+        return; // Don't let Sandpack process this error
+      }
+
+      // If we detect other errors, log them
+      if (message.type === 'error') {
+        console.log('[Sandpack] Error detected:', message);
       }
     });
 
     return () => {
       stopListening();
+      console.error = originalConsoleError;
     };
   }, [listen]);
 
@@ -62,7 +79,31 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
         <SandpackProvider
           template="react-ts"
           files={{
-            "/App.tsx": content
+            "/App.tsx": content,
+            "/public/index.html": `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  <script>
+    // Block telemetry requests before Sandpack loads
+    (function() {
+      const originalFetch = window.fetch;
+      window.fetch = function(...args) {
+        const url = args[0]?.toString() || '';
+        if (url.includes('col.csbops.io') || url.includes('csbops')) {
+          return Promise.resolve(new Response('{}', { status: 200 }));
+        }
+        return originalFetch.apply(this, args);
+      };
+    })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>`
           }}
           customSetup={{
             dependencies: {
