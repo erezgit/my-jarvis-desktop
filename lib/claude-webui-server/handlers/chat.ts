@@ -39,15 +39,17 @@ async function* executeClaudeCommand(
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
-    // Build SDK options with all documented parameters from sdk.d.ts
+    // Build SDK options - use same configuration as working my-jarvis-erez
     const queryOptions = {
-      cwd: workingDirectory, // Working directory for Claude CLI process
+      abortController,
+      executable: "node" as const, // Use "node" to let SDK find it in PATH (works for both Electron and Docker)
+      executableArgs: [],
+      pathToClaudeCodeExecutable: cliPath,
+      cwd: workingDirectory, // Set working directory for Claude CLI process
+      additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? { allowedTools } : {}),
-      permissionMode: "bypassPermissions" as PermissionMode, // Always bypass permissions in container environment
-      executable: "node" as const, // Specify Node.js runtime for CLI subprocess (from Options.executable)
-      pathToClaudeCodeExecutable: cliPath, // Path to Claude Code CLI binary (from Options.pathToClaudeCodeExecutable)
-      abortController, // Pass abort controller for cancellation support (from Options.abortController)
+      ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend
     };
 
     logger.chat.debug("SDK query options: {queryOptions}", { queryOptions });
