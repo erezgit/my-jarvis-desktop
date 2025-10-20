@@ -9,9 +9,10 @@
  * - npm package support via CDN
  * - TypeScript support
  * - Light theme matching app design
- * - Uses h-full to match panel architecture (not 100vh)
+ * - Measures container height and provides fixed pixel height to Sandpack
  */
 
+import { useEffect, useRef, useState } from "react";
 import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout } from "@codesandbox/sandpack-react";
 
 interface SandpackPreviewProps {
@@ -21,37 +22,61 @@ interface SandpackPreviewProps {
 }
 
 export function SandpackPreview({ filePath, content, className = "" }: SandpackPreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number>(600); // Default height
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        const newHeight = containerRef.current.offsetHeight;
+        if (newHeight > 0) {
+          setHeight(newHeight);
+        }
+      }
+    };
+
+    // Initial measurement
+    updateHeight();
+
+    // Update on window resize
+    window.addEventListener('resize', updateHeight);
+
+    // Also update after a short delay to catch layout changes
+    const timer = setTimeout(updateHeight, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
-    <div className={`h-full w-full bg-white ${className}`} style={{ position: 'relative', height: '100%', width: '100%' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-        <SandpackProvider
-          template="react-ts"
-          files={{
-            "/App.tsx": content
-          }}
-          customSetup={{
-            dependencies: {
-              "spectacle": "^10.0.0",
-              "react": "^18.2.0",
-              "react-dom": "^18.2.0"
-            }
-          }}
-          options={{
-            autorun: true,
-            autoReload: true
-          }}
-          theme="light"
-          style={{ height: '100%', width: '100%' }}
-        >
-          <SandpackLayout style={{ height: '100%', width: '100%' }}>
-            <SandpackPreviewComponent
-              showOpenInCodeSandbox={false}
-              showRefreshButton={false}
-              style={{ height: '100%', width: '100%' }}
-            />
-          </SandpackLayout>
-        </SandpackProvider>
-      </div>
+    <div ref={containerRef} className={`h-full w-full bg-white ${className}`}>
+      <SandpackProvider
+        template="react-ts"
+        files={{
+          "/App.tsx": content
+        }}
+        customSetup={{
+          dependencies: {
+            "spectacle": "^10.0.0",
+            "react": "^18.2.0",
+            "react-dom": "^18.2.0"
+          }
+        }}
+        options={{
+          autorun: true,
+          autoReload: true
+        }}
+        theme="light"
+      >
+        <SandpackLayout style={{ height: `${height}px` }}>
+          <SandpackPreviewComponent
+            showOpenInCodeSandbox={false}
+            showRefreshButton={false}
+          />
+        </SandpackLayout>
+      </SandpackProvider>
     </div>
   );
 }
