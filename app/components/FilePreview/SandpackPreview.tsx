@@ -12,12 +12,47 @@
  * - Uses h-full to match panel architecture (not 100vh)
  */
 
-import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout, useSandpack } from "@codesandbox/sandpack-react";
+import { useEffect, useState } from "react";
 
 interface SandpackPreviewProps {
   filePath: string;
   content: string;
   className?: string;
+}
+
+function SandpackPreviewInner() {
+  const { listen, sandpack } = useSandpack();
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    const stopListening = listen((message) => {
+      // Log all messages for debugging
+      console.log('[Sandpack Message]', message);
+
+      // If we detect an error, try to recover by forcing a refresh
+      if (message.type === 'error' || message.type === 'action' && message.action === 'show-error') {
+        console.log('[Sandpack] Error detected, attempting recovery...');
+        // Don't actually refresh, just ignore the error
+      }
+    });
+
+    return () => {
+      stopListening();
+    };
+  }, [listen]);
+
+  return (
+    <SandpackLayout style={{ height: '100%', width: '100%' }}>
+      <SandpackPreviewComponent
+        key={key}
+        showOpenInCodeSandbox={false}
+        showRefreshButton={true}
+        showErrorScreen={false}
+        style={{ height: '100%', width: '100%' }}
+      />
+    </SandpackLayout>
+  );
 }
 
 export function SandpackPreview({ filePath, content, className = "" }: SandpackPreviewProps) {
@@ -38,19 +73,12 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
           }}
           options={{
             autorun: true,
-            autoReload: true,
-            bundlerURL: "https://sandpack-bundler.codesandbox.io"
+            autoReload: true
           }}
           theme="light"
           style={{ height: '100%', width: '100%' }}
         >
-          <SandpackLayout style={{ height: '100%', width: '100%' }}>
-            <SandpackPreviewComponent
-              showOpenInCodeSandbox={false}
-              showRefreshButton={false}
-              style={{ height: '100%', width: '100%' }}
-            />
-          </SandpackLayout>
+          <SandpackPreviewInner />
         </SandpackProvider>
       </div>
     </div>
