@@ -87,36 +87,32 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview</title>
   <script>
-    // Disable React error overlay
-    if (typeof window !== 'undefined') {
-      window.addEventListener('error', function(e) {
-        if (e.message && e.message.includes('col.csbops.io')) {
-          e.stopImmediatePropagation();
-          e.preventDefault();
-          return false;
-        }
+    // Aggressively hide React error overlay using MutationObserver
+    (function() {
+      function hideErrorOverlay() {
+        const overlays = document.querySelectorAll('iframe[style*="2147483647"]');
+        overlays.forEach(function(overlay) {
+          overlay.style.display = 'none';
+          overlay.remove();
+        });
+      }
+
+      // Hide immediately
+      hideErrorOverlay();
+
+      // Watch for error overlay being added
+      const observer = new MutationObserver(function() {
+        hideErrorOverlay();
       });
 
-      window.addEventListener('unhandledrejection', function(e) {
-        if (e.reason && e.reason.message && e.reason.message.includes('Failed to fetch')) {
-          e.stopImmediatePropagation();
-          e.preventDefault();
-          return false;
-        }
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
       });
-    }
 
-    // Disable CRA error overlay completely
-    setTimeout(function() {
-      if (window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__) {
-        window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__.iframeStyle = 'display: none';
-      }
-      // Hide error overlay iframe if it exists
-      const errorOverlay = document.querySelector('iframe[style*="z-index: 2147483647"]');
-      if (errorOverlay) {
-        errorOverlay.style.display = 'none';
-      }
-    }, 100);
+      // Also check periodically
+      setInterval(hideErrorOverlay, 100);
+    })();
   </script>
 </head>
 <body>
