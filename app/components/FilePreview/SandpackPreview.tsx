@@ -12,7 +12,7 @@
  * - Uses h-full to match panel architecture (not 100vh)
  */
 
-import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout, SandpackLogLevel } from "@codesandbox/sandpack-react";
 
 interface SandpackPreviewProps {
   filePath: string;
@@ -38,7 +38,8 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
           }}
           options={{
             autorun: true,
-            autoReload: true
+            autoReload: true,
+            logLevel: SandpackLogLevel.None
           }}
           theme="light"
           style={{ height: '100%', width: '100%' }}
