@@ -1,6 +1,7 @@
 import { MarkdownRenderer } from './mdx/MarkdownRenderer';
 import { MDXRenderer } from './mdx/MDXRenderer';
 import { PDFViewer } from './PDFViewer';
+import { SandpackPreview } from './SandpackPreview';
 
 interface FileItem {
   name: string;
@@ -61,6 +62,18 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
 
   // Handle different file types based on extension
 
+  // React component files - use Sandpack for live preview
+  const isReactFile = file.extension === '.tsx' || file.extension === '.jsx';
+  if (isReactFile && file.content) {
+    return (
+      <SandpackPreview
+        filePath={file.path}
+        content={file.content}
+        className={className}
+      />
+    );
+  }
+
   // PDF files - use react-pdf viewer with streaming support
   if (file.extension === '.pdf') {
     const streamUrl = `/api/stream-file?path=${encodeURIComponent(file.path)}`;
@@ -93,7 +106,8 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
     }
 
     // Code files with basic syntax highlighting placeholder
-    if (['.js', '.jsx', '.ts', '.tsx', '.py', '.json', '.css', '.html', '.yml', '.yaml', '.sh', '.bash'].includes(file.extension)) {
+    // Note: .tsx and .jsx are handled by Sandpack above
+    if (['.js', '.ts', '.py', '.json', '.css', '.html', '.yml', '.yaml', '.sh', '.bash'].includes(file.extension)) {
       return (
         <div className={`h-full w-full overflow-auto bg-white dark:bg-gray-900 ${className}`}>
           <div className="p-4">
