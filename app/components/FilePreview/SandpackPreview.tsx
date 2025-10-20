@@ -10,66 +10,15 @@
  * - TypeScript support
  * - Light theme matching app design
  * - Uses h-full to match panel architecture (not 100vh)
+ * - Error overlays disabled via official Sandpack options
  */
 
-import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout, useSandpack } from "@codesandbox/sandpack-react";
-import { useEffect, useState } from "react";
+import { SandpackProvider, SandpackPreview as SandpackPreviewComponent, SandpackLayout } from "@codesandbox/sandpack-react";
 
 interface SandpackPreviewProps {
   filePath: string;
   content: string;
   className?: string;
-}
-
-function SandpackPreviewInner() {
-  const { listen, sandpack } = useSandpack();
-  const [key, setKey] = useState(0);
-
-  useEffect(() => {
-    // Override the internal error handler to filter telemetry errors
-    const originalConsoleError = console.error;
-    console.error = (...args) => {
-      // Suppress telemetry fetch errors
-      const message = args.join(' ');
-      if (message.includes('col.csbops.io') || message.includes('Failed to fetch')) {
-        return; // Silently ignore
-      }
-      originalConsoleError.apply(console, args);
-    };
-
-    const stopListening = listen((message) => {
-      // Log all messages for debugging
-      console.log('[Sandpack Message]', message);
-
-      // Completely ignore telemetry-related errors
-      if (message.type === 'error' && message.message?.includes('Failed to fetch')) {
-        console.log('[Sandpack] Telemetry error suppressed');
-        return; // Don't let Sandpack process this error
-      }
-
-      // If we detect other errors, log them
-      if (message.type === 'error') {
-        console.log('[Sandpack] Error detected:', message);
-      }
-    });
-
-    return () => {
-      stopListening();
-      console.error = originalConsoleError;
-    };
-  }, [listen]);
-
-  return (
-    <SandpackLayout style={{ height: '100%', width: '100%' }}>
-      <SandpackPreviewComponent
-        key={key}
-        showOpenInCodeSandbox={false}
-        showRefreshButton={true}
-        showSandpackErrorOverlay={false}
-        style={{ height: '100%', width: '100%' }}
-      />
-    </SandpackLayout>
-  );
 }
 
 export function SandpackPreview({ filePath, content, className = "" }: SandpackPreviewProps) {
@@ -79,46 +28,7 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
         <SandpackProvider
           template="react-ts"
           files={{
-            "/App.tsx": content,
-            "/public/index.html": `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview</title>
-  <script>
-    // Aggressively hide React error overlay using MutationObserver
-    (function() {
-      function hideErrorOverlay() {
-        const overlays = document.querySelectorAll('iframe[style*="2147483647"]');
-        overlays.forEach(function(overlay) {
-          overlay.style.display = 'none';
-          overlay.remove();
-        });
-      }
-
-      // Hide immediately
-      hideErrorOverlay();
-
-      // Watch for error overlay being added
-      const observer = new MutationObserver(function() {
-        hideErrorOverlay();
-      });
-
-      observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true
-      });
-
-      // Also check periodically
-      setInterval(hideErrorOverlay, 100);
-    })();
-  </script>
-</head>
-<body>
-  <div id="root"></div>
-</body>
-</html>`
+            "/App.tsx": content
           }}
           customSetup={{
             dependencies: {
@@ -129,12 +39,20 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
           }}
           options={{
             autorun: true,
-            autoReload: true
+            autoReload: true,
+            showErrorScreen: false
           }}
           theme="light"
           style={{ height: '100%', width: '100%' }}
         >
-          <SandpackPreviewInner />
+          <SandpackLayout style={{ height: '100%', width: '100%' }}>
+            <SandpackPreviewComponent
+              showOpenInCodeSandbox={false}
+              showRefreshButton={true}
+              showSandpackErrorOverlay={false}
+              style={{ height: '100%', width: '100%' }}
+            />
+          </SandpackLayout>
         </SandpackProvider>
       </div>
     </div>
