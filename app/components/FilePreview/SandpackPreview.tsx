@@ -87,17 +87,36 @@ export function SandpackPreview({ filePath, content, className = "" }: SandpackP
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preview</title>
   <script>
-    // Block telemetry requests before Sandpack loads
-    (function() {
-      const originalFetch = window.fetch;
-      window.fetch = function(...args) {
-        const url = args[0]?.toString() || '';
-        if (url.includes('col.csbops.io') || url.includes('csbops')) {
-          return Promise.resolve(new Response('{}', { status: 200 }));
+    // Disable React error overlay
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('col.csbops.io')) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          return false;
         }
-        return originalFetch.apply(this, args);
-      };
-    })();
+      });
+
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && e.reason.message && e.reason.message.includes('Failed to fetch')) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          return false;
+        }
+      });
+    }
+
+    // Disable CRA error overlay completely
+    setTimeout(function() {
+      if (window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__) {
+        window.__REACT_ERROR_OVERLAY_GLOBAL_HOOK__.iframeStyle = 'display: none';
+      }
+      // Hide error overlay iframe if it exists
+      const errorOverlay = document.querySelector('iframe[style*="z-index: 2147483647"]');
+      if (errorOverlay) {
+        errorOverlay.style.display = 'none';
+      }
+    }, 100);
   </script>
 </head>
 <body>
