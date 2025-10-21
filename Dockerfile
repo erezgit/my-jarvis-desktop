@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     make \
     g++ \
+    rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude CLI globally
