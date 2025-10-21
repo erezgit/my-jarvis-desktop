@@ -3,6 +3,7 @@ import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
 import { ChatPage } from '../ChatPage'
 import { SettingsModal } from '../SettingsModal'
+import { useSettings } from '../../hooks/useSettings'
 
 interface FileItem {
   name: string
@@ -58,6 +59,9 @@ export function ResponsiveLayout() {
   const [fileUploadHandler, setFileUploadHandler] = useState<((file: File) => void) | null>(null)
   const isDesktop = useIsDesktop()
 
+  // Get workspace settings from context
+  const { workingDirectory, setWorkingDirectory } = useSettings()
+
   // Create chat element with currentView prop (re-creates when view changes)
   const chatElement = useMemo(() => (
     <ChatPage
@@ -104,6 +108,8 @@ export function ResponsiveLayout() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={handleSettingsClose}
+        workingDirectory={workingDirectory}
+        onWorkspaceChange={setWorkingDirectory}
       />
     </>
   )
