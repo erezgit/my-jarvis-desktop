@@ -21,11 +21,13 @@ RUN pip3 install --break-system-packages openai python-dotenv pdfplumber
 # Create workspace directory for persistent storage
 RUN mkdir -p /workspace
 
-# Copy workspace template (will be copied to persistent /workspace on first startup)
+# Copy workspace template and scripts (available for manual execution)
 COPY workspace-template /app/workspace-template
+COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
+COPY scripts/update-workspace.sh /app/scripts/update-workspace.sh
 COPY scripts/init-workspace.sh /app/scripts/init-workspace.sh
 COPY scripts/sync-files.sh /app/scripts/sync-files.sh
-RUN chmod +x /app/scripts/init-workspace.sh /app/scripts/sync-files.sh
+RUN chmod +x /app/scripts/*.sh
 
 # Set working directory
 WORKDIR /app
@@ -89,5 +91,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Start the backend server with workspace root as working directory
 WORKDIR /workspace
 
-# Initialize workspace on startup, sync files, then start server
-CMD ["/bin/bash", "-c", "/app/scripts/init-workspace.sh && /app/scripts/sync-files.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]
+# DEPLOYMENT MODE: Just start the server (no workspace initialization)
+# For new apps: SSH in and run: /app/scripts/setup-new-app.sh
+# For workspace updates: SSH in and run: /app/scripts/update-workspace.sh [options]
+CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]

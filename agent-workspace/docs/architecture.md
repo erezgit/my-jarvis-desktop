@@ -1632,266 +1632,307 @@ fly volumes destroy OLD_VOLUME_ID --app my-jarvis-USERNAME
 
 ---
 
-## File Sync Deployment Procedure
+## Deployment Procedure - Separation of Concerns
 
-This section documents the **workspace-template sync system** used to deploy files and directories to Fly.io instances. This system enables copying files from the local development environment to running Fly.io containers through a persistent volume sync mechanism.
+This section documents the **three-script deployment architecture** that separates concerns between creating new apps, updating application code, and updating workspace files.
+
+### Design Philosophy
+
+The deployment system follows a **strict separation of concerns**:
+
+1. **New App Creation** - Initialize workspace ONCE when creating a new Fly.io app
+2. **Code Updates** - Deploy application code changes WITHOUT touching persistent workspace
+3. **Workspace Updates** - Update workspace files manually when explicitly needed
+
+This prevents unwanted file duplication and preserves user customizations during routine code deployments.
 
 ### Overview
 
-The file sync system consists of two components:
-1. **workspace-template/** - Template directory containing files to sync
-2. **sync-files.sh** - Script that syncs template files to persistent volumes on container startup
+The deployment system consists of three components:
 
-**Use cases:**
-- Deploying documentation files to specific user instances
-- Adding configuration files to containers
-- Copying application data or resources
-- Setting up user-specific workspaces
+1. **setup-new-app.sh** - Initialize workspace for NEW apps (run ONCE)
+2. **update-workspace.sh** - Update workspace files in EXISTING apps (manual)
+3. **Dockerfile** - Deploys code updates ONLY (runs server, no initialization)
 
-### Architecture
+### Architecture Diagram
 
 ```
-Local Development                    Fly.io Container
-─────────────────                    ────────────────
-workspace-template/                  /app/workspace-template/  (ephemeral)
-  └── spaces/                             └── spaces/
-       └── daniel/                              └── daniel/
-            └── docs/                                 └── docs/
-                 ├── file1.md                              ├── file1.md
-                 ├── file2.md                              ├── file2.md
-                 └── file3.md                              └── file3.md
+SCENARIO 1: Regular Code Deployment (99% of deployments)
+───────────────────────────────────────────────────────
 
-Docker Build                         Container Startup
-────────────                         ─────────────────
-COPY workspace-template              /app/scripts/sync-files.sh
-     /app/workspace-template         ↓
-                                     rsync --ignore-existing
-                                     ↓
-                                     /workspace/  (persistent volume)
-                                       └── spaces/
-                                            └── daniel/
-                                                 └── docs/
-                                                      ├── file1.md
-                                                      ├── file2.md
-                                                      └── file3.md
+flyctl deploy --app my-jarvis-user
+         ↓
+Docker builds new image
+         ↓
+Container starts with:  node server.js
+         ↓
+/app directory (ephemeral) → UPDATED with new code
+/workspace volume (persistent) → UNTOUCHED (user files preserved)
+
+
+SCENARIO 2: New App Creation (one-time setup)
+────────────────────────────────────────────────
+
+1. flyctl deploy --app my-jarvis-newuser (creates app + volume)
+2. SSH into machine: flyctl ssh console --app my-jarvis-newuser
+3. Run: /app/scripts/setup-new-app.sh
+         ↓
+Copies from workspace-template/ → /workspace/
+  - CLAUDE.md
+  - tools/
+  - my-jarvis/
+  - spaces/
+  - Creates .claude symlinks
+
+
+SCENARIO 3: Workspace File Updates (manual, when needed)
+───────────────────────────────────────────────────────────
+
+1. SSH into machine: flyctl ssh console --app my-jarvis-user
+2. Run: /app/scripts/update-workspace.sh --tools --sync-files
+         ↓
+Updates specific items in /workspace/:
+  - tools/ directory (latest scripts)
+  - Syncs user-specific files (Daniel's docs, etc.)
+  - Preserves all other user files
 ```
 
-### Components
+### Three Scripts Explained
 
-#### **1. workspace-template Directory**
+#### **1. setup-new-app.sh** - New App Initialization (Run ONCE)
 
-Located in project root: `/Users/erezfern/Workspace/my-jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop/workspace-template/`
+**Location**: `scripts/setup-new-app.sh`
 
-**Purpose**: Contains files and directory structure to be synced to persistent volumes on container startup.
+**Purpose**: Initialize workspace for a BRAND NEW Fly.io app
 
-**Example structure:**
-```
-workspace-template/
-├── spaces/
-│   ├── daniel/
-│   │   └── docs/
-│   │       ├── conversation-summary.md
-│   │       ├── google-forms-guide.md
-│   │       └── shir-derech-questionnaire.md
-│   └── erez/
-│       └── projects/
-│           └── project-notes.md
-└── .claude/
-    └── default-settings.json
-```
+**When to use**: ONLY when creating a new app for the first time
 
-#### **2. sync-files.sh Script**
+**What it does:**
+- Checks if workspace already initialized (CLAUDE.md marker exists)
+- If already initialized → exits with error (prevents re-initialization)
+- If new workspace → copies ALL template files:
+  - CLAUDE.md (marker file)
+  - tools/ directory
+  - my-jarvis/ project
+  - spaces/ directories
+- Creates Claude CLI configuration on persistent disk
+- Creates symlinks: /root/.claude → /workspace/.claude
 
-Located at: `scripts/sync-files.sh`
-
-**Purpose**: Copies files from workspace-template to persistent /workspace volume on container startup.
-
-**Key features:**
-- Uses `rsync --ignore-existing --update` to prevent overwriting user modifications
-- Creates parent directories automatically with `mkdir -p`
-- Syncs multiple directory trees with single script
-- Logs sync operations for debugging
-
-**Script structure:**
+**Usage:**
 ```bash
-#!/bin/bash
+# SSH into new Fly.io machine
+flyctl ssh console --app my-jarvis-newuser
 
-TEMPLATE_DIR="/app/workspace-template"
-WORKSPACE="/workspace"
-
-# Helper function for syncing directories
-sync_directory() {
-    local src="$1"
-    local dest="$2"
-    local name="$3"
-
-    mkdir -p "$(dirname "$dest")"
-    rsync -av --ignore-existing --update "$src/" "$dest/"
-
-    echo "[Sync] ✅ $name synced"
-}
-
-# Sync Daniel's documentation
-sync_directory \
-    "$TEMPLATE_DIR/spaces/daniel/docs" \
-    "$WORKSPACE/spaces/daniel/docs" \
-    "Daniel's Documentation (Shir Derech project)"
-
-# Add more sync operations as needed
-# sync_directory "$TEMPLATE_DIR/other" "$WORKSPACE/other" "Description"
-
-echo "[Sync] All files synced successfully"
+# Run setup script
+/app/scripts/setup-new-app.sh
 ```
 
-**rsync flags explained:**
-- `-a` - Archive mode (preserves permissions, timestamps, etc.)
-- `-v` - Verbose output for logging
-- `--ignore-existing` - Don't overwrite files that exist in destination
-- `--update` - Skip files that are newer in destination
+#### **2. update-workspace.sh** - Workspace File Updates (Manual)
 
-#### **3. Dockerfile Integration**
+**Location**: `scripts/update-workspace.sh`
 
-The sync script is run automatically on container startup via the Dockerfile CMD:
+**Purpose**: Update specific files in EXISTING app's workspace
 
+**When to use**: When you want to update tools/, sync files, or update CLAUDE.md in an existing app
+
+**What it does:**
+- Checks if workspace initialized (CLAUDE.md marker must exist)
+- If not initialized → exits with error (use setup-new-app.sh instead)
+- Updates only what you specify via command-line flags:
+  - `--tools` - Updates tools/ directory (backs up existing first)
+  - `--claude-md` - Updates CLAUDE.md (backs up existing first)
+  - `--sync-files` - Runs file sync (Daniel's docs, etc.)
+  - `--all` - Updates everything
+
+**Usage:**
+```bash
+# SSH into existing Fly.io machine
+flyctl ssh console --app my-jarvis-daniel
+
+# Update only tools directory
+/app/scripts/update-workspace.sh --tools
+
+# Update tools and sync user-specific files
+/app/scripts/update-workspace.sh --tools --sync-files
+
+# Update everything
+/app/scripts/update-workspace.sh --all
+```
+
+#### **3. Dockerfile CMD** - Code Deployment Only
+
+**Location**: `Dockerfile` (line 97)
+
+**Purpose**: Deploy application code updates WITHOUT touching persistent workspace
+
+**What changed**: Removed automatic initialization scripts from CMD
+
+**Old behavior (WRONG):**
 ```dockerfile
-# Install rsync (required dependency)
-RUN apt-get update && apt-get install -y \
-    rsync \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy workspace template
-COPY workspace-template /app/workspace-template
-
-# Copy sync script
-COPY scripts/sync-files.sh /app/scripts/sync-files.sh
-RUN chmod +x /app/scripts/sync-files.sh
-
-# Run sync on container startup
-CMD ["/bin/bash", "-c", "/app/scripts/init-workspace.sh && /app/scripts/sync-files.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]
+CMD ["/bin/bash", "-c", "/app/scripts/init-workspace.sh && /app/scripts/sync-files.sh && node server.js"]
 ```
+This ran initialization on EVERY deployment, causing unwanted file duplication.
 
-### Deployment Workflow
-
-#### **Step 1: Add Files to workspace-template**
-
-Add files to the workspace-template directory in your local environment:
-
-```bash
-# Example: Adding documentation for Daniel
-cd /path/to/my-jarvis-desktop
-mkdir -p workspace-template/spaces/daniel/docs
-cp /source/path/file1.md workspace-template/spaces/daniel/docs/
-cp /source/path/file2.md workspace-template/spaces/daniel/docs/
+**New behavior (CORRECT):**
+```dockerfile
+CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]
 ```
+This ONLY runs the server. No workspace manipulation.
 
-#### **Step 2: Update sync-files.sh**
+### Deployment Workflows
 
-Add sync operations for the new files in `scripts/sync-files.sh`:
+#### **Workflow 1: Deploying Code Updates (Most Common)**
 
+**Use case**: You fixed a bug or added a feature to the application code
+
+**Steps:**
 ```bash
-# Add after existing sync_directory calls
-sync_directory \
-    "$TEMPLATE_DIR/spaces/daniel/docs" \
-    "$WORKSPACE/spaces/daniel/docs" \
-    "Daniel's Documentation (Shir Derech project)"
-```
-
-#### **Step 3: Commit Changes**
-
-Commit both workspace-template files and script updates:
-
-```bash
-git add workspace-template/ scripts/sync-files.sh
-git commit -m "feat: Add file sync for [description]
-
-Added:
-- workspace-template/spaces/[user]/[files]
-- sync-files.sh sync operation
-
-Deploys to: [app-name]"
-
+# 1. Commit your code changes
+git add app/ lib/
+git commit -m "fix: Bug fix in chat interface"
 git push origin main
+
+# 2. Deploy to Fly.io (updates code only, workspace untouched)
+cd /path/to/my-jarvis-desktop
+export FLY_API_TOKEN="your-token"
+flyctl deploy --app my-jarvis-erez --update-only
+flyctl deploy --app my-jarvis-lilah --update-only
+flyctl deploy --app my-jarvis-daniel --update-only
+
+# 3. Verify deployment
+flyctl status --app my-jarvis-erez
 ```
 
-#### **Step 4: Deploy to Fly.io**
+**What happens:**
+- Docker builds new image with updated code
+- Container restarts with new code in /app directory
+- `/workspace` volume is NOT touched
+- User files, customizations, auth tokens all preserved
 
-Deploy using the `--update-only` flag to update existing machines:
+#### **Workflow 2: Creating a New User App**
 
+**Use case**: Setting up My Jarvis for a new user (e.g., my-jarvis-sarah)
+
+**Steps:**
 ```bash
-# Using deployment script (recommended)
-bash /workspace/tools/scripts/deploy-my-jarvis-[app-name].sh
+# 1. Create Fly.io app with volume
+flyctl apps create my-jarvis-sarah
+flyctl volumes create my_jarvis_data --size 3 --app my-jarvis-sarah --region sjc
 
-# Or using flyctl directly
-export FLY_API_TOKEN="FlyV1..."
-flyctl deploy --app my-jarvis-[app-name] --update-only
+# 2. Deploy the application
+flyctl deploy --app my-jarvis-sarah
+
+# 3. Allocate IP addresses (required for DNS)
+flyctl ips allocate-v4 --app my-jarvis-sarah
+flyctl ips allocate-v6 --app my-jarvis-sarah
+
+# 4. SSH into the machine
+flyctl ssh console --app my-jarvis-sarah
+
+# 5. Run new app setup (ONCE)
+/app/scripts/setup-new-app.sh
+
+# 6. Exit and access via web
+exit
+# Visit: https://my-jarvis-sarah.fly.dev
 ```
 
-**Important**: Always use `--update-only` to avoid creating duplicate machines and volumes.
+**What setup-new-app.sh does:**
+- Copies all template files to /workspace
+- Sets up Claude CLI configuration
+- Creates authentication symlinks
+- Workspace is now ready for use
 
-#### **Step 5: Verify Deployment**
+#### **Workflow 3: Updating Workspace Files in Existing App**
 
-SSH into the container and verify files were synced:
+**Use case**: You want to update the tools/ directory or sync new files to Daniel's app
 
+**Steps:**
 ```bash
-# SSH into container
-flyctl ssh console --app my-jarvis-[app-name]
+# 1. Add files to workspace-template (if needed)
+mkdir -p workspace-template/spaces/daniel/docs
+cp new-file.md workspace-template/spaces/daniel/docs/
 
-# Verify files exist
-ls -lh /workspace/spaces/daniel/docs/
+# 2. Commit and deploy code
+git add workspace-template/
+git commit -m "feat: Add new files for Daniel"
+git push origin main
+flyctl deploy --app my-jarvis-daniel --update-only
 
-# Example output:
-# total 68K
-# -rw-r--r-- 1 root root 3.3K Oct 21 12:34 conversation-summary.md
-# -rw-r--r-- 1 root root 4.7K Oct 21 12:34 google-forms-guide.md
-# -rw-r--r-- 1 root root  30K Oct 21 12:34 psychological-assessment.md
+# 3. SSH into Daniel's machine
+flyctl ssh console --app my-jarvis-daniel
 
-# Exit SSH session
+# 4. Run workspace update (selective)
+/app/scripts/update-workspace.sh --sync-files
+
+# 5. Verify files were synced
+ls -la /workspace/spaces/daniel/docs/
 exit
 ```
 
-### Common Use Cases
+**What update-workspace.sh does:**
+- Only updates what you specify (--tools, --sync-files, etc.)
+- Backs up existing files before overwriting
+- Uses rsync --ignore-existing for safe file sync
+- Preserves user customizations
 
-#### **Use Case 1: Deploy User Documentation**
+### Key Benefits of This Architecture
 
+**1. Clean Separation of Concerns**
+- Code updates don't touch workspace files
+- Workspace updates are explicit and controlled
+- No accidental file duplication
+
+**2. Preserves User Customizations**
+- Regular deployments preserve all user files
+- Backup created before workspace updates
+- rsync --ignore-existing prevents overwrites
+
+**3. Predictable Behavior**
+- 99% of deployments = code-only updates
+- Workspace changes only when explicitly requested
+- Clear documentation for each scenario
+
+**4. Safer Operations**
+- Scripts check for correct state before running
+- Error messages guide to correct script
+- Backup files created before updates
+
+### Troubleshooting
+
+#### **Problem: Unwanted Files Added to Workspace**
+
+**Symptom**: After deployment, workspace has duplicate files or files you already moved
+
+**Cause**: Old architecture ran initialization on every deployment
+
+**Solution**: This is now fixed. Future code deployments won't touch workspace.
+
+**Cleanup**: SSH into machine and manually remove unwanted files
+
+#### **Problem**: New app has empty workspace after deployment**
+
+**Symptom**: Deployed new app but /workspace is empty
+
+**Cause**: Forgot to run setup-new-app.sh
+
+**Solution**:
 ```bash
-# Add files
-mkdir -p workspace-template/spaces/username/docs
-cp *.md workspace-template/spaces/username/docs/
-
-# Update sync script
-echo 'sync_directory \
-    "$TEMPLATE_DIR/spaces/username/docs" \
-    "$WORKSPACE/spaces/username/docs" \
-    "Username Documentation"' >> scripts/sync-files.sh
-
-# Deploy
-git commit -am "feat: Add documentation for username"
-flyctl deploy --app my-jarvis-username --update-only
+flyctl ssh console --app my-jarvis-newuser
+/app/scripts/setup-new-app.sh
 ```
 
-#### **Use Case 2: Copy Configuration Files**
+#### **Problem: Tools directory not updating**
 
+**Symptom**: Code has new tools/ scripts but workspace still has old ones
+
+**Cause**: Code deployments don't update workspace
+
+**Solution**: Run manual workspace update
 ```bash
-# Add config
-mkdir -p workspace-template/.claude
-cp my-config.json workspace-template/.claude/
-
-# Update sync script
-sync_directory \
-    "$TEMPLATE_DIR/.claude" \
-    "$WORKSPACE/.claude" \
-    "Claude Configuration"
-
-# Deploy
-git commit -am "feat: Add Claude configuration"
-flyctl deploy --app my-jarvis-app --update-only
+flyctl ssh console --app my-jarvis-user
+/app/scripts/update-workspace.sh --tools
 ```
-
-#### **Use Case 3: Setup Project Templates**
-
-```bash
-# Add project structure
-mkdir -p workspace-template/projects/starter-kit
 cp -r starter-template/* workspace-template/projects/starter-kit/
 
 # Update sync script
