@@ -360,8 +360,9 @@ aria-label={`انتقل إلى الشريحة ${index + 1}`}  // Arabic
 ### How PDF Export Works
 
 1. User says: "Export this presentation to PDF" or "Make me a PDF"
-2. Agent responds with a `pdf_export` message type
-3. Frontend PDF exporter:
+2. Agent calls bash script: `./tools/src/jarvis_pdf_export.sh "path/to/presentation.tsx"`
+3. Script output triggers `PDFExportMessage` in frontend
+4. Frontend PDF exporter:
    - Finds the Sandpack iframe
    - Locates element with `data-pdf-slide` attribute
    - Counts slides using `aria-label` attributes
@@ -369,8 +370,8 @@ aria-label={`انتقل إلى الشريحة ${index + 1}`}  // Arabic
    - Captures each slide at 1920x1080 resolution
    - Combines into multi-page PDF
    - Sends to backend
-4. Backend saves PDF to same directory as presentation
-5. User sees: "PDF exported successfully to: my-jarvis/tickets/002/presentation.pdf"
+5. Backend saves PDF to same directory as presentation
+6. User receives voice confirmation: "PDF exported successfully to: my-jarvis/tickets/002/presentation.pdf"
 
 ### File Locations
 
@@ -383,6 +384,24 @@ User can specify custom filename:
 ```
 User: "Export this to quarterly-results.pdf"
 ```
+
+### How Jarvis Triggers Export
+
+When user asks to export a presentation, Jarvis should:
+
+1. Identify the presentation file path (e.g., `my-jarvis/tickets/002/app.tsx`)
+2. Call the PDF export script:
+
+```bash
+/workspace/tools/src/jarvis_pdf_export.sh "/workspace/my-jarvis/tickets/002/app.tsx"
+```
+
+With custom filename:
+```bash
+/workspace/tools/src/jarvis_pdf_export.sh --filename "quarterly-results.pdf" "/workspace/my-jarvis/tickets/002/app.tsx"
+```
+
+The script will output a trigger pattern that the frontend detects and automatically starts the PDF capture process.
 
 ---
 

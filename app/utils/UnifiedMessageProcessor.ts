@@ -262,6 +262,31 @@ export class UnifiedMessageProcessor {
           return; // Skip creating ToolResultMessage
         }
       }
+
+      // Special handling for PDF export trigger
+      if (command?.includes('jarvis_pdf_export.sh')) {
+        // Parse PDF export parameters from content
+        if (content.includes('PDF_EXPORT_TRIGGER')) {
+          const filePathMatch = content.match(/FILE_PATH:(.+)/);
+          const filenameMatch = content.match(/FILENAME:(.+)/);
+
+          if (filePathMatch) {
+            const filePath = filePathMatch[1].trim();
+            const filename = filenameMatch ? filenameMatch[1].trim() : 'presentation.pdf';
+
+            // Create PDFExportMessage instead of ToolResultMessage
+            const pdfExportMessage = {
+              type: "pdf_export" as const,
+              filePath,
+              filename,
+              timestamp: options.timestamp || Date.now(),
+            };
+
+            context.addMessage(pdfExportMessage);
+            return; // Skip creating ToolResultMessage
+          }
+        }
+      }
     }
 
     // This is a regular tool result - create a ToolResultMessage

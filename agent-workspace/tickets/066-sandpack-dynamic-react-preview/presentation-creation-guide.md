@@ -1,6 +1,6 @@
 # Presentation Creation Guide
 
-**For Dev Agent: How to Create Presentations in My Jarvis Desktop**
+**How to Create Presentations in My Jarvis Desktop**
 
 This guide explains how to create presentations that work perfectly with the Sandpack preview and PDF export system.
 
@@ -442,7 +442,7 @@ Before considering a presentation complete, verify:
 
 **User Request**: "Create a 5-slide presentation about quarterly results in Hebrew"
 
-**Dev Agent Response**:
+**Jarvis Response**:
 
 1. Create `app.tsx` in ticket directory
 2. Define all components inline (Button, Card, etc.)
@@ -490,7 +490,7 @@ exported PDF:       my-jarvis/tickets/XXX/presentation.pdf
 
 ## Summary
 
-**Key Points for Dev Agent:**
+**Key Points:**
 
 1. **Single file**: All components inline, no external imports
 2. **data-pdf-slide**: Required on slide container
