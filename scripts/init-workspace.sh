@@ -12,36 +12,37 @@ MARKER_FILE="$WORKSPACE_PARENT/CLAUDE.md"
 echo "[Init] Starting workspace initialization..."
 
 # Check if workspace is already initialized (CLAUDE.md exists)
-if [ -f "$MARKER_FILE" ]; then
-    echo "[Init] ✅ Workspace already initialized - preserving user files"
-    echo "[Init] Updating tools directory from template (preserving user data)..."
-
-    # Always update tools directory to get latest scripts
-    if [ -d "$TEMPLATE_DIR/tools" ]; then
-        cp -r "$TEMPLATE_DIR/tools" "$WORKSPACE_PARENT/"
-        echo "[Init] ✅ Updated tools/ directory from template"
-    fi
-
-    # Ensure .claude directory exists on persistent disk for auth
-    mkdir -p "$WORKSPACE_PARENT/.claude/projects"
-
-    # Ensure symlink exists from container home to persistent disk
-    if [ ! -L /root/.claude ]; then
-        echo "[Init] Creating symlink: /root/.claude -> /workspace/.claude"
-        rm -rf /root/.claude
-        ln -sf "$WORKSPACE_PARENT/.claude" /root/.claude
-    fi
-
-    if [ ! -L /root/.claude.json ] && [ -f "$WORKSPACE_PARENT/.claude.json" ]; then
-        echo "[Init] Creating symlink: /root/.claude.json -> /workspace/.claude.json"
-        rm -f /root/.claude.json
-        ln -sf "$WORKSPACE_PARENT/.claude.json" /root/.claude.json
-    fi
-
-    echo "[Init] Current workspace structure:"
-    ls -la "$WORKSPACE_PARENT"
-    exit 0
-fi
+# COMMENTED OUT - Always update tools directory on every deployment
+# if [ -f "$MARKER_FILE" ]; then
+#     echo "[Init] ✅ Workspace already initialized - preserving user files"
+#     echo "[Init] Updating tools directory from template (preserving user data)..."
+#
+#     # Always update tools directory to get latest scripts
+#     if [ -d "$TEMPLATE_DIR/tools" ]; then
+#         cp -r "$TEMPLATE_DIR/tools" "$WORKSPACE_PARENT/"
+#         echo "[Init] ✅ Updated tools/ directory from template"
+#     fi
+#
+#     # Ensure .claude directory exists on persistent disk for auth
+#     mkdir -p "$WORKSPACE_PARENT/.claude/projects"
+#
+#     # Ensure symlink exists from container home to persistent disk
+#     if [ ! -L /root/.claude ]; then
+#         echo "[Init] Creating symlink: /root/.claude -> /workspace/.claude"
+#         rm -rf /root/.claude
+#         ln -sf "$WORKSPACE_PARENT/.claude" /root/.claude
+#     fi
+#
+#     if [ ! -L /root/.claude.json ] && [ -f "$WORKSPACE_PARENT/.claude.json" ]; then
+#         echo "[Init] Creating symlink: /root/.claude.json -> /workspace/.claude.json"
+#         rm -f /root/.claude.json
+#         ln -sf "$WORKSPACE_PARENT/.claude.json" /root/.claude.json
+#     fi
+#
+#     echo "[Init] Current workspace structure:"
+#     ls -la "$WORKSPACE_PARENT"
+#     exit 0
+# fi
 
 # First run: Initialize workspace from template
 echo "[Init] 🚀 Initializing workspace from template..."
