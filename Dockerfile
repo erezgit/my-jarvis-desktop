@@ -47,7 +47,7 @@ COPY tsconfig*.json ./
 # Build React app for production using web-only Vite config
 ENV NODE_ENV=production
 ENV VITE_API_URL=
-ENV VITE_WORKING_DIRECTORY=/workspace
+ENV VITE_WORKING_DIRECTORY=/workspace/my-jarvis
 RUN npx vite build --config vite.web.config.mts
 
 # Build the backend server (skip frontend copy since we already built it)
