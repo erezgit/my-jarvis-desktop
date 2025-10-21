@@ -128,6 +128,14 @@ export interface FileOperationMessage {
   timestamp: number;
 }
 
+// PDF export message for presentation export trigger
+export interface PDFExportMessage {
+  type: "pdf_export";
+  filePath: string;        // Path to the .tsx file to export
+  filename?: string;       // Optional output filename
+  timestamp: number;
+}
+
 // Thinking content item from Claude SDK
 export interface ThinkingContentItem {
   type: "thinking";
@@ -158,7 +166,8 @@ export type AllMessage =
   | ThinkingMessage
   | TodoMessage
   | VoiceMessage
-  | FileOperationMessage;
+  | FileOperationMessage
+  | PDFExportMessage;
 
 // Type guard functions
 export function isChatMessage(message: AllMessage): message is ChatMessage {
@@ -203,6 +212,10 @@ export function isVoiceMessage(message: AllMessage): message is VoiceMessage {
 
 export function isFileOperationMessage(message: AllMessage): message is FileOperationMessage {
   return message.type === "file_operation";
+}
+
+export function isPDFExportMessage(message: AllMessage): message is PDFExportMessage {
+  return message.type === "pdf_export";
 }
 
 // Permission mode types (UI-focused subset of SDK PermissionMode)

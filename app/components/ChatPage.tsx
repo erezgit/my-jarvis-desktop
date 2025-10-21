@@ -6,6 +6,7 @@ import type {
   ProjectInfo,
   PermissionMode,
 } from "../types";
+import { isPDFExportMessage } from "../types";
 import { useClaudeStreaming } from "../hooks/useClaudeStreaming";
 import { useChatStateContext } from "../contexts/ChatStateContext";
 import { usePermissions } from "../hooks/chat/usePermissions";
@@ -23,6 +24,7 @@ import { TokenContextBar } from "./TokenContextBar";
 import { useTokenUsage } from "../hooks/useTokenUsage";
 import { useSettings } from "../hooks/useSettings";
 import { voicePlayedTracker } from "../lib/voice-played-tracker";
+import { exportPresentationToPDF } from "../utils/presentation-pdf-exporter";
 
 interface ChatPageProps {
   currentView: 'chat' | 'history';
@@ -324,6 +326,51 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
       onFileUploadReady(handleFileUpload);
     }
   }, [onFileUploadReady, handleFileUpload]);
+
+  // Handle PDF export messages
+  useEffect(() => {
+    // Find the last PDF export message in the messages array
+    const pdfExportMessages = messages.filter(isPDFExportMessage);
+    if (pdfExportMessages.length === 0) return;
+
+    const latestExport = pdfExportMessages[pdfExportMessages.length - 1];
+
+    // Use a flag to prevent duplicate exports
+    const exportKey = `${latestExport.filePath}-${latestExport.timestamp}`;
+    const hasExported = sessionStorage.getItem(`pdf-export-${exportKey}`);
+
+    if (!hasExported) {
+      sessionStorage.setItem(`pdf-export-${exportKey}`, 'true');
+
+      console.log('[PDF Export] Triggering export for:', latestExport.filePath);
+
+      // Trigger PDF export
+      exportPresentationToPDF({
+        filePath: latestExport.filePath,
+        filename: latestExport.filename,
+      })
+        .then((pdfPath) => {
+          console.log('[PDF Export] Export completed successfully');
+          // Add success message to the chat with file path
+          addMessage({
+            type: 'chat',
+            role: 'assistant',
+            content: `PDF exported successfully to: ${pdfPath}`,
+            timestamp: Date.now(),
+          });
+        })
+        .catch((error) => {
+          console.error('[PDF Export] Export failed:', error);
+          // Add error message to chat
+          addMessage({
+            type: 'chat',
+            role: 'assistant',
+            content: `PDF export failed: ${error.message}`,
+            timestamp: Date.now(),
+          });
+        });
+    }
+  }, [messages, addMessage]);
 
   // Permission request handlers
   const handlePermissionAllow = useCallback(() => {
