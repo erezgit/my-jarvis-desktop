@@ -1632,6 +1632,463 @@ fly volumes destroy OLD_VOLUME_ID --app my-jarvis-USERNAME
 
 ---
 
+## File Sync Deployment Procedure
+
+This section documents the **workspace-template sync system** used to deploy files and directories to Fly.io instances. This system enables copying files from the local development environment to running Fly.io containers through a persistent volume sync mechanism.
+
+### Overview
+
+The file sync system consists of two components:
+1. **workspace-template/** - Template directory containing files to sync
+2. **sync-files.sh** - Script that syncs template files to persistent volumes on container startup
+
+**Use cases:**
+- Deploying documentation files to specific user instances
+- Adding configuration files to containers
+- Copying application data or resources
+- Setting up user-specific workspaces
+
+### Architecture
+
+```
+Local Development                    Fly.io Container
+─────────────────                    ────────────────
+workspace-template/                  /app/workspace-template/  (ephemeral)
+  └── spaces/                             └── spaces/
+       └── daniel/                              └── daniel/
+            └── docs/                                 └── docs/
+                 ├── file1.md                              ├── file1.md
+                 ├── file2.md                              ├── file2.md
+                 └── file3.md                              └── file3.md
+
+Docker Build                         Container Startup
+────────────                         ─────────────────
+COPY workspace-template              /app/scripts/sync-files.sh
+     /app/workspace-template         ↓
+                                     rsync --ignore-existing
+                                     ↓
+                                     /workspace/  (persistent volume)
+                                       └── spaces/
+                                            └── daniel/
+                                                 └── docs/
+                                                      ├── file1.md
+                                                      ├── file2.md
+                                                      └── file3.md
+```
+
+### Components
+
+#### **1. workspace-template Directory**
+
+Located in project root: `/Users/erezfern/Workspace/my-jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop/workspace-template/`
+
+**Purpose**: Contains files and directory structure to be synced to persistent volumes on container startup.
+
+**Example structure:**
+```
+workspace-template/
+├── spaces/
+│   ├── daniel/
+│   │   └── docs/
+│   │       ├── conversation-summary.md
+│   │       ├── google-forms-guide.md
+│   │       └── shir-derech-questionnaire.md
+│   └── erez/
+│       └── projects/
+│           └── project-notes.md
+└── .claude/
+    └── default-settings.json
+```
+
+#### **2. sync-files.sh Script**
+
+Located at: `scripts/sync-files.sh`
+
+**Purpose**: Copies files from workspace-template to persistent /workspace volume on container startup.
+
+**Key features:**
+- Uses `rsync --ignore-existing --update` to prevent overwriting user modifications
+- Creates parent directories automatically with `mkdir -p`
+- Syncs multiple directory trees with single script
+- Logs sync operations for debugging
+
+**Script structure:**
+```bash
+#!/bin/bash
+
+TEMPLATE_DIR="/app/workspace-template"
+WORKSPACE="/workspace"
+
+# Helper function for syncing directories
+sync_directory() {
+    local src="$1"
+    local dest="$2"
+    local name="$3"
+
+    mkdir -p "$(dirname "$dest")"
+    rsync -av --ignore-existing --update "$src/" "$dest/"
+
+    echo "[Sync] ✅ $name synced"
+}
+
+# Sync Daniel's documentation
+sync_directory \
+    "$TEMPLATE_DIR/spaces/daniel/docs" \
+    "$WORKSPACE/spaces/daniel/docs" \
+    "Daniel's Documentation (Shir Derech project)"
+
+# Add more sync operations as needed
+# sync_directory "$TEMPLATE_DIR/other" "$WORKSPACE/other" "Description"
+
+echo "[Sync] All files synced successfully"
+```
+
+**rsync flags explained:**
+- `-a` - Archive mode (preserves permissions, timestamps, etc.)
+- `-v` - Verbose output for logging
+- `--ignore-existing` - Don't overwrite files that exist in destination
+- `--update` - Skip files that are newer in destination
+
+#### **3. Dockerfile Integration**
+
+The sync script is run automatically on container startup via the Dockerfile CMD:
+
+```dockerfile
+# Install rsync (required dependency)
+RUN apt-get update && apt-get install -y \
+    rsync \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy workspace template
+COPY workspace-template /app/workspace-template
+
+# Copy sync script
+COPY scripts/sync-files.sh /app/scripts/sync-files.sh
+RUN chmod +x /app/scripts/sync-files.sh
+
+# Run sync on container startup
+CMD ["/bin/bash", "-c", "/app/scripts/init-workspace.sh && /app/scripts/sync-files.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]
+```
+
+### Deployment Workflow
+
+#### **Step 1: Add Files to workspace-template**
+
+Add files to the workspace-template directory in your local environment:
+
+```bash
+# Example: Adding documentation for Daniel
+cd /path/to/my-jarvis-desktop
+mkdir -p workspace-template/spaces/daniel/docs
+cp /source/path/file1.md workspace-template/spaces/daniel/docs/
+cp /source/path/file2.md workspace-template/spaces/daniel/docs/
+```
+
+#### **Step 2: Update sync-files.sh**
+
+Add sync operations for the new files in `scripts/sync-files.sh`:
+
+```bash
+# Add after existing sync_directory calls
+sync_directory \
+    "$TEMPLATE_DIR/spaces/daniel/docs" \
+    "$WORKSPACE/spaces/daniel/docs" \
+    "Daniel's Documentation (Shir Derech project)"
+```
+
+#### **Step 3: Commit Changes**
+
+Commit both workspace-template files and script updates:
+
+```bash
+git add workspace-template/ scripts/sync-files.sh
+git commit -m "feat: Add file sync for [description]
+
+Added:
+- workspace-template/spaces/[user]/[files]
+- sync-files.sh sync operation
+
+Deploys to: [app-name]"
+
+git push origin main
+```
+
+#### **Step 4: Deploy to Fly.io**
+
+Deploy using the `--update-only` flag to update existing machines:
+
+```bash
+# Using deployment script (recommended)
+bash /workspace/tools/scripts/deploy-my-jarvis-[app-name].sh
+
+# Or using flyctl directly
+export FLY_API_TOKEN="FlyV1..."
+flyctl deploy --app my-jarvis-[app-name] --update-only
+```
+
+**Important**: Always use `--update-only` to avoid creating duplicate machines and volumes.
+
+#### **Step 5: Verify Deployment**
+
+SSH into the container and verify files were synced:
+
+```bash
+# SSH into container
+flyctl ssh console --app my-jarvis-[app-name]
+
+# Verify files exist
+ls -lh /workspace/spaces/daniel/docs/
+
+# Example output:
+# total 68K
+# -rw-r--r-- 1 root root 3.3K Oct 21 12:34 conversation-summary.md
+# -rw-r--r-- 1 root root 4.7K Oct 21 12:34 google-forms-guide.md
+# -rw-r--r-- 1 root root  30K Oct 21 12:34 psychological-assessment.md
+
+# Exit SSH session
+exit
+```
+
+### Common Use Cases
+
+#### **Use Case 1: Deploy User Documentation**
+
+```bash
+# Add files
+mkdir -p workspace-template/spaces/username/docs
+cp *.md workspace-template/spaces/username/docs/
+
+# Update sync script
+echo 'sync_directory \
+    "$TEMPLATE_DIR/spaces/username/docs" \
+    "$WORKSPACE/spaces/username/docs" \
+    "Username Documentation"' >> scripts/sync-files.sh
+
+# Deploy
+git commit -am "feat: Add documentation for username"
+flyctl deploy --app my-jarvis-username --update-only
+```
+
+#### **Use Case 2: Copy Configuration Files**
+
+```bash
+# Add config
+mkdir -p workspace-template/.claude
+cp my-config.json workspace-template/.claude/
+
+# Update sync script
+sync_directory \
+    "$TEMPLATE_DIR/.claude" \
+    "$WORKSPACE/.claude" \
+    "Claude Configuration"
+
+# Deploy
+git commit -am "feat: Add Claude configuration"
+flyctl deploy --app my-jarvis-app --update-only
+```
+
+#### **Use Case 3: Setup Project Templates**
+
+```bash
+# Add project structure
+mkdir -p workspace-template/projects/starter-kit
+cp -r starter-template/* workspace-template/projects/starter-kit/
+
+# Update sync script
+sync_directory \
+    "$TEMPLATE_DIR/projects/starter-kit" \
+    "$WORKSPACE/projects/starter-kit" \
+    "Project Starter Kit"
+
+# Deploy
+git commit -am "feat: Add project starter kit"
+flyctl deploy --app my-jarvis-app --update-only
+```
+
+### Copying Files Between Apps
+
+You can use this system to copy files from one Fly.io app to another:
+
+#### **Method 1: Via workspace-template (Recommended)**
+
+1. Add files to workspace-template in source app
+2. Deploy to target app with updated sync script
+3. Files appear in target app's /workspace volume
+
+#### **Method 2: Direct SSH Copy**
+
+```bash
+# 1. SSH into source app and export files
+flyctl ssh console --app my-jarvis-source -C "tar -czf /tmp/export.tar.gz /workspace/spaces/daniel/docs"
+flyctl ssh sftp get /tmp/export.tar.gz --app my-jarvis-source
+
+# 2. SSH into target app and import
+flyctl ssh sftp put export.tar.gz --app my-jarvis-target
+flyctl ssh console --app my-jarvis-target -C "tar -xzf export.tar.gz -C /workspace"
+```
+
+### Troubleshooting
+
+#### **Issue: Files Not Appearing After Deployment**
+
+**Cause**: Container needs restart to run sync-files.sh
+
+**Solution**:
+```bash
+# Restart container to trigger sync
+flyctl machine restart MACHINE_ID --app my-jarvis-app
+```
+
+#### **Issue: "rsync: command not found"**
+
+**Cause**: rsync not installed in Docker image
+
+**Solution**: Verify Dockerfile includes rsync installation:
+```dockerfile
+RUN apt-get update && apt-get install -y \
+    rsync \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+Then rebuild and redeploy:
+```bash
+flyctl deploy --app my-jarvis-app --update-only
+```
+
+#### **Issue: Files Overwritten on Sync**
+
+**Cause**: User modified files being overwritten by template
+
+**Solution**: The `--ignore-existing` flag should prevent this. Verify sync-files.sh uses:
+```bash
+rsync -av --ignore-existing --update "$src/" "$dest/"
+```
+
+#### **Issue: Permission Denied During Sync**
+
+**Cause**: Incorrect directory permissions in container
+
+**Solution**: Check container permissions:
+```bash
+flyctl ssh console --app my-jarvis-app
+ls -la /workspace/
+# Should show directories owned by user running the app
+```
+
+### Best Practices
+
+#### **1. Use Descriptive Sync Names**
+```bash
+# Good - clear description
+sync_directory "$TEMPLATE_DIR/docs" "$WORKSPACE/docs" "User Documentation"
+
+# Bad - unclear purpose
+sync_directory "$TEMPLATE_DIR/docs" "$WORKSPACE/docs" "Files"
+```
+
+#### **2. Preserve User Modifications**
+Always use `--ignore-existing --update` flags to prevent overwriting user changes.
+
+#### **3. Test Locally First**
+Test sync script behavior in local Docker container before deploying to production:
+```bash
+docker build -t test-sync .
+docker run --rm test-sync /bin/bash -c "/app/scripts/sync-files.sh"
+```
+
+#### **4. Document Sync Operations**
+Add comments in sync-files.sh explaining what each sync does:
+```bash
+# Sync Daniel's Shir Derech questionnaire documentation
+# Source: Client interview materials from 2025-10-20
+sync_directory "$TEMPLATE_DIR/spaces/daniel/docs" "$WORKSPACE/spaces/daniel/docs" "Daniel's Documentation"
+```
+
+#### **5. Commit Template and Script Together**
+Always commit workspace-template changes and sync-files.sh updates in the same commit:
+```bash
+git add workspace-template/ scripts/sync-files.sh
+git commit -m "feat: Add user files"
+```
+
+#### **6. Use Deployment Scripts**
+Create app-specific deployment scripts with embedded tokens to avoid permission issues:
+```bash
+# /workspace/tools/scripts/deploy-my-jarvis-app.sh
+#!/bin/bash
+cd /workspace/my-jarvis/projects/my-jarvis-desktop
+export FLY_API_TOKEN="FlyV1..."
+/root/.fly/bin/flyctl deploy --app my-jarvis-app --update-only
+```
+
+### Security Considerations
+
+#### **1. Sensitive Files**
+Never add sensitive files (API keys, passwords, tokens) to workspace-template:
+- ❌ `workspace-template/.env` with secrets
+- ❌ `workspace-template/.claude/api-keys.json`
+- ✅ Use Fly.io secrets: `flyctl secrets set KEY=value --app my-jarvis-app`
+
+#### **2. User Data Privacy**
+Only sync files appropriate for the target user:
+- ✅ User-specific documentation
+- ✅ Project templates
+- ❌ Other users' personal files
+- ❌ Shared credentials
+
+#### **3. Git History**
+Be cautious about committing files with sensitive content to git history:
+```bash
+# Review files before committing
+git diff --cached workspace-template/
+
+# Remove accidentally committed files
+git rm --cached workspace-template/sensitive-file
+```
+
+### Reference Implementation
+
+**Example from Daniel's documentation deployment (October 21, 2025):**
+
+**Files added:**
+- `workspace-template/spaces/daniel/docs/conversation-summary.md`
+- `workspace-template/spaces/daniel/docs/google-forms-guide.md`
+- `workspace-template/spaces/daniel/docs/psychological-assessment-tools-hebrew.md`
+- `workspace-template/spaces/daniel/docs/shir-derech-questionnaire-closing.md`
+- `workspace-template/spaces/daniel/docs/shir-derech-questionnaire-opening.md`
+
+**sync-files.sh update:**
+```bash
+sync_directory \
+    "$TEMPLATE_DIR/spaces/daniel/docs" \
+    "$WORKSPACE/spaces/daniel/docs" \
+    "Daniel's Documentation (Shir Derech project)"
+```
+
+**Dockerfile dependency:**
+```dockerfile
+RUN apt-get update && apt-get install -y \
+    rsync \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+**Deployment:**
+```bash
+# Committed changes
+git commit -m "feat: Add file sync system for Daniel's documentation"
+
+# Deployed to my-jarvis-daniel
+flyctl deploy --app my-jarvis-daniel --update-only
+
+# Verified files
+flyctl ssh console --app my-jarvis-daniel -C "ls -lh /workspace/spaces/daniel/docs/"
+# Output: 5 files, 68K total
+```
+
+**Result**: ✅ All files successfully synced and accessible in My Jarvis Daniel app at `/workspace/spaces/daniel/docs/`
+
+---
+
 ### **Deployment Script for Updates** (October 20, 2025)
 
 **Problem Solved**: Permission system in Claude Code blocks FLY_API_TOKEN environment variable, making deployments difficult.
