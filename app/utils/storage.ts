@@ -100,6 +100,22 @@ function migrateSettings(oldSettings: Partial<AppSettings>): AppSettings {
       theme: oldSettings.theme || DEFAULT_SETTINGS.theme,
       enterBehavior: oldSettings.enterBehavior || DEFAULT_SETTINGS.enterBehavior,
       messageDisplay: { mode },
+      workingDirectory: oldSettings.workingDirectory || DEFAULT_SETTINGS.workingDirectory,
+      version: CURRENT_SETTINGS_VERSION,
+    };
+
+    // Save migrated settings
+    setSettings(migratedSettings);
+    return migratedSettings;
+  }
+
+  // Migrate from version 3 to version 4 (add workingDirectory)
+  if (oldSettings.version === 3) {
+    const migratedSettings: AppSettings = {
+      theme: oldSettings.theme || DEFAULT_SETTINGS.theme,
+      enterBehavior: oldSettings.enterBehavior || DEFAULT_SETTINGS.enterBehavior,
+      messageDisplay: oldSettings.messageDisplay || DEFAULT_SETTINGS.messageDisplay,
+      workingDirectory: oldSettings.workingDirectory || DEFAULT_SETTINGS.workingDirectory,
       version: CURRENT_SETTINGS_VERSION,
     };
 
