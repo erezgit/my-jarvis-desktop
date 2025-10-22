@@ -261,7 +261,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
       allowedTools,
       hasShownInitMessage,
       currentAssistantMessage,
-      workingDirectory: claudeWorkingDirectory,
+      claudeWorkingDirectory,
       permissionMode,
       generateRequestId,
       clearInput,
