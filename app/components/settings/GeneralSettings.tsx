@@ -208,7 +208,7 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
           {onWorkspaceChange && (
             <div>
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">
-                Workspace Directory
+                File Tree Directory
               </label>
 
               {isWebMode() ? (
@@ -229,7 +229,7 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           Workspace
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Root workspace directory (/workspace)
+                          Root workspace directory (/workspace) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
@@ -261,7 +261,7 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           My Jarvis
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          My Jarvis project directory (/workspace/my-jarvis)
+                          My Jarvis project directory (/workspace/my-jarvis) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
@@ -296,7 +296,7 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           Workspace
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Root workspace directory (/workspace)
+                          Root workspace directory (/workspace) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
@@ -328,7 +328,7 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           My Jarvis
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          My Jarvis project directory (/workspace/my-jarvis)
+                          My Jarvis project directory (/workspace/my-jarvis) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">

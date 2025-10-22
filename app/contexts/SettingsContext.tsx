@@ -70,6 +70,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     updateSettings({ workingDirectory: path });
   }, [updateSettings]);
 
+  const setFileTreeDirectory = useCallback((path: string) => {
+    updateSettings({ fileTreeDirectory: path });
+  }, [updateSettings]);
+
   const toggleTerminal = useCallback(() => {
     setIsTerminalOpen(prev => !prev);
   }, []);
@@ -80,14 +84,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       theme: settings.theme,
       enterBehavior: settings.enterBehavior,
       workingDirectory: settings.workingDirectory,
+      fileTreeDirectory: settings.fileTreeDirectory,
       isTerminalOpen,
       toggleTheme,
       toggleEnterBehavior,
       setWorkingDirectory,
+      setFileTreeDirectory,
       updateSettings,
       toggleTerminal,
     }),
-    [settings, isTerminalOpen, toggleTheme, toggleEnterBehavior, setWorkingDirectory, updateSettings, toggleTerminal],
+    [settings, isTerminalOpen, toggleTheme, toggleEnterBehavior, setWorkingDirectory, setFileTreeDirectory, updateSettings, toggleTerminal],
   );
 
   return (

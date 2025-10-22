@@ -41,8 +41,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
   // Token usage tracking - accumulate tokens from each result message
   const { updateTokenUsage, resetTokenUsage } = useTokenUsage();
 
-  // Workspace state - read from settings context
-  const { workingDirectory } = useSettings();
+  // Claude Code working directory - always /workspace for consistency
+  const claudeWorkingDirectory = '/workspace';
 
   // Use currentView from props
   const isHistoryView = currentView === "history";
@@ -56,14 +56,14 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
 
   // Get encoded name for current working directory
   const getEncodedName = useCallback(() => {
-    if (!workingDirectory || !projects.length) {
+    if (!claudeWorkingDirectory || !projects.length) {
       return null;
     }
 
-    const project = projects.find((p) => p.path === workingDirectory);
+    const project = projects.find((p) => p.path === claudeWorkingDirectory);
 
     // Normalize paths for comparison (handle Windows path issues)
-    const normalizedWorking = normalizeWindowsPath(workingDirectory);
+    const normalizedWorking = normalizeWindowsPath(claudeWorkingDirectory);
     const normalizedProject = projects.find(
       (p) => normalizeWindowsPath(p.path) === normalizedWorking,
     );
@@ -72,7 +72,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
     const finalProject = project || normalizedProject;
 
     return finalProject?.encodedName || null;
-  }, [workingDirectory, projects]);
+  }, [claudeWorkingDirectory, projects]);
 
   // Load conversation history if sessionId is provided
   const {
@@ -191,7 +191,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
             requestId,
             ...(currentSessionId ? { sessionId: currentSessionId } : {}),
             allowedTools: tools || allowedTools,
-            ...(workingDirectory ? { workingDirectory } : {}),
+            workingDirectory: '/workspace', // Claude Code always runs in /workspace
             permissionMode: overridePermissionMode || permissionMode,
           } as ChatRequest),
         });
@@ -261,7 +261,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
       allowedTools,
       hasShownInitMessage,
       currentAssistantMessage,
-      workingDirectory,
+      workingDirectory: claudeWorkingDirectory,
       permissionMode,
       generateRequestId,
       clearInput,
@@ -480,7 +480,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
   // Load projects to get encodedName mapping
   // Reload when workingDirectory changes to update file tree
   useEffect(() => {
-    console.log('[PROJECTS_EFFECT] Loading projects for workspace:', workingDirectory);
+    console.log('[PROJECTS_EFFECT] Loading projects for workspace:', claudeWorkingDirectory);
     const loadProjects = async () => {
       try {
         const response = await fetch(getProjectsUrl());
@@ -494,7 +494,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
       }
     };
     loadProjects();
-  }, [workingDirectory]);
+  }, [claudeWorkingDirectory]);
 
   const handleConversationSelect = useCallback((sessionId: string) => {
     // Reset tokens when switching to a different conversation

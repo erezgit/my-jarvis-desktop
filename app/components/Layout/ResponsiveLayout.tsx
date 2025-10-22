@@ -60,7 +60,7 @@ export function ResponsiveLayout() {
   const isDesktop = useIsDesktop()
 
   // Get workspace settings from context
-  const { workingDirectory, setWorkingDirectory } = useSettings()
+  const { fileTreeDirectory, setFileTreeDirectory } = useSettings()
 
   // Create chat element with currentView prop (re-creates when view changes)
   const chatElement = useMemo(() => (
@@ -108,8 +108,8 @@ export function ResponsiveLayout() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={handleSettingsClose}
-        workingDirectory={workingDirectory}
-        onWorkspaceChange={setWorkingDirectory}
+        workingDirectory={fileTreeDirectory}
+        onWorkspaceChange={setFileTreeDirectory}
       />
     </>
   )

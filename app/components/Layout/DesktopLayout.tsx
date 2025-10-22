@@ -50,7 +50,7 @@ export function DesktopLayout({
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
 
   // Get working directory from settings
-  const { workingDirectory } = useSettings()
+  const { fileTreeDirectory } = useSettings()
 
   // Get messages from shared context
   const { messages } = useChatStateContext()
@@ -137,7 +137,7 @@ export function DesktopLayout({
         >
           <VirtualizedFileTree
             ref={fileTreeRef}
-            workingDirectory={workingDirectory}
+            workingDirectory={fileTreeDirectory}
             onFileSelect={onFileSelect}
             onFileUpload={onFileUpload}
           />

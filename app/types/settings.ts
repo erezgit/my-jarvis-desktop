@@ -10,7 +10,8 @@ export interface AppSettings {
   theme: Theme;
   enterBehavior: EnterBehavior;
   messageDisplay: MessageDisplaySettings;
-  workingDirectory: string;
+  workingDirectory: string; // For Claude Code execution - always /workspace
+  fileTreeDirectory: string; // For file tree display - can be /workspace or /workspace/my-jarvis
   version: number;
 }
 
@@ -23,26 +24,26 @@ export interface SettingsContextType {
   settings: AppSettings;
   theme: Theme;
   enterBehavior: EnterBehavior;
-  workingDirectory: string;
+  workingDirectory: string; // Claude Code working directory
+  fileTreeDirectory: string; // File tree display directory
   isTerminalOpen: boolean;
   toggleTheme: () => void;
   toggleEnterBehavior: () => void;
   setWorkingDirectory: (path: string) => void;
+  setFileTreeDirectory: (path: string) => void;
   updateSettings: (updates: Partial<AppSettings>) => void;
   toggleTerminal: () => void;
 }
 
-// Get default workspace path dynamically based on user's home directory
-// Note: This function is synchronous but may return a fallback in Electron mode
-// The actual home directory will be set asynchronously when settings load
-function getDefaultWorkspace(): string {
-  // In Electron, use a placeholder that will be replaced by actual home dir
-  if (typeof window !== 'undefined' && (window as any).electron) {
-    // Return fallback - will be updated asynchronously via fileAPI.getHomeDir()
-    return '~/Documents/MyJarvis';
-  }
+// Get default Claude working directory - always /workspace for consistent execution
+function getDefaultClaudeWorkspace(): string {
+  // Claude Code always runs in /workspace for consistent behavior
+  return '/workspace';
+}
 
-  // For web mode (Docker), default to /workspace/my-jarvis
+// Get default file tree directory - can be customized by user
+function getDefaultFileTreeDirectory(): string {
+  // File tree can default to my-jarvis subdirectory for user convenience
   return import.meta.env.VITE_WORKING_DIRECTORY || '/workspace/my-jarvis';
 }
 
@@ -53,9 +54,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   messageDisplay: {
     mode: "jarvis"  // Default to consumer experience
   },
-  workingDirectory: getDefaultWorkspace(),
-  version: 4,  // Increment for migration
+  workingDirectory: getDefaultClaudeWorkspace(), // Claude Code always in /workspace
+  fileTreeDirectory: getDefaultFileTreeDirectory(), // File tree can show my-jarvis
+  version: 5,  // Increment for migration
 };
 
 // Current settings version for migration
-export const CURRENT_SETTINGS_VERSION = 4;
+export const CURRENT_SETTINGS_VERSION = 5;

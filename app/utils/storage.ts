@@ -116,6 +116,23 @@ function migrateSettings(oldSettings: Partial<AppSettings>): AppSettings {
       enterBehavior: oldSettings.enterBehavior || DEFAULT_SETTINGS.enterBehavior,
       messageDisplay: oldSettings.messageDisplay || DEFAULT_SETTINGS.messageDisplay,
       workingDirectory: oldSettings.workingDirectory || DEFAULT_SETTINGS.workingDirectory,
+      fileTreeDirectory: DEFAULT_SETTINGS.fileTreeDirectory, // Add new field
+      version: CURRENT_SETTINGS_VERSION,
+    };
+
+    // Save migrated settings
+    setSettings(migratedSettings);
+    return migratedSettings;
+  }
+
+  // Migrate from version 4 to version 5 (separate fileTreeDirectory)
+  if (oldSettings.version === 4) {
+    const migratedSettings: AppSettings = {
+      theme: oldSettings.theme || DEFAULT_SETTINGS.theme,
+      enterBehavior: oldSettings.enterBehavior || DEFAULT_SETTINGS.enterBehavior,
+      messageDisplay: oldSettings.messageDisplay || DEFAULT_SETTINGS.messageDisplay,
+      workingDirectory: '/workspace', // Claude Code always uses /workspace
+      fileTreeDirectory: oldSettings.workingDirectory || DEFAULT_SETTINGS.fileTreeDirectory, // Preserve user's directory choice for file tree
       version: CURRENT_SETTINGS_VERSION,
     };
 
@@ -164,7 +181,8 @@ function migrateLegacySettings(): AppSettings {
     theme: legacyTheme,
     enterBehavior: legacyEnterBehavior,
     messageDisplay: DEFAULT_SETTINGS.messageDisplay, // Add new field
-    workingDirectory: defaultWorkspace, // Use dynamic workspace path
+    workingDirectory: DEFAULT_SETTINGS.workingDirectory, // Claude Code always uses /workspace
+    fileTreeDirectory: defaultWorkspace, // File tree can use user's preference
     version: CURRENT_SETTINGS_VERSION,
   };
 

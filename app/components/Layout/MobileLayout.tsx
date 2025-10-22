@@ -51,7 +51,7 @@ export function MobileLayout({
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
 
   // Get working directory from settings
-  const { workingDirectory } = useSettings()
+  const { fileTreeDirectory } = useSettings()
 
   // Get messages from shared context
   const { messages } = useChatStateContext()
@@ -204,7 +204,7 @@ export function MobileLayout({
             <div className="h-full flex flex-col overflow-auto bg-gray-50 dark:bg-gray-900">
               <VirtualizedFileTree
                 ref={fileTreeRef}
-                workingDirectory={workingDirectory}
+                workingDirectory={fileTreeDirectory}
                 onFileSelect={onFileSelect}
               />
             </div>
