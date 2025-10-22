@@ -1,6 +1,6 @@
 # fly.toml for My Jarvis Desktop Web Deployment
 
-app = "my-jarvis-desktop"
+app = "my-jarvis-erez"
 primary_region = "sjc"
 
 [build]
