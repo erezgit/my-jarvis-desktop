@@ -166,6 +166,19 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
       } catch (err) {
         console.error('Failed to refresh directory:', err);
       }
+    } else {
+      // Directory not found in tree (likely not expanded yet)
+      // Check if this is a direct child of the current working directory
+      console.log('[FILE_TREE_REFRESH] Directory not found in tree:', path);
+      console.log('[FILE_TREE_REFRESH] Current path:', currentPath);
+
+      if (currentPath && path.startsWith(currentPath)) {
+        // Reload the root level to pick up the changes
+        console.log('[FILE_TREE_REFRESH] Reloading root directory to pick up changes');
+        await loadDirectory(currentPath);
+      } else {
+        console.warn('[FILE_TREE_REFRESH] Cannot refresh directory outside current path:', path);
+      }
     }
   }
 
