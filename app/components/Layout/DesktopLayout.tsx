@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   PanelGroup,
   Panel,
@@ -48,6 +49,7 @@ export function DesktopLayout({
 }: DesktopLayoutProps) {
   const fileTreeRef = useRef<FileTreeRef>(null)
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
+  const queryClient = useQueryClient()
 
   // Get working directory from settings
   const { fileTreeDirectory } = useSettings()
@@ -78,46 +80,51 @@ export function DesktopLayout({
     if (fileOpMessage) {
       console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
 
-      // Use expandToPath to reveal the file in the tree
-      if (fileTreeRef.current) {
-        console.log('[DESKTOP_LAYOUT_DEBUG] Expanding to path:', fileOpMessage.path);
-        fileTreeRef.current.expandToPath(fileOpMessage.path).then(() => {
-          console.log('[DESKTOP_LAYOUT_DEBUG] Path expanded, now selecting file');
+      // Extract parent directory path
+      const pathParts = fileOpMessage.path.split('/')
+      pathParts.pop() // Remove filename
+      const parentPath = pathParts.join('/')
 
-          // Auto-select the file and load its content
-          if (typeof window !== 'undefined' && (window as any).fileAPI) {
-            (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
-              if (fileData) {
-                onFileSelect({
-                  name: fileOpMessage.fileName,
-                  path: fileOpMessage.path,
-                  isDirectory: fileOpMessage.isDirectory,
-                  size: 0,
-                  modified: new Date().toISOString(),
-                  extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-                  content: fileData.content
-                });
-              }
-            }).catch((error: any) => {
-              console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
-              // Select without content if read fails
-              onFileSelect({
-                name: fileOpMessage.fileName,
-                path: fileOpMessage.path,
-                isDirectory: fileOpMessage.isDirectory,
-                size: 0,
-                modified: new Date().toISOString(),
-                extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-              });
+      console.log('[DESKTOP_LAYOUT_DEBUG] Invalidating parent directory:', parentPath);
+
+      // Invalidate parent directory query - TanStack Query will refetch automatically
+      queryClient.invalidateQueries({
+        queryKey: ['directories', parentPath],
+        exact: true, // Only invalidate this specific directory
+      })
+
+      // Auto-select the file and load its content
+      if (typeof window !== 'undefined' && (window as any).fileAPI) {
+        (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
+          if (fileData) {
+            onFileSelect({
+              name: fileOpMessage.fileName,
+              path: fileOpMessage.path,
+              isDirectory: fileOpMessage.isDirectory,
+              size: 0,
+              modified: new Date().toISOString(),
+              extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+              content: fileData.content
             });
           }
+        }).catch((error: any) => {
+          console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
+          // Select without content if read fails
+          onFileSelect({
+            name: fileOpMessage.fileName,
+            path: fileOpMessage.path,
+            isDirectory: fileOpMessage.isDirectory,
+            size: 0,
+            modified: new Date().toISOString(),
+            extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+          });
         });
       }
     }
 
     // Update last processed count
     setLastProcessedMessageCount(messages.length);
-  }, [messages, onFileSelect, lastProcessedMessageCount])
+  }, [messages, onFileSelect, lastProcessedMessageCount, queryClient])
 
   return (
     <div className="h-screen">

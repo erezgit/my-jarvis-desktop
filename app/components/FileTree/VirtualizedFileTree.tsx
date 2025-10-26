@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo, memo, useImperativeHandle, forwardRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
 import { JarvisOrb } from '../JarvisOrb'
 import { FileUploadButton } from '../chat/FileUploadButton'
 import { isElectronMode, isWebMode } from '@/app/config/deployment'
+
+// Helper to create consistent query keys for directories
+function getDirectoryQueryKey(path: string) {
+  return ['directories', path] as const
+}
 
 interface FileItem {
   name: string
@@ -98,6 +104,43 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+
+  // Root directory query
+  const { data: rootFiles, isLoading: rootLoading, error: rootError } = useQuery({
+    queryKey: getDirectoryQueryKey(workingDirectory),
+    queryFn: async () => {
+      if (isWebMode()) {
+        const response = await fetch(`/api/files?path=${encodeURIComponent(workingDirectory)}`)
+        const data = await response.json()
+        if (!data.success) throw new Error(data.error || 'Failed to load directory')
+        return data.files
+      } else if (isElectronMode()) {
+        if (typeof window !== 'undefined' && (window as any).fileAPI) {
+          return await (window as any).fileAPI.readDirectory(workingDirectory)
+        }
+        throw new Error('window.fileAPI not available')
+      }
+      throw new Error('Unknown deployment mode')
+    },
+    enabled: !!workingDirectory,
+  })
+
+  // Update items when root query data changes
+  useEffect(() => {
+    if (rootFiles) {
+      const mappedFiles: FileItem[] = rootFiles.map((file: any) => ({
+        ...file,
+        level: 0,
+        isExpanded: false,
+        children: [],
+      }))
+      setItems(mappedFiles)
+      setCurrentPath(workingDirectory)
+      setLoading(rootLoading)
+      setError(rootError?.message || null)
+    }
+  }, [rootFiles, workingDirectory, rootLoading, rootError])
 
   // Expand all parent directories to reveal a file path
   const expandToPath = async (filePath: string) => {
@@ -168,16 +211,26 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     refreshDirectory: async (path: string) => {
-      await refreshDirectoryContents(path)
+      // Use query invalidation instead
+      queryClient.invalidateQueries({
+        queryKey: getDirectoryQueryKey(path),
+        exact: true,
+      })
     },
     expandToPath: async (filePath: string) => {
-      await expandToPath(filePath)
+      // No longer needed with query invalidation, but keep for compatibility
     }
   }))
 
   // Surgically refresh a specific directory without affecting the rest of the tree
   const refreshDirectoryContents = async (path: string) => {
-    // Find the directory item in the current tree
+    // Use query invalidation - TanStack Query will handle the refetch
+    queryClient.invalidateQueries({
+      queryKey: getDirectoryQueryKey(path),
+      exact: true,
+    })
+
+    // Find the directory item in the current tree to update its children
     const findDirectory = (items: FileItem[], targetPath: string): FileItem | null => {
       for (const item of items) {
         if (item.path === targetPath && item.isDirectory) {
@@ -242,11 +295,12 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   }
 
   // Load directory when workingDirectory changes
-  useEffect(() => {
-    if (workingDirectory) {
-      loadDirectory(workingDirectory)
-    }
-  }, [workingDirectory])
+  // NOW HANDLED BY useQuery - see root directory query above
+  // useEffect(() => {
+  //   if (workingDirectory) {
+  //     loadDirectory(workingDirectory)
+  //   }
+  // }, [workingDirectory])
 
   const loadDirectory = async (path: string) => {
     try {
@@ -298,29 +352,40 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
 
   const loadSubdirectory = async (parentItem: FileItem) => {
     try {
+      // Check if already in query cache
+      const cachedData = queryClient.getQueryData(getDirectoryQueryKey(parentItem.path))
+
       let files: any[]
 
-      // Explicit deployment mode detection
-      if (isElectronMode()) {
-        // Electron mode: Use IPC via window.fileAPI
-        if (typeof window !== 'undefined' && (window as any).fileAPI) {
-          files = await (window as any).fileAPI.readDirectory(parentItem.path)
-        } else {
-          throw new Error('Electron mode but window.fileAPI not available')
-        }
-      } else if (isWebMode()) {
-        // Web mode: Use HTTP API
-        const response = await fetch(`/api/files?path=${encodeURIComponent(parentItem.path)}`)
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        const data = await response.json()
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load subdirectory')
-        }
-        files = data.files
+      if (cachedData) {
+        // Use cached data
+        files = cachedData as any[]
       } else {
-        throw new Error('Unknown deployment mode')
+        // Fetch from API
+        if (isElectronMode()) {
+          // Electron mode: Use IPC via window.fileAPI
+          if (typeof window !== 'undefined' && (window as any).fileAPI) {
+            files = await (window as any).fileAPI.readDirectory(parentItem.path)
+          } else {
+            throw new Error('Electron mode but window.fileAPI not available')
+          }
+        } else if (isWebMode()) {
+          // Web mode: Use HTTP API
+          const response = await fetch(`/api/files?path=${encodeURIComponent(parentItem.path)}`)
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+          const data = await response.json()
+          if (!data.success) {
+            throw new Error(data.error || 'Failed to load subdirectory')
+          }
+          files = data.files
+        } else {
+          throw new Error('Unknown deployment mode')
+        }
+
+        // Cache the data
+        queryClient.setQueryData(getDirectoryQueryKey(parentItem.path), files)
       }
 
       const children: FileItem[] = files.map((file: any) => ({
