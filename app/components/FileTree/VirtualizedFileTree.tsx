@@ -83,6 +83,7 @@ FileTreeItem.displayName = 'FileTreeItem'
 
 export interface FileTreeRef {
   refreshDirectory: (path: string) => Promise<void>;
+  expandToPath: (filePath: string) => Promise<void>;
 }
 
 export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
@@ -98,10 +99,79 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Expose refresh method to parent via ref
+  // Expand all parent directories to reveal a file path
+  const expandToPath = async (filePath: string) => {
+    if (!currentPath || !filePath.startsWith(currentPath)) {
+      console.warn('[EXPAND_TO_PATH] File path outside current workspace:', filePath);
+      return;
+    }
+
+    // Extract parent directory path
+    const pathParts = filePath.split('/');
+    pathParts.pop(); // Remove filename
+    const parentPath = pathParts.join('/');
+
+    if (!parentPath || parentPath === currentPath) {
+      // File is in root, just refresh root
+      await refreshDirectoryContents(currentPath);
+      return;
+    }
+
+    // Build the path segments from currentPath to parentPath
+    const relativePath = parentPath.substring(currentPath.length + 1);
+    const segments = relativePath.split('/');
+
+    let currentExpandPath = currentPath;
+
+    // Walk through each segment and expand it
+    for (const segment of segments) {
+      currentExpandPath = `${currentExpandPath}/${segment}`;
+
+      // Find the item at this path
+      const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
+        for (const item of items) {
+          if (item.path === targetPath) {
+            return item;
+          }
+          if (item.children && item.children.length > 0) {
+            const found = findItem(item.children, targetPath);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const dirItem = findItem(items, currentExpandPath);
+
+      if (dirItem && dirItem.isDirectory) {
+        // Check if already expanded
+        if (!expandedPaths.has(dirItem.path)) {
+          // Expand this directory (load its children)
+          await loadSubdirectory(dirItem);
+          setExpandedPaths(prev => {
+            const next = new Set(prev);
+            next.add(dirItem.path);
+            return next;
+          });
+          dirItem.isExpanded = true;
+          setItems([...items]); // Force re-render
+        }
+      } else {
+        console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
+      }
+    }
+
+    // Finally refresh the parent directory to pick up the new file
+    await refreshDirectoryContents(parentPath);
+  };
+
+  // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     refreshDirectory: async (path: string) => {
       await refreshDirectoryContents(path)
+    },
+    expandToPath: async (filePath: string) => {
+      await expandToPath(filePath)
     }
   }))
 
@@ -167,18 +237,7 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         console.error('Failed to refresh directory:', err);
       }
     } else {
-      // Directory not found in tree (likely not expanded yet)
-      // Check if this is a direct child of the current working directory
-      console.log('[FILE_TREE_REFRESH] Directory not found in tree:', path);
-      console.log('[FILE_TREE_REFRESH] Current path:', currentPath);
-
-      if (currentPath && path.startsWith(currentPath)) {
-        // Reload the root level to pick up the changes
-        console.log('[FILE_TREE_REFRESH] Reloading root directory to pick up changes');
-        await loadDirectory(currentPath);
-      } else {
-        console.warn('[FILE_TREE_REFRESH] Cannot refresh directory outside current path:', path);
-      }
+      console.warn('[FILE_TREE_REFRESH] Directory not found in tree (likely not expanded):', path);
     }
   }
 

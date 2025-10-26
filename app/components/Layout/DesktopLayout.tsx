@@ -77,46 +77,40 @@ export function DesktopLayout({
 
     if (fileOpMessage) {
       console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
-      // Extract parent directory path
-      const pathParts = fileOpMessage.path.split('/')
-      pathParts.pop() // Remove filename
-      const parentPath = pathParts.join('/')
-      console.log('[DESKTOP_LAYOUT_DEBUG] Parent path:', parentPath);
 
-      // Refresh the parent directory
-      if (fileTreeRef.current && parentPath) {
-        console.log('[DESKTOP_LAYOUT_DEBUG] Refreshing directory:', parentPath);
-        fileTreeRef.current.refreshDirectory(parentPath)
-      }
+      // Use expandToPath to reveal the file in the tree
+      if (fileTreeRef.current) {
+        console.log('[DESKTOP_LAYOUT_DEBUG] Expanding to path:', fileOpMessage.path);
+        fileTreeRef.current.expandToPath(fileOpMessage.path).then(() => {
+          console.log('[DESKTOP_LAYOUT_DEBUG] Path expanded, now selecting file');
 
-      // Auto-select the new file and load its content
-      console.log('[DESKTOP_LAYOUT_DEBUG] Auto-selecting file:', fileOpMessage.path);
-
-      // Load file content before selecting
-      if (typeof window !== 'undefined' && (window as any).fileAPI) {
-        (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
-          if (fileData) {
-            onFileSelect({
-              name: fileOpMessage.fileName,
-              path: fileOpMessage.path,
-              isDirectory: fileOpMessage.isDirectory,
-              size: 0,
-              modified: new Date().toISOString(),
-              extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-              content: fileData.content
+          // Auto-select the file and load its content
+          if (typeof window !== 'undefined' && (window as any).fileAPI) {
+            (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
+              if (fileData) {
+                onFileSelect({
+                  name: fileOpMessage.fileName,
+                  path: fileOpMessage.path,
+                  isDirectory: fileOpMessage.isDirectory,
+                  size: 0,
+                  modified: new Date().toISOString(),
+                  extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+                  content: fileData.content
+                });
+              }
+            }).catch((error: any) => {
+              console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
+              // Select without content if read fails
+              onFileSelect({
+                name: fileOpMessage.fileName,
+                path: fileOpMessage.path,
+                isDirectory: fileOpMessage.isDirectory,
+                size: 0,
+                modified: new Date().toISOString(),
+                extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+              });
             });
           }
-        }).catch((error: any) => {
-          console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
-          // Select without content if read fails
-          onFileSelect({
-            name: fileOpMessage.fileName,
-            path: fileOpMessage.path,
-            isDirectory: fileOpMessage.isDirectory,
-            size: 0,
-            modified: new Date().toISOString(),
-            extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-          });
         });
       }
     }
