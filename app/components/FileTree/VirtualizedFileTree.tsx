@@ -242,15 +242,13 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
       let currentExpandPath = currentPath;
 
       // Walk through each segment and expand it
+      // NOTE: We no longer call refreshDirectoryContents here to prevent flickering
+      // The parent component (DesktopLayout) uses optimistic cache updates via setQueryData
       for (const segment of segments) {
         const parentExpandPath = currentExpandPath;
         currentExpandPath = `${currentExpandPath}/${segment}`;
 
-        // FIRST: Refresh the parent directory to ensure it has the latest children
-        // This is critical for newly created directories
-        await refreshDirectoryContents(parentExpandPath);
-
-        // THEN: Find the item at this path (now it should exist after refresh)
+        // Find the item at this path (cache already updated via setQueryData)
         const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
           for (const item of items) {
             if (item.path === targetPath) {
@@ -269,7 +267,7 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         if (dirItem && dirItem.isDirectory) {
           // Check if already expanded
           if (!expandedPaths.has(dirItem.path)) {
-            // Expand this directory (load its children)
+            // Expand this directory (load its children from cache)
             await loadSubdirectory(dirItem);
             setExpandedPaths(prev => {
               const next = new Set(prev);
@@ -283,9 +281,6 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
           console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
         }
       }
-
-      // Finally refresh the parent directory to pick up the new file
-      await refreshDirectoryContents(parentPath);
     }
   }))
 

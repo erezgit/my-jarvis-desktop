@@ -82,26 +82,54 @@ export function DesktopLayout({
       (async () => {
         console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
 
-        // FIRST: Expand to the file path to ensure parent is loaded and expanded
-        // AWAIT this to ensure tree is fully expanded before selecting file
+        // Extract parent directory path
+        const pathParts = fileOpMessage.path.split('/')
+        const fileName = pathParts.pop() // Remove and save filename
+        const parentPath = pathParts.join('/')
+
+        console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory:', parentPath);
+
+        // OPTIMISTIC UPDATE: Immediately add new file to parent directory cache
+        // This prevents flickering and makes UI instantly responsive
+        const queryKey = ['directories', parentPath];
+        const currentData = queryClient.getQueryData<{success: boolean, files: any[]}>(queryKey);
+
+        if (currentData && currentData.files) {
+          console.log('[DESKTOP_LAYOUT_DEBUG] Optimistically updating cache for:', parentPath);
+
+          const newFile = {
+            name: fileOpMessage.fileName,
+            path: fileOpMessage.path,
+            isDirectory: fileOpMessage.isDirectory,
+            size: 0,
+            modified: new Date().toISOString(),
+            extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : ''
+          };
+
+          // Check if file already exists in cache (prevent duplicates)
+          const fileExists = currentData.files.some(f => f.path === fileOpMessage.path);
+
+          if (!fileExists) {
+            // Add new file to cache
+            queryClient.setQueryData(queryKey, {
+              ...currentData,
+              files: [...currentData.files, newFile]
+            });
+          }
+        }
+
+        // Expand to the file path (without refresh calls - tree will read from updated cache)
         if (fileTreeRef.current) {
           await fileTreeRef.current.expandToPath(fileOpMessage.path);
         }
 
-        // THEN: Extract parent directory path and invalidate cache
-        const pathParts = fileOpMessage.path.split('/')
-        pathParts.pop() // Remove filename
-        const parentPath = pathParts.join('/')
-
-        console.log('[DESKTOP_LAYOUT_DEBUG] Invalidating parent directory:', parentPath);
-
-        // Invalidate parent directory query - ensures fresh data after expand
+        // Background invalidate to sync with filesystem (won't cause flicker since cache already updated)
         queryClient.invalidateQueries({
           queryKey: ['directories', parentPath],
           exact: true,
         })
 
-        // FINALLY: Auto-select the file and load its content (after tree is expanded)
+        // Auto-select the file and load its content
         if (typeof window !== 'undefined' && (window as any).fileAPI) {
           try {
             const fileData = await (window as any).fileAPI.readFile(fileOpMessage.path);
