@@ -243,9 +243,14 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
 
       // Walk through each segment and expand it
       for (const segment of segments) {
+        const parentExpandPath = currentExpandPath;
         currentExpandPath = `${currentExpandPath}/${segment}`;
 
-        // Find the item at this path
+        // FIRST: Refresh the parent directory to ensure it has the latest children
+        // This is critical for newly created directories
+        await refreshDirectoryContents(parentExpandPath);
+
+        // THEN: Find the item at this path (now it should exist after refresh)
         const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
           for (const item of items) {
             if (item.path === targetPath) {
