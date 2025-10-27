@@ -78,31 +78,47 @@ export function DesktopLayout({
     console.log('[DESKTOP_LAYOUT_DEBUG] Found FileOperationMessage:', fileOpMessage);
 
     if (fileOpMessage) {
-      console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
+      // Handle async operations in an IIFE
+      (async () => {
+        console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
 
-      // FIRST: Expand to the file path to ensure parent is loaded and expanded
-      // This creates active observers so invalidation will trigger refetch
-      if (fileTreeRef.current) {
-        fileTreeRef.current.expandToPath(fileOpMessage.path);
-      }
+        // FIRST: Expand to the file path to ensure parent is loaded and expanded
+        // AWAIT this to ensure tree is fully expanded before selecting file
+        if (fileTreeRef.current) {
+          await fileTreeRef.current.expandToPath(fileOpMessage.path);
+        }
 
-      // THEN: Extract parent directory path and invalidate cache
-      const pathParts = fileOpMessage.path.split('/')
-      pathParts.pop() // Remove filename
-      const parentPath = pathParts.join('/')
+        // THEN: Extract parent directory path and invalidate cache
+        const pathParts = fileOpMessage.path.split('/')
+        pathParts.pop() // Remove filename
+        const parentPath = pathParts.join('/')
 
-      console.log('[DESKTOP_LAYOUT_DEBUG] Invalidating parent directory:', parentPath);
+        console.log('[DESKTOP_LAYOUT_DEBUG] Invalidating parent directory:', parentPath);
 
-      // Invalidate parent directory query - ensures fresh data after expand
-      queryClient.invalidateQueries({
-        queryKey: ['directories', parentPath],
-        exact: true,
-      })
+        // Invalidate parent directory query - ensures fresh data after expand
+        queryClient.invalidateQueries({
+          queryKey: ['directories', parentPath],
+          exact: true,
+        })
 
-      // Auto-select the file and load its content
-      if (typeof window !== 'undefined' && (window as any).fileAPI) {
-        (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
-          if (fileData) {
+        // FINALLY: Auto-select the file and load its content (after tree is expanded)
+        if (typeof window !== 'undefined' && (window as any).fileAPI) {
+          try {
+            const fileData = await (window as any).fileAPI.readFile(fileOpMessage.path);
+            if (fileData) {
+              onFileSelect({
+                name: fileOpMessage.fileName,
+                path: fileOpMessage.path,
+                isDirectory: fileOpMessage.isDirectory,
+                size: 0,
+                modified: new Date().toISOString(),
+                extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+                content: fileData.content
+              });
+            }
+          } catch (error) {
+            console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
+            // Select without content if read fails
             onFileSelect({
               name: fileOpMessage.fileName,
               path: fileOpMessage.path,
@@ -110,22 +126,10 @@ export function DesktopLayout({
               size: 0,
               modified: new Date().toISOString(),
               extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-              content: fileData.content
             });
           }
-        }).catch((error: any) => {
-          console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
-          // Select without content if read fails
-          onFileSelect({
-            name: fileOpMessage.fileName,
-            path: fileOpMessage.path,
-            isDirectory: fileOpMessage.isDirectory,
-            size: 0,
-            modified: new Date().toISOString(),
-            extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-          });
-        });
-      }
+        }
+      })();
     }
 
     // Update last processed count

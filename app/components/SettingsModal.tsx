@@ -71,7 +71,7 @@ export function SettingsModal({ isOpen, onClose, workingDirectory, onWorkspaceCh
         {/* Version Footer */}
         <div className="border-t border-slate-200 dark:border-slate-700 px-6 py-3">
           <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-            Version 1.30.5
+            Version 1.30.6
           </p>
         </div>
       </div>
