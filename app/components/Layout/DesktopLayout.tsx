@@ -89,13 +89,16 @@ export function DesktopLayout({
 
         console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory:', parentPath);
 
-        // OPTIMISTIC UPDATE: Immediately add new file to parent directory cache
-        // This prevents flickering and makes UI instantly responsive
-        const queryKey = ['directories', parentPath];
-        const currentData = queryClient.getQueryData<{success: boolean, files: any[]}>(queryKey);
+        // OPTIMISTIC UPDATE: Handle both file creation and directory creation
+        // When creating tickets, we create BOTH a directory AND a file inside it
+        // e.g., /workspace/tickets/018-api-rate-limiting/implementation-plan.md
 
-        if (currentData && currentData.files) {
-          console.log('[DESKTOP_LAYOUT_DEBUG] Optimistically updating cache for:', parentPath);
+        const parentQueryKey = ['directories', parentPath];
+        const parentData = queryClient.getQueryData<{success: boolean, files: any[]}>(parentQueryKey);
+
+        if (parentData && parentData.files) {
+          // Parent directory exists in cache - just add the file
+          console.log('[DESKTOP_LAYOUT_DEBUG] Parent exists in cache, adding file:', fileOpMessage.fileName);
 
           const newFile = {
             name: fileOpMessage.fileName,
@@ -106,14 +109,64 @@ export function DesktopLayout({
             extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : ''
           };
 
-          // Check if file already exists in cache (prevent duplicates)
-          const fileExists = currentData.files.some(f => f.path === fileOpMessage.path);
+          const fileExists = parentData.files.some(f => f.path === fileOpMessage.path);
 
           if (!fileExists) {
-            // Add new file to cache
-            queryClient.setQueryData(queryKey, {
-              ...currentData,
-              files: [...currentData.files, newFile]
+            queryClient.setQueryData(parentQueryKey, {
+              ...parentData,
+              files: [...parentData.files, newFile]
+            });
+          }
+        } else {
+          // Parent directory doesn't exist in cache - this is a new directory being created
+          // We need to update the GRANDPARENT to add the new directory
+          console.log('[DESKTOP_LAYOUT_DEBUG] Parent NOT in cache - creating new directory structure');
+
+          const parentPathParts = parentPath.split('/');
+          const newDirName = parentPathParts.pop();
+          const grandparentPath = parentPathParts.join('/');
+
+          console.log('[DESKTOP_LAYOUT_DEBUG] Grandparent path:', grandparentPath);
+          console.log('[DESKTOP_LAYOUT_DEBUG] New directory name:', newDirName);
+
+          const grandparentQueryKey = ['directories', grandparentPath];
+          const grandparentData = queryClient.getQueryData<{success: boolean, files: any[]}>(grandparentQueryKey);
+
+          if (grandparentData && grandparentData.files && newDirName) {
+            // Add the new directory to grandparent cache
+            const dirExists = grandparentData.files.some(f => f.path === parentPath);
+
+            if (!dirExists) {
+              console.log('[DESKTOP_LAYOUT_DEBUG] Adding new directory to grandparent cache');
+              const newDirectory = {
+                name: newDirName,
+                path: parentPath,
+                isDirectory: true,
+                size: 0,
+                modified: new Date().toISOString(),
+                extension: ''
+              };
+
+              queryClient.setQueryData(grandparentQueryKey, {
+                ...grandparentData,
+                files: [...grandparentData.files, newDirectory]
+              });
+            }
+
+            // Also create cache entry for the new directory with the file inside
+            console.log('[DESKTOP_LAYOUT_DEBUG] Creating cache entry for new directory with file');
+            const newFile = {
+              name: fileOpMessage.fileName,
+              path: fileOpMessage.path,
+              isDirectory: fileOpMessage.isDirectory,
+              size: 0,
+              modified: new Date().toISOString(),
+              extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : ''
+            };
+
+            queryClient.setQueryData(parentQueryKey, {
+              success: true,
+              files: [newFile]
             });
           }
         }
