@@ -203,19 +203,13 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
       }
     }
-
-    // Finally refresh the parent directory to pick up the new file
-    await refreshDirectoryContents(parentPath);
   };
 
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     refreshDirectory: async (path: string) => {
-      // Use query invalidation
-      queryClient.invalidateQueries({
-        queryKey: getDirectoryQueryKey(path),
-        exact: true,
-      })
+      // Directly refresh the directory to update items state
+      await refreshDirectoryContents(path);
     },
     expandToPath: async (filePath: string) => {
       // This IS needed - must expand parent before invalidation can work
