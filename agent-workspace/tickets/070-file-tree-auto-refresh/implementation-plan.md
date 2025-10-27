@@ -1,6 +1,41 @@
 # Ticket 070: File Tree Auto-Refresh Fix
 
-## Status: IN PROGRESS - TanStack Query Solution
+## Status: IN PROGRESS - Implementation Fix v1.30.4
+
+## Previous Attempt (v1.30.3) - FAILED
+
+**What we tried:** Basic TanStack Query integration with cache invalidation only.
+
+**Why it failed:**
+- invalidateQueries only refetches **active** queries (queries with active observers/useQuery hooks)
+- Collapsed directories have no active observers - they're not rendered yet
+- Cache invalidation does nothing when parent directory isn't expanded
+- We disabled the old expandToPath logic, breaking the fundamental expand-then-refresh flow
+- The problem: Two layers of state - TanStack cache (server state) + UI state (expansion)
+
+**Evidence from 20+ web searches:**
+- "invalidateQueries only refetches queries that are actively used. Others are just marked as stale"
+- "When a component is unmounted, it no longer has active observers, so invalidateQueries will only mark the query as stale but won't trigger an immediate refetch"
+- Solution: Use `refetchType: 'all'` OR keep expand-then-invalidate pattern
+- Best practice: Expand parent to subscribe to query, then invalidate to refresh
+
+## Root Cause Analysis
+
+**The Real Problem:**
+TanStack Query manages **server state** (cached directory data), but our file tree also has **UI state** (which directories are expanded). These are two separate concerns:
+
+1. **Server State (TanStack Query)**: What files exist in each directory
+2. **UI State (Component)**: Which directories are expanded/collapsed
+
+When invalidateQueries is called for a collapsed directory:
+- ✅ TanStack updates its cache
+- ❌ But no useQuery hook is watching that directory (not rendered)
+- ❌ So no refetch happens
+- ❌ UI never updates
+
+**The Fix:** Keep expandToPath logic to ensure parent is expanded (has active observer), THEN invalidate cache to trigger refresh.
+
+## Status: CORRECTED Solution
 
 ## Problem Statement
 
@@ -121,20 +156,156 @@ useEffect(() => {
 }, [fileOpMessage])
 ```
 
-## Implementation Plan
+## Corrected Implementation Plan (v1.30.4)
 
-### Phase 1: Setup TanStack Query Infrastructure
+### Fix: Restore expandToPath + Add Proper Cache Integration
+
+**The Solution:**
+1. Keep loadSubdirectory checking cache FIRST (already done)
+2. Keep queryClient.setQueryData to cache fetched data (already done)
+3. **RESTORE expandToPath in VirtualizedFileTree.tsx** (was disabled)
+4. **RESTORE calling expandToPath from DesktopLayout.tsx** (was replaced with invalidation only)
+5. Keep invalidation AFTER expand for cache refresh
+
+**Why This Works:**
+- expandToPath ensures parent directory is expanded and loaded
+- Loading creates active useQuery observer (if using queries) or populates cache (current approach)
+- Then invalidation refreshes the cache
+- UI updates because directory is now expanded and watching for changes
+
+### Phase 1: Restore expandToPath Implementation
 
 **Tasks:**
-- [ ] Install `@tanstack/react-query` and `@tanstack/react-query-devtools`
-- [ ] Create `QueryClient` in `App.tsx`
-- [ ] Wrap app with `QueryClientProvider`
-- [ ] Verify QueryClient accessible in components
+- [x] TanStack Query already installed and setup (v1.30.3)
+- [ ] Re-enable expandToPath in useImperativeHandle (VirtualizedFileTree.tsx line 220-223)
+- [ ] Restore expandToPath call in DesktopLayout.tsx (replace invalidation-only approach)
 
-**File: `package.json`**
-```bash
-npm install @tanstack/react-query @tanstack/react-query-devtools
+**Changes Required:**
+
+**File: `app/components/FileTree/VirtualizedFileTree.tsx` (lines 212-223)**
+
+Replace the disabled useImperativeHandle with working version:
+
+```typescript
+// Expose methods to parent via ref
+useImperativeHandle(ref, () => ({
+  refreshDirectory: async (path: string) => {
+    // Use query invalidation
+    queryClient.invalidateQueries({
+      queryKey: getDirectoryQueryKey(path),
+      exact: true,
+    })
+  },
+  expandToPath: async (filePath: string) => {
+    // RESTORE THIS - was commented out saying "No longer needed"
+    // But we DO need it to ensure parent is expanded before invalidation
+    if (!currentPath || !filePath.startsWith(currentPath)) {
+      console.warn('[EXPAND_TO_PATH] File path outside current workspace:', filePath);
+      return;
+    }
+
+    // Extract parent directory path
+    const pathParts = filePath.split('/');
+    pathParts.pop(); // Remove filename
+    const parentPath = pathParts.join('/');
+
+    if (!parentPath || parentPath === currentPath) {
+      // File is in root, just refresh root
+      await refreshDirectoryContents(currentPath);
+      return;
+    }
+
+    // Build the path segments from currentPath to parentPath
+    const relativePath = parentPath.substring(currentPath.length + 1);
+    const segments = relativePath.split('/');
+
+    let currentExpandPath = currentPath;
+
+    // Walk through each segment and expand it
+    for (const segment of segments) {
+      currentExpandPath = `${currentExpandPath}/${segment}`;
+
+      // Find the item at this path
+      const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
+        for (const item of items) {
+          if (item.path === targetPath) {
+            return item;
+          }
+          if (item.children && item.children.length > 0) {
+            const found = findItem(item.children, targetPath);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const dirItem = findItem(items, currentExpandPath);
+
+      if (dirItem && dirItem.isDirectory) {
+        // Check if already expanded
+        if (!expandedPaths.has(dirItem.path)) {
+          // Expand this directory (load its children)
+          await loadSubdirectory(dirItem);
+          setExpandedPaths(prev => {
+            const next = new Set(prev);
+            next.add(dirItem.path);
+            return next;
+          });
+          dirItem.isExpanded = true;
+          setItems([...items]); // Force re-render
+        }
+      } else {
+        console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
+      }
+    }
+
+    // Finally refresh the parent directory to pick up the new file
+    await refreshDirectoryContents(parentPath);
+  }
+}))
 ```
+
+**File: `app/components/Layout/DesktopLayout.tsx` (lines 78-123)**
+
+Restore expandToPath call BEFORE invalidation:
+
+```typescript
+if (fileOpMessage) {
+  console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
+
+  // FIRST: Expand to the file path to ensure parent is loaded and expanded
+  if (fileTreeRef.current) {
+    await fileTreeRef.current.expandToPath(fileOpMessage.path);
+  }
+
+  // THEN: Extract parent directory path and invalidate cache
+  const pathParts = fileOpMessage.path.split('/')
+  pathParts.pop() // Remove filename
+  const parentPath = pathParts.join('/')
+
+  console.log('[DESKTOP_LAYOUT_DEBUG] Invalidating parent directory:', parentPath);
+
+  // Invalidate parent directory query - ensures fresh data
+  queryClient.invalidateQueries({
+    queryKey: ['directories', parentPath],
+    exact: true,
+  })
+
+  // Auto-select the file and load its content
+  if (typeof window !== 'undefined' && (window as any).fileAPI) {
+    (window as any).fileAPI.readFile(fileOpMessage.path).then((fileData: any) => {
+      // ... existing file selection logic ...
+    })
+  }
+}
+```
+
+**Key Changes:**
+1. ✅ Keep TanStack Query setup (from v1.30.3)
+2. ✅ Keep cache-checking in loadSubdirectory (from v1.30.3)
+3. ✅ Keep queryClient.setQueryData caching (from v1.30.3)
+4. ✅ RESTORE expandToPath implementation (was disabled)
+5. ✅ RESTORE expandToPath call before invalidation (was removed)
 
 **File: `app/App.tsx`**
 ```typescript

@@ -80,17 +80,23 @@ export function DesktopLayout({
     if (fileOpMessage) {
       console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
 
-      // Extract parent directory path
+      // FIRST: Expand to the file path to ensure parent is loaded and expanded
+      // This creates active observers so invalidation will trigger refetch
+      if (fileTreeRef.current) {
+        fileTreeRef.current.expandToPath(fileOpMessage.path);
+      }
+
+      // THEN: Extract parent directory path and invalidate cache
       const pathParts = fileOpMessage.path.split('/')
       pathParts.pop() // Remove filename
       const parentPath = pathParts.join('/')
 
       console.log('[DESKTOP_LAYOUT_DEBUG] Invalidating parent directory:', parentPath);
 
-      // Invalidate parent directory query - TanStack Query will refetch automatically
+      // Invalidate parent directory query - ensures fresh data after expand
       queryClient.invalidateQueries({
         queryKey: ['directories', parentPath],
-        exact: true, // Only invalidate this specific directory
+        exact: true,
       })
 
       // Auto-select the file and load its content

@@ -211,14 +211,76 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     refreshDirectory: async (path: string) => {
-      // Use query invalidation instead
+      // Use query invalidation
       queryClient.invalidateQueries({
         queryKey: getDirectoryQueryKey(path),
         exact: true,
       })
     },
     expandToPath: async (filePath: string) => {
-      // No longer needed with query invalidation, but keep for compatibility
+      // This IS needed - must expand parent before invalidation can work
+      if (!currentPath || !filePath.startsWith(currentPath)) {
+        console.warn('[EXPAND_TO_PATH] File path outside current workspace:', filePath);
+        return;
+      }
+
+      // Extract parent directory path
+      const pathParts = filePath.split('/');
+      pathParts.pop(); // Remove filename
+      const parentPath = pathParts.join('/');
+
+      if (!parentPath || parentPath === currentPath) {
+        // File is in root, just refresh root
+        await refreshDirectoryContents(currentPath);
+        return;
+      }
+
+      // Build the path segments from currentPath to parentPath
+      const relativePath = parentPath.substring(currentPath.length + 1);
+      const segments = relativePath.split('/');
+
+      let currentExpandPath = currentPath;
+
+      // Walk through each segment and expand it
+      for (const segment of segments) {
+        currentExpandPath = `${currentExpandPath}/${segment}`;
+
+        // Find the item at this path
+        const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
+          for (const item of items) {
+            if (item.path === targetPath) {
+              return item;
+            }
+            if (item.children && item.children.length > 0) {
+              const found = findItem(item.children, targetPath);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        const dirItem = findItem(items, currentExpandPath);
+
+        if (dirItem && dirItem.isDirectory) {
+          // Check if already expanded
+          if (!expandedPaths.has(dirItem.path)) {
+            // Expand this directory (load its children)
+            await loadSubdirectory(dirItem);
+            setExpandedPaths(prev => {
+              const next = new Set(prev);
+              next.add(dirItem.path);
+              return next;
+            });
+            dirItem.isExpanded = true;
+            setItems([...items]); // Force re-render
+          }
+        } else {
+          console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
+        }
+      }
+
+      // Finally refresh the parent directory to pick up the new file
+      await refreshDirectoryContents(parentPath);
     }
   }))
 
