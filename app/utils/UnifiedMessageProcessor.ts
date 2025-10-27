@@ -175,27 +175,36 @@ export class UnifiedMessageProcessor {
     const cachedToolInfo = this.getCachedToolInfo(toolUseId);
     const toolName = cachedToolInfo?.name || "Tool";
 
-    console.log('[PROCESS_TOOL_RESULT] Called with toolName:', toolName, 'content:', content.substring(0, 100));
+    console.log('[PROCESS_TOOL_RESULT] ========================================');
+    console.log('[PROCESS_TOOL_RESULT] Called with toolName:', toolName);
+    console.log('[PROCESS_TOOL_RESULT] Content length:', content.length);
+    console.log('[PROCESS_TOOL_RESULT] Content preview:', content.substring(0, 200));
+    console.log('[PROCESS_TOOL_RESULT] Full content:', content);
+    console.log('[PROCESS_TOOL_RESULT] ========================================');
 
     // Don't show tool_result for TodoWrite since we already show TodoMessage from tool_use
     if (toolName === "TodoWrite") {
+      console.log('[PROCESS_TOOL_RESULT] Skipping TodoWrite (already handled)');
       return;
     }
 
     // Special handling for Write/Edit tool results - file operations
     if (toolName === "Write" || toolName === "Edit") {
-      console.log('[FILE_OP_DEBUG] Write/Edit tool result, content:', content);
+      console.log('[FILE_OP_DEBUG] ✅ Write/Edit tool detected!');
+      console.log('[FILE_OP_DEBUG] Full content:', content);
 
       // Try multiple patterns to extract file path
       // Pattern 1: Write tool format - "File created successfully at: /path/to/file"
       let pathMatch = content.match(/at: (.+)$/);
+      console.log('[FILE_OP_DEBUG] Pattern 1 (at:) match result:', pathMatch);
 
       // Pattern 2: Edit tool format - "The file /path/to/file has been updated"
       if (!pathMatch) {
         pathMatch = content.match(/The file (.+) has been updated/);
+        console.log('[FILE_OP_DEBUG] Pattern 2 (The file) match result:', pathMatch);
       }
 
-      console.log('[FILE_OP_DEBUG] Path match:', pathMatch);
+      console.log('[FILE_OP_DEBUG] Final path match:', pathMatch);
 
       if (pathMatch) {
         const filePath = pathMatch[1].trim();
@@ -212,10 +221,14 @@ export class UnifiedMessageProcessor {
           timestamp: options.timestamp || Date.now(),
         };
 
-        console.log('[FILE_OP_DEBUG] Creating FileOperationMessage:', fileOpMessage);
+        console.log('[FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage:', fileOpMessage);
         context.addMessage(fileOpMessage);
         // Note: We still create ToolResultMessage too (unlike voice which returns early)
+      } else {
+        console.log('[FILE_OP_DEBUG] ❌ NO PATH MATCH - FileOperationMessage NOT created');
       }
+    } else {
+      console.log('[PROCESS_TOOL_RESULT] Not Write/Edit tool, skipping file operation check');
     }
 
     // Special handling for Bash tool results that are voice scripts
@@ -608,10 +621,16 @@ export class UnifiedMessageProcessor {
         };
 
     const messageContent = message.message.content;
+    console.log('[USER_MESSAGE_DEBUG] Processing user message, content type:', typeof messageContent, 'isArray:', Array.isArray(messageContent));
 
     if (Array.isArray(messageContent)) {
-      for (const contentItem of messageContent) {
+      console.log('[USER_MESSAGE_DEBUG] Content is array, length:', messageContent.length);
+      for (let i = 0; i < messageContent.length; i++) {
+        const contentItem = messageContent[i];
+        console.log('[USER_MESSAGE_DEBUG] ContentItem[' + i + '] type:', contentItem.type, 'full item:', JSON.stringify(contentItem).substring(0, 200));
+
         if (contentItem.type === "tool_result") {
+          console.log('[USER_MESSAGE_DEBUG] ✅ FOUND tool_result! Processing...');
           // Extract toolUseResult from message if it exists
           const toolUseResult = (message as { toolUseResult?: unknown })
             .toolUseResult;
@@ -622,6 +641,7 @@ export class UnifiedMessageProcessor {
             toolUseResult,
           );
         } else if (contentItem.type === "text") {
+          console.log('[USER_MESSAGE_DEBUG] Found text content');
           // Regular text content
           const userMessage: ChatMessage = {
             type: "chat",
@@ -630,9 +650,12 @@ export class UnifiedMessageProcessor {
             timestamp,
           };
           localContext.addMessage(userMessage);
+        } else {
+          console.log('[USER_MESSAGE_DEBUG] Unknown contentItem type:', contentItem.type);
         }
       }
     } else if (typeof messageContent === "string") {
+      console.log('[USER_MESSAGE_DEBUG] Content is string');
       // Simple string content
       const userMessage: ChatMessage = {
         type: "chat",
