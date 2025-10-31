@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo, memo, useImperativeHandle, forwardRef } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import React, { useRef, useImperativeHandle, forwardRef, useCallback, useState, useEffect } from 'react'
+import { Tree, NodeRendererProps } from 'react-arborist'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
+import useResizeObserver from 'use-resize-observer'
 import { JarvisOrb } from '../JarvisOrb'
 import { FileUploadButton } from '../chat/FileUploadButton'
 import { isElectronMode, isWebMode } from '@/app/config/deployment'
@@ -18,11 +19,19 @@ interface FileItem {
   size: number
   modified: string
   extension: string
-  level?: number
-  isExpanded?: boolean
-  children?: FileItem[]
-  parent?: FileItem
   content?: string
+}
+
+// React Arborist expects data with 'id' and 'children'
+interface TreeNode {
+  id: string
+  name: string
+  isDirectory: boolean
+  path: string
+  size: number
+  modified: string
+  extension: string
+  children?: TreeNode[]
 }
 
 interface FileTreeProps {
@@ -32,64 +41,63 @@ interface FileTreeProps {
   className?: string
 }
 
-// Utility function to combine class names (simple version)
+// Utility function to combine class names
 function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
-// Memoized file tree item component
-const FileTreeItem = memo(({
-  item,
-  onToggle,
-  onSelect,
-  isSelected
-}: {
-  item: FileItem
-  onToggle: (item: FileItem) => void
-  onSelect: (item: FileItem) => void
-  isSelected: boolean
-}) => {
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (item.isDirectory) {
-      onToggle(item)
-    } else {
-      onSelect(item)
+// Helper to immutably update a node's children in the tree
+function updateNodeChildren(nodes: TreeNode[], nodeId: string, newChildren: TreeNode[]): TreeNode[] {
+  // Create a completely new array with new object references at every level
+  return nodes.map(node => {
+    if (node.id === nodeId) {
+      // Found the target node - return new object with updated children
+      return { ...node, children: [...newChildren] }
     }
-  }, [item, onToggle, onSelect])
+    if (node.children && node.children.length > 0) {
+      // Recursively search in children - create new object even if children don't change
+      const updatedChildren = updateNodeChildren(node.children, nodeId, newChildren)
+      // Always return new object reference to trigger React re-render
+      return { ...node, children: updatedChildren }
+    }
+    // Return new object reference for leaf nodes too
+    return { ...node }
+  })
+}
 
-  const Icon = item.isDirectory
-    ? (item.isExpanded ? FolderOpen : Folder)
+// Custom Node Renderer with Tailwind styling
+function CustomNode({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
+  const Icon = node.data.isDirectory
+    ? (node.isOpen ? FolderOpen : Folder)
     : File
 
-  const ChevronIcon = item.isExpanded ? ChevronDown : ChevronRight
+  const ChevronIcon = node.isOpen ? ChevronDown : ChevronRight
 
   return (
     <div
+      ref={dragHandle}
+      style={style}
+      onClick={() => node.isInternal && node.toggle()}
       className={cn(
         "flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer select-none",
-        isSelected && "bg-gray-100 dark:bg-gray-800"
+        node.isSelected && "bg-gray-100 dark:bg-gray-800"
       )}
-      style={{ paddingLeft: `${(item.level || 0) * 16 + 8}px` }}
-      onClick={handleClick}
     >
-      {item.isDirectory && (
+      {node.data.isDirectory && (
         <ChevronIcon className="h-4 w-4 shrink-0" />
       )}
-      {!item.isDirectory && (
+      {!node.data.isDirectory && (
         <div className="w-4" />
       )}
       <Icon className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
-      <span className="truncate text-sm">{item.name}</span>
+      <span className="truncate text-sm">{node.data.name}</span>
     </div>
   )
-})
-
-FileTreeItem.displayName = 'FileTreeItem'
+}
 
 export interface FileTreeRef {
-  refreshDirectory: (path: string) => Promise<void>;
-  expandToPath: (filePath: string) => Promise<void>;
+  refreshDirectory: (path: string) => Promise<void>
+  expandToPath: (filePath: string) => Promise<void>
 }
 
 export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
@@ -98,495 +106,248 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   onFileUpload,
   className
 }, ref) => {
-  const [currentPath, setCurrentPath] = useState<string>('')
-  const [items, setItems] = useState<FileItem[]>([])
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
-  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const treeRef = useRef<any>(null)
   const queryClient = useQueryClient()
 
-  // Root directory query
-  const { data: rootFiles, isLoading: rootLoading, error: rootError } = useQuery({
-    queryKey: getDirectoryQueryKey(workingDirectory),
-    queryFn: async () => {
-      if (isWebMode()) {
-        const response = await fetch(`/api/files?path=${encodeURIComponent(workingDirectory)}`)
-        const data = await response.json()
-        if (!data.success) throw new Error(data.error || 'Failed to load directory')
-        return data.files
-      } else if (isElectronMode()) {
-        if (typeof window !== 'undefined' && (window as any).fileAPI) {
-          return await (window as any).fileAPI.readDirectory(workingDirectory)
-        }
-        throw new Error('window.fileAPI not available')
+  // Use resize observer to get actual pixel dimensions for React Arborist
+  const { ref: containerRef, width = 1, height = 1 } = useResizeObserver()
+
+  // Fetch directory contents
+  const fetchDirectory = async (path: string): Promise<FileItem[]> => {
+    if (isWebMode()) {
+      const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error || 'Failed to load directory')
+      return data.files
+    } else if (isElectronMode()) {
+      if (typeof window !== 'undefined' && (window as any).fileAPI) {
+        return await (window as any).fileAPI.readDirectory(path)
       }
-      throw new Error('Unknown deployment mode')
-    },
+      throw new Error('window.fileAPI not available')
+    }
+    throw new Error('Unknown deployment mode')
+  }
+
+  // Root directory query
+  const { data: rootFiles, isLoading, error } = useQuery({
+    queryKey: getDirectoryQueryKey(workingDirectory),
+    queryFn: () => fetchDirectory(workingDirectory),
     enabled: !!workingDirectory,
   })
 
-  // Update items when root query data changes
+  console.log('[FILE_TREE_DEBUG] workingDirectory:', workingDirectory)
+  console.log('[FILE_TREE_DEBUG] rootFiles:', rootFiles)
+  console.log('[FILE_TREE_DEBUG] isLoading:', isLoading)
+  console.log('[FILE_TREE_DEBUG] error:', error)
+
+  // Transform FileItem[] to TreeNode[] for React Arborist
+  const transformToTreeNodes = useCallback((files: FileItem[], parentPath: string): TreeNode[] => {
+    return files.map(file => ({
+      id: file.path,
+      name: file.name,
+      isDirectory: file.isDirectory,
+      path: file.path,
+      size: file.size,
+      modified: file.modified,
+      extension: file.extension,
+      children: file.isDirectory ? [] : undefined // Directories have children array, files don't
+    }))
+  }, [])
+
+  // State variable for tree data (controlled mode)
+  const [treeData, setTreeData] = useState<TreeNode[]>([])
+
+  // Sync treeData state with rootFiles from query
   useEffect(() => {
     if (rootFiles) {
-      const mappedFiles: FileItem[] = rootFiles.map((file: any) => ({
-        ...file,
-        level: 0,
-        isExpanded: false,
-        children: [],
-      }))
-      setItems(mappedFiles)
-      setCurrentPath(workingDirectory)
-      setLoading(rootLoading)
-      setError(rootError?.message || null)
+      setTreeData(transformToTreeNodes(rootFiles, workingDirectory))
     }
-  }, [rootFiles, workingDirectory, rootLoading, rootError])
+  }, [rootFiles, workingDirectory, transformToTreeNodes])
 
-  // Expand all parent directories to reveal a file path
-  const expandToPath = async (filePath: string) => {
-    if (!currentPath || !filePath.startsWith(currentPath)) {
-      console.warn('[EXPAND_TO_PATH] File path outside current workspace:', filePath);
-      return;
-    }
+  console.log('[FILE_TREE_DEBUG] treeData length:', treeData.length)
 
-    // Extract parent directory path
-    const pathParts = filePath.split('/');
-    pathParts.pop(); // Remove filename
-    const parentPath = pathParts.join('/');
+  // Load children when a directory is opened
+  const onToggle = useCallback(async (nodeId: string) => {
+    const node = treeRef.current?.get(nodeId)
+    if (!node || !node.data.isDirectory) return
 
-    if (!parentPath || parentPath === currentPath) {
-      // File is in root, just refresh root
-      await refreshDirectoryContents(currentPath);
-      return;
+    // Check if already loaded
+    if (node.children && node.children.length > 0) return
+
+    // Check cache first
+    const cachedData = queryClient.getQueryData(getDirectoryQueryKey(node.data.path))
+
+    let files: FileItem[]
+    if (cachedData) {
+      files = cachedData as FileItem[]
+    } else {
+      // Fetch from API
+      files = await fetchDirectory(node.data.path)
+      // Cache the data
+      queryClient.setQueryData(getDirectoryQueryKey(node.data.path), files)
     }
 
-    // Build the path segments from currentPath to parentPath
-    const relativePath = parentPath.substring(currentPath.length + 1);
-    const segments = relativePath.split('/');
+    const children = transformToTreeNodes(files, node.data.path)
 
-    let currentExpandPath = currentPath;
+    // ✅ FIXED: Immutable update using setState (controlled mode)
+    setTreeData(prevData => updateNodeChildren(prevData, nodeId, children))
+  }, [queryClient, transformToTreeNodes])
 
-    // Walk through each segment and expand it
-    for (const segment of segments) {
-      currentExpandPath = `${currentExpandPath}/${segment}`;
+  // Handle node selection
+  const onSelect = useCallback(async (nodes: any[]) => {
+    if (!onFileSelect || nodes.length === 0) return
 
-      // Find the item at this path
-      const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
-        for (const item of items) {
-          if (item.path === targetPath) {
-            return item;
+    const node = nodes[0]
+    const fileData = node.data
+
+    if (!fileData.isDirectory) {
+      // Read file content for text files
+      const binaryExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.zip', '.tar', '.gz']
+      if (binaryExtensions.includes(fileData.extension.toLowerCase())) {
+        // Pass item without content - FilePreview will handle streaming
+        onFileSelect({
+          name: fileData.name,
+          path: fileData.path,
+          isDirectory: false,
+          size: fileData.size,
+          modified: fileData.modified,
+          extension: fileData.extension
+        })
+        return
+      }
+
+      try {
+        let fileContent: string = ''
+
+        if (isElectronMode()) {
+          if (typeof window !== 'undefined' && (window as any).fileAPI) {
+            const data = await (window as any).fileAPI.readFile(fileData.path)
+            if (data) fileContent = data.content
           }
-          if (item.children && item.children.length > 0) {
-            const found = findItem(item.children, targetPath);
-            if (found) return found;
+        } else if (isWebMode()) {
+          const response = await fetch(`/api/files/read?path=${encodeURIComponent(fileData.path)}`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success) fileContent = data.content
           }
         }
-        return null;
-      };
 
-      const dirItem = findItem(items, currentExpandPath);
-
-      if (dirItem && dirItem.isDirectory) {
-        // Check if already expanded
-        if (!expandedPaths.has(dirItem.path)) {
-          // Expand this directory (load its children)
-          await loadSubdirectory(dirItem);
-          setExpandedPaths(prev => {
-            const next = new Set(prev);
-            next.add(dirItem.path);
-            return next;
-          });
-          dirItem.isExpanded = true;
-          setItems([...items]); // Force re-render
-        }
-      } else {
-        console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
+        onFileSelect({
+          name: fileData.name,
+          path: fileData.path,
+          isDirectory: false,
+          size: fileData.size,
+          modified: fileData.modified,
+          extension: fileData.extension,
+          content: fileContent
+        })
+      } catch (error) {
+        console.error('Error reading file:', error)
+        onFileSelect({
+          name: fileData.name,
+          path: fileData.path,
+          isDirectory: false,
+          size: fileData.size,
+          modified: fileData.modified,
+          extension: fileData.extension
+        })
       }
     }
-  };
+  }, [onFileSelect])
 
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     refreshDirectory: async (path: string) => {
-      // Directly refresh the directory to update items state
-      await refreshDirectoryContents(path);
+      // Invalidate and refetch the directory
+      await queryClient.invalidateQueries({
+        queryKey: getDirectoryQueryKey(path),
+        exact: true,
+      })
+
+      // Refresh the directory in the tree
+      const node = treeRef.current?.get(path)
+      if (node && node.data.isDirectory) {
+        const files = await fetchDirectory(path)
+        queryClient.setQueryData(getDirectoryQueryKey(path), files)
+        const children = transformToTreeNodes(files, path)
+
+        // ✅ FIXED: Immutable update using setState
+        setTreeData(prevData => updateNodeChildren(prevData, path, children))
+      }
     },
     expandToPath: async (filePath: string) => {
-      // This IS needed - must expand parent before invalidation can work
-      if (!currentPath || !filePath.startsWith(currentPath)) {
-        console.warn('[EXPAND_TO_PATH] File path outside current workspace:', filePath);
-        return;
-      }
+      if (!treeRef.current) return
 
-      // Extract parent directory path
-      const pathParts = filePath.split('/');
-      pathParts.pop(); // Remove filename
-      const parentPath = pathParts.join('/');
+      // VSCode Pattern: Load parent data, then use reveal API
+      const pathParts = filePath.split('/')
+      pathParts.pop() // Remove filename
+      const parentPath = pathParts.join('/')
 
-      if (!parentPath || parentPath === currentPath) {
-        // File is in root, just refresh root
-        await refreshDirectoryContents(currentPath);
-        return;
-      }
-
-      // Build the path segments from currentPath to parentPath
-      const relativePath = parentPath.substring(currentPath.length + 1);
-      const segments = relativePath.split('/');
-
-      let currentExpandPath = currentPath;
-
-      // Walk through each segment and expand it
-      // NOTE: We no longer call refreshDirectoryContents here to prevent flickering
-      // The parent component (DesktopLayout) uses optimistic cache updates via setQueryData
-      for (const segment of segments) {
-        const parentExpandPath = currentExpandPath;
-        currentExpandPath = `${currentExpandPath}/${segment}`;
-
-        // Find the item at this path (cache already updated via setQueryData)
-        const findItem = (items: FileItem[], targetPath: string): FileItem | null => {
-          for (const item of items) {
-            if (item.path === targetPath) {
-              return item;
-            }
-            if (item.children && item.children.length > 0) {
-              const found = findItem(item.children, targetPath);
-              if (found) return found;
-            }
-          }
-          return null;
-        };
-
-        const dirItem = findItem(items, currentExpandPath);
-
-        if (dirItem && dirItem.isDirectory) {
-          // Check if already expanded
-          if (!expandedPaths.has(dirItem.path)) {
-            // Expand this directory (load its children from cache)
-            await loadSubdirectory(dirItem);
-            setExpandedPaths(prev => {
-              const next = new Set(prev);
-              next.add(dirItem.path);
-              return next;
-            });
-            dirItem.isExpanded = true;
-            setItems([...items]); // Force re-render
-          }
-        } else {
-          console.warn('[EXPAND_TO_PATH] Directory not found in tree:', currentExpandPath);
-        }
-      }
-    }
-  }))
-
-  // Surgically refresh a specific directory without affecting the rest of the tree
-  const refreshDirectoryContents = async (path: string) => {
-    // Use query invalidation - TanStack Query will handle the refetch
-    queryClient.invalidateQueries({
-      queryKey: getDirectoryQueryKey(path),
-      exact: true,
-    })
-
-    // Find the directory item in the current tree to update its children
-    const findDirectory = (items: FileItem[], targetPath: string): FileItem | null => {
-      for (const item of items) {
-        if (item.path === targetPath && item.isDirectory) {
-          return item;
-        }
-        if (item.children && item.children.length > 0) {
-          const found = findDirectory(item.children, targetPath);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    const targetDir = findDirectory(items, path);
-
-    if (targetDir) {
+      // Refresh parent directory to ensure new file is in tree data
       try {
-        let files: any[]
+        const files = await fetchDirectory(parentPath)
+        queryClient.setQueryData(getDirectoryQueryKey(parentPath), files)
+        const children = transformToTreeNodes(files, parentPath)
 
-        // Explicit deployment mode detection
-        if (isElectronMode()) {
-          // Electron mode: Use IPC via window.fileAPI
-          if (typeof window !== 'undefined' && (window as any).fileAPI) {
-            files = await (window as any).fileAPI.readDirectory(path)
-          } else {
-            throw new Error('Electron mode but window.fileAPI not available')
-          }
-        } else if (isWebMode()) {
-          // Web mode: Use HTTP API
-          const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-          const data = await response.json()
-          if (!data.success) {
-            throw new Error(data.error || 'Failed to load directory')
-          }
-          files = data.files
-        } else {
-          throw new Error('Unknown deployment mode')
-        }
+        // Update tree data immutably
+        setTreeData(prevData => updateNodeChildren(prevData, parentPath, children))
 
-        const newChildren: FileItem[] = files.map((file: any) => ({
-          ...file,
-          level: (targetDir.level || 0) + 1,
-          isExpanded: false,
-          children: [],
-          parent: targetDir
-        }));
+        // Wait for state to update before revealing
+        await new Promise(resolve => setTimeout(resolve, 100))
 
-        // Update only this directory's children
-        targetDir.children = newChildren;
-
-        // Trigger re-render by creating a new array reference
-        setItems([...items]);
-      } catch (err) {
-        console.error('Failed to refresh directory:', err);
-      }
-    } else {
-      console.warn('[FILE_TREE_REFRESH] Directory not found in tree (likely not expanded):', path);
-    }
-  }
-
-  // Load directory when workingDirectory changes
-  // NOW HANDLED BY useQuery - see root directory query above
-  // useEffect(() => {
-  //   if (workingDirectory) {
-  //     loadDirectory(workingDirectory)
-  //   }
-  // }, [workingDirectory])
-
-  const loadDirectory = async (path: string) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      let files: any[]
-
-      // Explicit deployment mode detection
-      if (isElectronMode()) {
-        // Electron mode: Use IPC via window.fileAPI
-        if (typeof window !== 'undefined' && (window as any).fileAPI) {
-          files = await (window as any).fileAPI.readDirectory(path)
-        } else {
-          throw new Error('Electron mode but window.fileAPI not available')
-        }
-      } else if (isWebMode()) {
-        // Web mode: Use HTTP API
-        const response = await fetch(`/api/files?path=${encodeURIComponent(path)}`)
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-        const data = await response.json()
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load directory')
-        }
-        files = data.files
-      } else {
-        throw new Error('Unknown deployment mode')
-      }
-
-      // Format items for display
-      const formattedItems: FileItem[] = files.map((file: any) => ({
-        ...file,
-        level: 0,
-        isExpanded: false,
-        children: []
-      }))
-
-      setItems(formattedItems)
-      setCurrentPath(path)
-    } catch (err) {
-      setError('Failed to load directory')
-      console.error('File tree load error:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadSubdirectory = async (parentItem: FileItem) => {
-    try {
-      // Check if already in query cache
-      const cachedData = queryClient.getQueryData(getDirectoryQueryKey(parentItem.path))
-
-      let files: any[]
-
-      if (cachedData) {
-        // Use cached data
-        files = cachedData as any[]
-      } else {
-        // Fetch from API
-        if (isElectronMode()) {
-          // Electron mode: Use IPC via window.fileAPI
-          if (typeof window !== 'undefined' && (window as any).fileAPI) {
-            files = await (window as any).fileAPI.readDirectory(parentItem.path)
-          } else {
-            throw new Error('Electron mode but window.fileAPI not available')
-          }
-        } else if (isWebMode()) {
-          // Web mode: Use HTTP API
-          const response = await fetch(`/api/files?path=${encodeURIComponent(parentItem.path)}`)
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-          const data = await response.json()
-          if (!data.success) {
-            throw new Error(data.error || 'Failed to load subdirectory')
-          }
-          files = data.files
-        } else {
-          throw new Error('Unknown deployment mode')
-        }
-
-        // Cache the data
-        queryClient.setQueryData(getDirectoryQueryKey(parentItem.path), files)
-      }
-
-      const children: FileItem[] = files.map((file: any) => ({
-        ...file,
-        level: (parentItem.level || 0) + 1,
-        isExpanded: false,
-        children: [],
-        parent: parentItem
-      }))
-
-      parentItem.children = children
-      return children
-    } catch (err) {
-      console.error('Failed to load subdirectory:', err)
-      return []
-    }
-  }
-
-  const toggleDirectory = useCallback(async (item: FileItem) => {
-    if (!item.isDirectory) return
-
-    const isExpanded = expandedPaths.has(item.path)
-
-    if (isExpanded) {
-      // Collapse
-      setExpandedPaths(prev => {
-        const next = new Set(prev)
-        next.delete(item.path)
-        return next
-      })
-      item.isExpanded = false
-    } else {
-      // Expand - load subdirectory contents
-      await loadSubdirectory(item)
-      setExpandedPaths(prev => {
-        const next = new Set(prev)
-        next.add(item.path)
-        return next
-      })
-      item.isExpanded = true
-    }
-
-    // Force re-render
-    setItems([...items])
-  }, [items, expandedPaths])
-
-  const selectFile = useCallback(async (item: FileItem) => {
-    setSelectedFile(item)
-    if (onFileSelect) {
-      // Read file content if it's a file
-      if (!item.isDirectory) {
-        // Skip content loading for binary files like PDFs - they'll be streamed directly
-        const binaryExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.zip', '.tar', '.gz']
-        if (binaryExtensions.includes(item.extension.toLowerCase())) {
-          // Pass item without content - FilePreview will handle streaming
-          onFileSelect(item)
-          return
-        }
-
-        try {
-          let fileContent: string = ''
-
-          // Explicit deployment mode detection
-          if (isElectronMode()) {
-            // Electron mode: Use IPC via window.fileAPI
-            if (typeof window !== 'undefined' && (window as any).fileAPI) {
-              const fileData = await (window as any).fileAPI.readFile(item.path)
-              if (fileData) {
-                fileContent = fileData.content
-              }
-            } else {
-              throw new Error('Electron mode but window.fileAPI not available')
-            }
-          } else if (isWebMode()) {
-            // Web mode: Use HTTP API
-            const response = await fetch(`/api/files/read?path=${encodeURIComponent(item.path)}`)
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-            }
-            const data = await response.json()
-            if (!data.success) {
-              throw new Error(data.error || 'Failed to read file')
-            }
-            fileContent = data.content
-          } else {
-            throw new Error('Unknown deployment mode')
+        // Use React Arborist's reveal API (VSCode pattern)
+        // This automatically expands ancestors and scrolls to the file
+        const node = treeRef.current.get(filePath)
+        if (node) {
+          // Open all parent directories
+          if (treeRef.current.openParents) {
+            treeRef.current.openParents(filePath)
           }
 
-          onFileSelect({ ...item, content: fileContent })
-        } catch (error) {
-          console.error('Error reading file:', error)
-          onFileSelect(item)
+          // Scroll to the file
+          if (treeRef.current.scrollTo) {
+            treeRef.current.scrollTo(filePath)
+          }
+
+          // Select the node
+          if (treeRef.current.select) {
+            treeRef.current.select(filePath)
+          }
         }
-      } else {
-        // If it's a directory, toggle it
-        await toggleDirectory(item)
-        onFileSelect(item)
+      } catch (error) {
+        console.log('[expandToPath] Could not fetch directory:', parentPath)
       }
     }
-  }, [onFileSelect, toggleDirectory])
+  }), [queryClient, transformToTreeNodes])
 
   const selectNewDirectory = async () => {
     if (typeof window !== 'undefined' && (window as any).fileAPI) {
       const newPath = await (window as any).fileAPI.selectDirectory()
       if (newPath) {
-        await loadDirectory(newPath)
+        // Trigger refresh by invalidating root query
+        await queryClient.invalidateQueries({
+          queryKey: getDirectoryQueryKey(newPath),
+        })
       }
-    } else {
-      console.log('Directory selector not available')
     }
   }
 
-  // Flatten the tree for virtualization
-  const flattenedItems = useMemo(() => {
-    const result: FileItem[] = []
-
-    const flatten = (items: FileItem[]) => {
-      for (const item of items) {
-        result.push(item)
-        if (item.isDirectory && item.isExpanded && item.children) {
-          flatten(item.children)
-        }
-      }
-    }
-
-    flatten(items)
-    return result
-  }, [items, expandedPaths])
-
-  // Set up virtualizer
-  const parentRef = React.useRef<HTMLDivElement>(null)
-
-  const virtualizer = useVirtualizer({
-    count: flattenedItems.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 32, // Height of each item
-    overscan: 5
-  })
-
   // Extract folder name from path
-  const folderName = useMemo(() => {
-    if (!currentPath) return 'No folder selected'
-    const parts = currentPath.split('/')
+  const folderName = React.useMemo(() => {
+    if (!workingDirectory) return 'No folder selected'
+    const parts = workingDirectory.split('/')
     return parts[parts.length - 1] || parts[parts.length - 2] || 'Root'
-  }, [currentPath])
+  }, [workingDirectory])
+
+  if (error) {
+    return (
+      <div className={cn("flex flex-col h-full bg-neutral-50 dark:bg-neutral-900", className)}>
+        <div className="px-3 py-2 text-sm text-red-600 dark:text-red-400">
+          Failed to load directory
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={cn("flex flex-col h-full bg-neutral-50 dark:bg-neutral-900", className)}>
@@ -609,57 +370,39 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         )}
       </div>
 
-      {/* Error display */}
-      {error && (
-        <div className="px-3 py-2 text-sm text-red-600 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
       {/* Loading state */}
-      {loading && (
+      {isLoading && (
         <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
           Loading...
         </div>
       )}
 
-      {/* Virtualized file list */}
-      <div
-        ref={parentRef}
-        className="flex-1 overflow-auto"
-      >
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative'
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualItem) => {
-            const item = flattenedItems[virtualItem.index]
-            return (
-              <div
-                key={virtualItem.key}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualItem.size}px`,
-                  transform: `translateY(${virtualItem.start}px)`
-                }}
-              >
-                <FileTreeItem
-                  item={item}
-                  onToggle={toggleDirectory}
-                  onSelect={selectFile}
-                  isSelected={selectedFile?.path === item.path}
-                />
-              </div>
-            )
-          })}
+      {/* React Arborist Tree */}
+      {!isLoading && treeData.length > 0 && (
+        <div ref={containerRef} className="flex-1 overflow-hidden">
+          <Tree
+            ref={treeRef}
+            data={treeData}
+            openByDefault={false}
+            width={width}
+            height={height}
+            indent={16}
+            rowHeight={32}
+            overscanCount={10}
+            onToggle={onToggle}
+            onSelect={onSelect}
+          >
+            {CustomNode}
+          </Tree>
         </div>
-      </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && treeData.length === 0 && (
+        <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+          No files found
+        </div>
+      )}
     </div>
   )
 })

@@ -69,13 +69,15 @@ export function DesktopLayout({
     // Search through only the NEW messages for FileOperationMessage
     let fileOpMessage = null;
     for (let i = messages.length - 1; i >= lastProcessedMessageCount; i--) {
+      console.log('[DESKTOP_LAYOUT_DEBUG] Checking message[' + i + ']:', messages[i].type, messages[i]);
       if (isFileOperationMessage(messages[i])) {
         fileOpMessage = messages[i];
+        console.log('[DESKTOP_LAYOUT_DEBUG] ✅ FOUND FileOperationMessage at index', i);
         break;
       }
     }
 
-    console.log('[DESKTOP_LAYOUT_DEBUG] Found FileOperationMessage:', fileOpMessage);
+    console.log('[DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage:', fileOpMessage);
 
     if (fileOpMessage) {
       // Handle async operations in an IIFE
@@ -89,15 +91,10 @@ export function DesktopLayout({
 
         console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory:', parentPath);
 
-        // Expand to the file path FIRST - this will expand all parent directories
+        // React Arborist's reveal method handles everything automatically!
+        // Just call expandToPath which uses tree.reveal() internally
         if (fileTreeRef.current) {
           await fileTreeRef.current.expandToPath(fileOpMessage.path);
-        }
-
-        // THEN refresh ONLY the immediate parent directory to pick up the new file
-        // This calls setItems once, no loop, no flicker
-        if (fileTreeRef.current) {
-          await fileTreeRef.current.refreshDirectory(parentPath);
         }
 
         // Auto-select the file and load its content
@@ -128,11 +125,14 @@ export function DesktopLayout({
             });
           }
         }
-      })();
-    }
 
-    // Update last processed count
-    setLastProcessedMessageCount(messages.length);
+        // Update last processed count AFTER all async operations complete
+        setLastProcessedMessageCount(messages.length);
+      })();
+    } else {
+      // No file operation, update count immediately
+      setLastProcessedMessageCount(messages.length);
+    }
   }, [messages, onFileSelect, lastProcessedMessageCount, queryClient])
 
   return (

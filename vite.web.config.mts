@@ -13,6 +13,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'app/index.html'),
       },
+      external: [],
     },
   },
   resolve: {
@@ -20,7 +21,11 @@ export default defineConfig({
       '@/app': resolve(__dirname, 'app'),
       '@/lib': resolve(__dirname, 'lib'),
       '@/resources': resolve(__dirname, 'resources'),
+      'pdfjs-dist': 'pdfjs-dist',
     },
+  },
+  optimizeDeps: {
+    include: ['pdfjs-dist'],
   },
   define: {
     'import.meta.env.VITE_DEPLOYMENT_MODE': JSON.stringify('web'),

@@ -35,8 +35,8 @@ WORKDIR /app
 # Copy package files for dependency installation
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm install
+# Install Node.js dependencies (use --legacy-peer-deps for use-resize-observer compatibility)
+RUN npm install --legacy-peer-deps
 
 # Rebuild native modules for the Docker Node.js version
 RUN npm rebuild node-pty
