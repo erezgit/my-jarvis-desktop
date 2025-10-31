@@ -189,46 +189,47 @@ export class UnifiedMessageProcessor {
     }
 
     // Special handling for Write/Edit tool results - file operations
-    if (toolName === "Write" || toolName === "Edit") {
-      console.log('[FILE_OP_DEBUG] ✅ Write/Edit tool detected!');
-      console.log('[FILE_OP_DEBUG] Full content:', content);
+    // Check content patterns FIRST (robust against cache failures)
+    let pathMatch = null;
+    let operation: "created" | "modified" | null = null;
 
-      // Try multiple patterns to extract file path
-      // Pattern 1: Write tool format - "File created successfully at: /path/to/file"
-      let pathMatch = content.match(/at: (.+)$/);
-      console.log('[FILE_OP_DEBUG] Pattern 1 (at:) match result:', pathMatch);
+    // Pattern 1: Write tool format - "File created successfully at: /path/to/file"
+    pathMatch = content.match(/File created successfully at: (.+)$/);
+    if (pathMatch) {
+      operation = "created";
+      console.log('[FILE_OP_DEBUG] ✅ Write tool pattern detected in content!');
+    }
 
-      // Pattern 2: Edit tool format - "The file /path/to/file has been updated"
-      if (!pathMatch) {
-        pathMatch = content.match(/The file (.+) has been updated/);
-        console.log('[FILE_OP_DEBUG] Pattern 2 (The file) match result:', pathMatch);
-      }
-
-      console.log('[FILE_OP_DEBUG] Final path match:', pathMatch);
-
+    // Pattern 2: Edit tool format - "The file /path/to/file has been updated"
+    if (!pathMatch) {
+      pathMatch = content.match(/The file (.+) has been updated/);
       if (pathMatch) {
-        const filePath = pathMatch[1].trim();
-        const fileName = filePath.split('/').pop() || filePath;
-        const operation = toolName === "Write" ? "created" : "modified";
-
-        // Create FileOperationMessage
-        const fileOpMessage = {
-          type: "file_operation" as const,
-          operation: operation as "created" | "modified",
-          path: filePath,
-          fileName,
-          isDirectory: false,
-          timestamp: options.timestamp || Date.now(),
-        };
-
-        console.log('[FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage:', fileOpMessage);
-        context.addMessage(fileOpMessage);
-        // Note: We still create ToolResultMessage too (unlike voice which returns early)
-      } else {
-        console.log('[FILE_OP_DEBUG] ❌ NO PATH MATCH - FileOperationMessage NOT created');
+        operation = "modified";
+        console.log('[FILE_OP_DEBUG] ✅ Edit tool pattern detected in content!');
       }
+    }
+
+    // If we detected a file operation pattern, create FileOperationMessage
+    if (pathMatch && operation) {
+      const filePath = pathMatch[1].trim();
+      const fileName = filePath.split('/').pop() || filePath;
+
+      // Create FileOperationMessage
+      const fileOpMessage = {
+        type: "file_operation" as const,
+        operation,
+        path: filePath,
+        fileName,
+        isDirectory: false,
+        timestamp: options.timestamp || Date.now(),
+      };
+
+      console.log('[FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage:', fileOpMessage);
+      console.log('[FILE_OP_DEBUG] Detected from content pattern (cache-independent)');
+      context.addMessage(fileOpMessage);
+      // Note: We still create ToolResultMessage too (unlike voice which returns early)
     } else {
-      console.log('[PROCESS_TOOL_RESULT] Not Write/Edit tool, skipping file operation check');
+      console.log('[PROCESS_TOOL_RESULT] No file operation pattern detected in content');
     }
 
     // Special handling for Bash tool results that are voice scripts
