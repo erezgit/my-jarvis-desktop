@@ -91,7 +91,104 @@ const resetChat = useCallback(() => {
 )}
 ```
 
-### Phase 3: Scroll Behavior Fix
+### Phase 3: Welcome Message Flash Fix
+
+**Problem**: When page loads/refreshes, welcome message briefly flashes before history loads, creating jarring UX.
+
+**Root Cause**: Component initially renders with empty messages array → shows Greeting → then history loads → switches to messages
+
+**Solution**: Add loading state awareness to greeting display logic
+1. Pass `isCheckingForHistory` (latestLoading) to ChatMessages
+2. Show Greeting only when: NOT checking AND NOT loading AND no messages
+3. Show nothing during initial load to prevent flash
+
+**Key Code**:
+```typescript
+// ChatMessages.tsx
+const shouldShowGreeting = !isCheckingForHistory && !isLoadingHistory && messages.length === 0;
+
+return (
+  <div>
+    {shouldShowGreeting ? (
+      <Greeting />
+    ) : messages.length > 0 ? (
+      <>
+        {messages.map(renderMessage)}
+        {/* ... */}
+      </>
+    ) : null}
+  </div>
+);
+```
+
+**Deployment**: Version 1.33.9
+
+### Phase 4: Chat Messages Fade-in Animation
+
+**Feature**: Apply same fade-in animation to chat messages as welcome message uses
+
+**Implementation**:
+1. Import `framer-motion` in ChatMessages.tsx
+2. Wrap messages container in `motion.div`
+3. Use same animation pattern: `opacity: 0->1, y: 10->0`
+4. Smooth visual transition when messages load
+
+**Key Code**:
+```typescript
+<motion.div
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.3 }}
+>
+  {messages.map(renderMessage)}
+  {/* ... */}
+</motion.div>
+```
+
+**Deployment**: Version 1.34.0
+
+### Phase 5: New Chat Auto-reload Bug Fix
+
+**Problem**: Clicking "New Chat" button clears state but immediately reloads latest chat history instead of staying blank.
+
+**Root Cause Analysis**:
+1. User clicks New Chat → `resetChat()` runs → sets `currentSessionId` to null
+2. useEffect in ChatPage watches `currentSessionId`
+3. Condition: `if (!currentSessionId && latestSessionId && !latestLoading)`
+4. Effect can't distinguish "initial app load" vs "user clicked New Chat"
+5. Effect re-triggers and auto-loads latest chat
+6. New chat action gets overridden by auto-load mechanism
+
+**Solution**: Use ref to track initial load attempt
+1. Add `hasAttemptedInitialLoad` useRef
+2. Check ref in useEffect condition
+3. Auto-load only runs once on mount
+4. Never re-triggers when user actions set sessionId to null
+5. Clear separation between initial load and user actions
+
+**Key Code**:
+```typescript
+// ChatPage.tsx
+const hasAttemptedInitialLoad = useRef(false);
+
+useEffect(() => {
+  if (!hasAttemptedInitialLoad.current && !currentSessionId && latestSessionId && !latestLoading) {
+    console.log('[CHATPAGE] Auto-loading latest chat on initial mount:', latestSessionId);
+    setCurrentSessionId(latestSessionId);
+    hasAttemptedInitialLoad.current = true;
+  }
+}, [latestSessionId, latestLoading, currentSessionId, setCurrentSessionId]);
+```
+
+**Benefits**:
+- Consistent with React best practices for one-time initialization
+- No unnecessary state additions
+- Clear separation between initial load and user-triggered actions
+- Follows single responsibility principle
+
+**Deployment**: Version 1.34.1
+
+### Phase 6: Scroll Behavior Fix
 
 **Problem**: When auto-loading latest chat or switching conversations, the app would perform a long animated scroll from top to bottom, creating poor UX.
 
@@ -177,10 +274,12 @@ useEffect(() => {
 - [x] No animated scroll on history load
 - [x] Smooth scroll for new streaming messages
 
-## Deployment
-- Initial commit: 6eeb3ce5 "fix: Remove animated scroll on history load - use instant scroll"
-- Improved fix: 45e7a311 "fix: Improve scroll behavior detection for history loads"
-- Version: 1.33.8 (a181664c)
+## Deployment History
+- Phase 1-2: Initial auto-load + New Chat button
+- Phase 3: Welcome message flash fix - Version 1.33.9
+- Phase 4: Chat messages fade-in animation - Version 1.34.0
+- Phase 5: New Chat auto-reload bug fix - Version 1.34.1
+- Phase 6: Scroll behavior fix - Version 1.33.8
 - Deployed to: my-jarvis-erez-dev (https://my-jarvis-erez-dev.fly.dev)
 - Also deployed to: my-jarvis-iddo (https://my-jarvis-iddo.fly.dev)
 

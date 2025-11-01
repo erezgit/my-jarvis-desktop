@@ -548,9 +548,11 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     resetTokenUsage();
     // Clear voice message tracking to prevent cross-conversation playback
     voicePlayedTracker.clearAll();
+    // Clear messages immediately to prevent showing old conversation
+    setMessages([]);
     setCurrentSessionId(sessionId);
     onViewChange('chat'); // Exit history view and show the conversation
-  }, [onViewChange, resetTokenUsage, setCurrentSessionId]);
+  }, [onViewChange, resetTokenUsage, setCurrentSessionId, setMessages]);
 
   // Handle global keyboard shortcuts
   useEffect(() => {
