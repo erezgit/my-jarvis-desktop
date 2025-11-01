@@ -1,3 +1,4 @@
+import { PlusCircleIcon } from '@heroicons/react/24/outline';
 import { SettingsButton } from '../SettingsButton';
 
 interface ChatHeaderProps {
@@ -5,6 +6,8 @@ interface ChatHeaderProps {
   onChatClick: () => void;
   onHistoryClick: () => void;
   onSettingsClick: () => void;
+  onNewChat?: () => void;
+  hasMessages?: boolean;
   showPanelSwitchers?: boolean;  // false for desktop, true for mobile (not used in this phase)
 }
 
@@ -13,12 +16,25 @@ export function ChatHeader({
   onChatClick,
   onHistoryClick,
   onSettingsClick,
+  onNewChat,
+  hasMessages = false,
   showPanelSwitchers = false,
 }: ChatHeaderProps) {
   return (
     <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      {/* Left side - empty for desktop, panel switchers handled in MobileLayout */}
-      <div className="flex-1" />
+      {/* Left side - New Chat button */}
+      <div className="flex-1">
+        {onNewChat && hasMessages && (
+          <button
+            onClick={onNewChat}
+            className="px-3 py-1.5 rounded-lg transition-colors duration-200 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+            aria-label="Start new chat"
+          >
+            <PlusCircleIcon className="w-5 h-5" />
+            <span>New Chat</span>
+          </button>
+        )}
+      </div>
 
       {/* Right side - View switchers and settings */}
       <div className="flex items-center gap-2">

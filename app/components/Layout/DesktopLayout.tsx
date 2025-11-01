@@ -30,6 +30,7 @@ interface DesktopLayoutProps {
   selectedFile: FileItem | null
   onFileSelect: (file: FileItem) => void
   onFileUpload?: (file: File) => void
+  onNewChat?: () => void
   chatInterface: React.ReactNode
   currentView: 'chat' | 'history'
   onChatClick: () => void
@@ -41,6 +42,7 @@ export function DesktopLayout({
   selectedFile,
   onFileSelect,
   onFileUpload,
+  onNewChat,
   chatInterface,
   currentView,
   onChatClick,
@@ -228,6 +230,8 @@ export function DesktopLayout({
               onChatClick={onChatClick}
               onHistoryClick={onHistoryClick}
               onSettingsClick={onSettingsClick}
+              onNewChat={onNewChat}
+              hasMessages={messages.length > 0}
             />
 
             {/* Chat content - fills remaining space */}

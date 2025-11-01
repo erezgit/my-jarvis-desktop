@@ -35,6 +35,7 @@ export interface ChatStateContextType {
   generateRequestId: () => string;
   resetRequestState: () => void;
   startRequest: () => void;
+  resetChat: () => void;
 }
 
 export const ChatStateContext = createContext<ChatStateContextType | null>(null);

@@ -13,6 +13,7 @@ import { usePermissions } from "../hooks/chat/usePermissions";
 import { usePermissionMode } from "../hooks/chat/usePermissionMode";
 import { useAbortController } from "../hooks/chat/useAbortController";
 import { useAutoHistoryLoader } from "../hooks/useHistoryLoader";
+import { useLatestChat } from "../hooks/useLatestChat";
 import { ChatInput } from "./chat/ChatInput";
 import { ChatMessages } from "./chat/ChatMessages";
 import { HistoryView } from "./HistoryView";
@@ -30,13 +31,13 @@ interface ChatPageProps {
   currentView: 'chat' | 'history';
   onViewChange: (view: 'chat' | 'history') => void;
   onFileUploadReady?: (handler: (file: File) => void) => void;
+  onNewChatReady?: (handler: () => void) => void;
 }
 
-export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatPageProps) {
+export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewChatReady }: ChatPageProps) {
   console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Token usage tracking - accumulate tokens from each result message
   const { updateTokenUsage, resetTokenUsage } = useTokenUsage();
@@ -46,7 +47,6 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
 
   // Use currentView from props
   const isHistoryView = currentView === "history";
-  const isLoadedConversation = !!sessionId && !isHistoryView;
 
   const { processStreamLine } = useClaudeStreaming();
   const { abortRequest, createAbortHandler } = useAbortController();
@@ -74,17 +74,6 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
     return finalProject?.encodedName || null;
   }, [claudeWorkingDirectory, projects]);
 
-  // Load conversation history if sessionId is provided
-  const {
-    messages: historyMessages,
-    loading: historyLoading,
-    error: historyError,
-    sessionId: loadedSessionId,
-  } = useAutoHistoryLoader(
-    getEncodedName() || undefined,
-    sessionId || undefined,
-  );
-
   // Get chat state from context (single source of truth)
   const {
     messages,
@@ -106,7 +95,34 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
     generateRequestId,
     resetRequestState,
     startRequest,
+    resetChat,
   } = useChatStateContext();
+
+  // Fetch latest chat session ID on mount
+  const { latestSessionId, loading: latestLoading } = useLatestChat(
+    getEncodedName() || undefined
+  );
+
+  // Initialize with latest chat on mount (only if no session already loaded)
+  useEffect(() => {
+    if (!currentSessionId && latestSessionId && !latestLoading) {
+      console.log('[CHATPAGE] Auto-loading latest chat:', latestSessionId);
+      setCurrentSessionId(latestSessionId);
+    }
+  }, [latestSessionId, latestLoading, currentSessionId, setCurrentSessionId]);
+
+  // Load conversation history if sessionId is provided
+  const {
+    messages: historyMessages,
+    loading: historyLoading,
+    error: historyError,
+    sessionId: loadedSessionId,
+  } = useAutoHistoryLoader(
+    getEncodedName() || undefined,
+    currentSessionId || undefined,
+  );
+
+  const isLoadedConversation = !!currentSessionId && !isHistoryView;
 
   // Load history into shared state when it arrives
   useEffect(() => {
@@ -283,6 +299,21 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
     abortRequest(currentRequestId, isLoading, resetRequestState);
   }, [abortRequest, currentRequestId, isLoading, resetRequestState]);
 
+  // Handle new chat - resets all state
+  const handleNewChat = useCallback(() => {
+    console.log('[CHATPAGE] Starting new chat');
+    // Abort current request if in progress
+    if (isLoading && currentRequestId) {
+      handleAbort();
+    }
+    // Reset all chat state
+    resetChat();
+    // Reset tokens
+    resetTokenUsage();
+    // Clear voice tracking
+    voicePlayedTracker.clearAll();
+  }, [resetChat, resetTokenUsage, isLoading, currentRequestId, handleAbort]);
+
   const handleFileUpload = useCallback(async (file: File) => {
     console.log('[FILE_UPLOAD] Starting upload:', file.name);
 
@@ -326,6 +357,13 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
       onFileUploadReady(handleFileUpload);
     }
   }, [onFileUploadReady, handleFileUpload]);
+
+  // Expose new chat handler to parent via callback
+  useEffect(() => {
+    if (onNewChatReady) {
+      onNewChatReady(handleNewChat);
+    }
+  }, [onNewChatReady, handleNewChat]);
 
   // Handle PDF export messages
   useEffect(() => {
@@ -501,9 +539,9 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady }: ChatP
     resetTokenUsage();
     // Clear voice message tracking to prevent cross-conversation playback
     voicePlayedTracker.clearAll();
-    setSessionId(sessionId);
+    setCurrentSessionId(sessionId);
     onViewChange('chat'); // Exit history view and show the conversation
-  }, [onViewChange, resetTokenUsage]);
+  }, [onViewChange, resetTokenUsage, setCurrentSessionId]);
 
   // Handle global keyboard shortcuts
   useEffect(() => {

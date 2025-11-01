@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Folder, FileText, MessageSquare, Settings } from 'lucide-react'
+import { Folder, FileText, MessageSquare, Settings, PlusCircle } from 'lucide-react'
 import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
 import { isFileOperationMessage } from '../../types'
@@ -25,6 +25,8 @@ interface FileItem {
 interface MobileLayoutProps {
   selectedFile: FileItem | null
   onFileSelect: (file: FileItem) => void
+  onFileUpload?: (file: File) => void
+  onNewChat?: () => void
   chatInterface: React.ReactNode
   currentView: 'chat' | 'history'
   onChatClick: () => void
@@ -40,6 +42,8 @@ function cn(...classes: (string | undefined | null | false)[]): string {
 export function MobileLayout({
   selectedFile,
   onFileSelect,
+  onFileUpload,
+  onNewChat,
   chatInterface,
   currentView,
   onChatClick,
@@ -160,6 +164,15 @@ export function MobileLayout({
           {/* Right: ChatHeader buttons (only visible when chat panel active) */}
           {currentPanel === 'chat' && (
             <div className="flex items-center gap-1">
+              {onNewChat && messages.length > 0 && (
+                <button
+                  onClick={onNewChat}
+                  className="px-2 py-1 text-xs rounded transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Start new chat"
+                >
+                  New
+                </button>
+              )}
               <button
                 onClick={onChatClick}
                 className={cn(

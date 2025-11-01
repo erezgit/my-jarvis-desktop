@@ -57,6 +57,7 @@ export function ResponsiveLayout() {
   const [currentView, setCurrentView] = useState<'chat' | 'history'>('chat')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [fileUploadHandler, setFileUploadHandler] = useState<((file: File) => void) | null>(null)
+  const [newChatHandler, setNewChatHandler] = useState<(() => void) | null>(null)
   const isDesktop = useIsDesktop()
 
   // Get workspace settings from context
@@ -68,6 +69,7 @@ export function ResponsiveLayout() {
       currentView={currentView}
       onViewChange={setCurrentView}
       onFileUploadReady={(handler) => setFileUploadHandler(() => handler)}
+      onNewChatReady={(handler) => setNewChatHandler(() => handler)}
     />
   ), [currentView]);
 
@@ -90,6 +92,7 @@ export function ResponsiveLayout() {
           onChatClick={handleChatClick}
           onHistoryClick={handleHistoryClick}
           onSettingsClick={handleSettingsClick}
+          onNewChat={newChatHandler || undefined}
         />
       ) : (
         <MobileLayout
@@ -101,6 +104,7 @@ export function ResponsiveLayout() {
           onChatClick={handleChatClick}
           onHistoryClick={handleHistoryClick}
           onSettingsClick={handleSettingsClick}
+          onNewChat={newChatHandler || undefined}
         />
       )}
 

@@ -78,6 +78,17 @@ export function useChatState(options: ChatStateOptions = {}) {
     setHasReceivedInit(false);
   }, []);
 
+  const resetChat = useCallback(() => {
+    setMessages([]);
+    setInput("");
+    setIsLoading(false);
+    setCurrentSessionId(null);
+    setCurrentRequestId(null);
+    setHasShownInitMessage(false);
+    setHasReceivedInit(false);
+    setCurrentAssistantMessage(null);
+  }, []);
+
   return {
     // State
     messages,
@@ -106,5 +117,6 @@ export function useChatState(options: ChatStateOptions = {}) {
     generateRequestId,
     resetRequestState,
     startRequest,
+    resetChat,
   };
 }
