@@ -1,9 +1,127 @@
 # Ticket #065: Fly.io Instance Stability Fixes
 
-## Status: ✅ Completed
+## Status: 🔧 Implementation Required
 **Created**: 2025-10-18
+**Updated**: 2025-10-26
 **Priority**: Critical
-**Issue**: my-jarvis-erez Fly.io instance becoming unresponsive during long-running Claude Code operations
+**Issue**: All Fly.io instances (Erez, Lilah, Daniel, Dev) experiencing intermittent failures during long operations
+
+---
+
+## 🚨 IMPLEMENTATION PLAN - IMMEDIATE ACTION REQUIRED
+
+### Current Problem Summary
+All instances are experiencing the same crash pattern:
+- Long Claude operations (>60 seconds) cause Fly proxy to timeout
+- Connection forcibly closed → `ERR_NETWORK_CHANGED` error
+- Node.js server hangs with unhandled promises
+- Instance appears healthy but is frozen
+- Recovers after 1-2 minutes automatically
+
+### Step-by-Step Fix Implementation
+
+#### 1. Update fly.toml Configuration
+**File**: `/Users/erezfern/Workspace/my-jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop/fly.toml`
+
+```toml
+[http_service]
+  internal_port = 10000
+  force_https = true
+  auto_stop_machines = "off"        # CHANGE from "suspend" to "off"
+  min_machines_running = 0           # KEEP at 0 for cost savings
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 100                 # REDUCE from 250
+    soft_limit = 80                  # REDUCE from 200
+
+  [[http_service.checks]]           # ADD this entire section
+    interval = "15s"
+    timeout = "10s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/health"
+    protocol = "http"
+    tls_skip_verify = false
+
+[[vm]]
+  memory = "2gb"                     # Already updated
+  cpu_kind = "shared"
+  cpus = 1
+```
+
+#### 2. Verify Health Endpoint Exists
+**File**: `lib/claude-webui-server/dist/server.js`
+
+Check that this endpoint is present (should already be there from October fix):
+```javascript
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: Date.now(),
+    uptime: process.uptime()
+  });
+});
+```
+
+#### 3. Build and Deploy to Each Instance
+
+```bash
+# Navigate to project directory
+cd /Users/erezfern/Workspace/my-jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop
+
+# Build the project
+npm run build
+
+# Deploy to each instance
+fly deploy --app my-jarvis-erez
+fly deploy --app my-jarvis-lilah
+fly deploy --app my-jarvis-daniel
+fly deploy --app my-jarvis-erez-dev
+```
+
+#### 4. Verify Deployment Success
+
+For each instance, run:
+```bash
+# Check status
+fly status --app [instance-name]
+
+# Test health endpoint
+curl https://[instance-name].fly.dev/health
+
+# Monitor logs for errors
+fly logs --app [instance-name]
+```
+
+Expected response from health endpoint:
+```json
+{"status":"ok","timestamp":1234567890,"uptime":123.456}
+```
+
+### What This Fixes
+
+| Setting | Before | After | Impact |
+|---------|---------|---------|---------|
+| `auto_stop_machines` | "suspend" | "off" | No more mid-operation freezes |
+| `min_machines_running` | 0 | 0 | Still saves money when idle |
+| Concurrency limit | 250/200 | 100/80 | Less memory pressure |
+| Health check | None | Every 15s | Auto-restart if frozen |
+| Cost | ~$0.50/month | ~$0.50/month | SAME COST! |
+
+### Key Points
+- ✅ Machines still stop when idle (5 min timeout) - NO COST INCREASE
+- ✅ Machines won't suspend during active operations - NO MORE CRASHES
+- ✅ Health checks detect and auto-fix frozen instances
+- ✅ Clean shutdown/startup instead of suspend/resume
+
+### Testing After Deployment
+
+1. Trigger a long operation (multiple WebSearches)
+2. Monitor for `ERR_NETWORK_CHANGED` errors
+3. Verify instance stays responsive
+4. Check that instance stops after 5 minutes of inactivity
+5. Verify restart time is acceptable (1-2 seconds)
 
 ---
 

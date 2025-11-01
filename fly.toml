@@ -1,6 +1,6 @@
 # fly.toml for My Jarvis Desktop Web Deployment
 
-app = "my-jarvis-erez"
+app = "my-jarvis-iddo"
 primary_region = "sjc"
 
 [build]
@@ -31,14 +31,15 @@ primary_region = "sjc"
     method = "GET"
     path = "/health"
 
-[[services]]
-  internal_port = 3001
-  protocol = "tcp"
-  processes = ["app"]
-
-  [[services.ports]]
-    port = 3001
-    handlers = []
+# REMOVED: Port 3001 service causing routing conflicts
+# [[services]]
+#   internal_port = 3001
+#   protocol = "tcp"
+#   processes = ["app"]
+#
+#   [[services.ports]]
+#     port = 3001
+#     handlers = []
 
 [[vm]]
   size = "shared-cpu-1x"

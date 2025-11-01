@@ -3,6 +3,18 @@ set -e
 
 echo "[Claude Init] Setting up .claude directory structure..."
 
+# CRITICAL: Backend needs /root/.claude.json file (not just symlink)
+# This is required for the API to find projects
+echo "[Claude Init] Creating /root/.claude.json for backend..."
+cat > /root/.claude.json <<'EOF'
+{
+  "projects": {
+    "/workspace": {}
+  }
+}
+EOF
+echo "[Claude Init] ✅ Created /root/.claude.json (required for API)"
+
 # Check if /workspace/.claude already exists (app already initialized)
 if [ -d "/workspace/.claude" ]; then
     echo "[Claude Init] Found existing /workspace/.claude (app already initialized)"
