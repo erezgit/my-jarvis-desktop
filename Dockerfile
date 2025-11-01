@@ -24,9 +24,7 @@ RUN mkdir -p /workspace
 # Copy workspace template and scripts (available for manual execution)
 COPY workspace-template /app/workspace-template
 COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
-COPY scripts/update-workspace.sh /app/scripts/update-workspace.sh
-COPY scripts/init-workspace.sh /app/scripts/init-workspace.sh
-COPY scripts/sync-files.sh /app/scripts/sync-files.sh
+COPY scripts/init-claude-config.sh /app/scripts/init-claude-config.sh
 RUN chmod +x /app/scripts/*.sh
 
 # Set working directory
@@ -51,7 +49,7 @@ COPY tsconfig*.json ./
 # Build React app for production using web-only Vite config
 ENV NODE_ENV=production
 ENV VITE_API_URL=
-ENV VITE_WORKING_DIRECTORY=/workspace/my-jarvis
+ENV VITE_WORKING_DIRECTORY=/workspace
 RUN npx vite build --config vite.web.config.mts
 
 # Build the backend server (skip frontend copy since we already built it)
@@ -91,7 +89,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Start the backend server with workspace root as working directory
 WORKDIR /workspace
 
-# DEPLOYMENT MODE: Just start the server (no workspace initialization)
+# DEPLOYMENT MODE: Initialize Claude config then start server
+# Claude config initialization happens on every container start (idempotent)
 # For new apps: SSH in and run: /app/scripts/setup-new-app.sh
 # For workspace updates: SSH in and run: /app/scripts/update-workspace.sh [options]
-CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]
+CMD ["/bin/bash", "-c", "/app/scripts/init-claude-config.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]
