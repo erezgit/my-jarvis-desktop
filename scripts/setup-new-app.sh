@@ -72,42 +72,45 @@ echo "[Setup] ✅ All template files copied successfully"
 echo ""
 echo "[Claude Setup] Setting up .claude directory on PERSISTENT DISK..."
 
-# Create .claude directory on PERSISTENT DISK
-mkdir -p "$WORKSPACE_PARENT/.claude/projects"
+# Verify .claude directory exists on PERSISTENT DISK (should be created by init-claude-config.sh)
+if [ ! -d "$WORKSPACE_PARENT/.claude" ]; then
+    echo "[Claude Setup] Creating .claude directory structure..."
+    mkdir -p "$WORKSPACE_PARENT/.claude/projects"
 
-# Create .claude.json config file
-cat > "$WORKSPACE_PARENT/.claude.json" <<'EOF'
+    # Create .claude.json config file INSIDE .claude directory (single source of truth)
+    cat > "$WORKSPACE_PARENT/.claude/.claude.json" <<'EOF'
 {
   "projects": {
-    "/workspace/my-jarvis": {}
+    "/workspace": {}
   }
 }
 EOF
 
-echo "[Claude Setup] ✅ Created /workspace/.claude on persistent disk"
-echo "[Claude Setup] ✅ Created /workspace/.claude.json on persistent disk"
+    # Create encoded project directory for history storage
+    # Path encoding: "/workspace" → "-workspace"
+    ENCODED_NAME="-workspace"
+    mkdir -p "$WORKSPACE_PARENT/.claude/projects/$ENCODED_NAME"
 
-# Create encoded project directory for history storage
-ENCODED_NAME="-workspace-my-jarvis"
-mkdir -p "$WORKSPACE_PARENT/.claude/projects/$ENCODED_NAME"
-echo "[Claude Setup] ✅ Created project history directory"
+    echo "[Claude Setup] ✅ Created /workspace/.claude structure"
+else
+    echo "[Claude Setup] ✅ /workspace/.claude already exists (created by init-claude-config.sh)"
+fi
 
 # ============================================
-# CREATE SYMLINKS FROM CONTAINER HOME TO PERSISTENT DISK
+# VERIFY SYMLINK FROM CONTAINER HOME TO PERSISTENT DISK
 # ============================================
 echo ""
-echo "[Claude Setup] Creating symlinks for Claude CLI compatibility..."
+echo "[Claude Setup] Verifying symlink for Claude CLI compatibility..."
 
-# Remove any existing files/directories in container home
-rm -rf /root/.claude
-rm -f /root/.claude.json
-
-# Create symlinks from container home to persistent disk
-ln -sf "$WORKSPACE_PARENT/.claude" /root/.claude
-ln -sf "$WORKSPACE_PARENT/.claude.json" /root/.claude.json
-
-echo "[Claude Setup] ✅ Created symlink: /root/.claude -> /workspace/.claude"
-echo "[Claude Setup] ✅ Created symlink: /root/.claude.json -> /workspace/.claude.json"
+# Ensure symlink exists (should be created by init-claude-config.sh)
+if [ ! -L /root/.claude ]; then
+    echo "[Claude Setup] Creating symlink..."
+    rm -rf /root/.claude
+    ln -sf "$WORKSPACE_PARENT/.claude" /root/.claude
+    echo "[Claude Setup] ✅ Created symlink: /root/.claude -> /workspace/.claude"
+else
+    echo "[Claude Setup] ✅ Symlink already exists: /root/.claude -> /workspace/.claude"
+fi
 
 # ============================================
 # COMPLETION
