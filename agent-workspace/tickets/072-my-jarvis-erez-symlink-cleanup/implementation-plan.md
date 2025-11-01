@@ -60,7 +60,44 @@ ls -la /workspace/.claude/
 wc -l /workspace/.claude/.claude.json
 ```
 
-### Step 3: Create Symlink
+### Step 3: Backup Current Configuration
+
+```bash
+# Backup current .claude.json from workspace
+cp /workspace/.claude/.claude.json /workspace/.claude/.claude.json.pre-cleanup-backup
+
+# Backup /root/.claude if it exists as directory (not symlink)
+if [ ! -L /root/.claude ]; then
+  cp -r /root/.claude /root/.claude.backup
+fi
+```
+
+### Step 4: Clean Up .claude.json (BEFORE creating symlink)
+
+**⚠️ CRITICAL**: This must be done BEFORE creating the symlink, while `/workspace/.claude` and `/root/.claude` are still separate.
+
+Edit `/workspace/.claude/.claude.json` to:
+1. Remove the entire `/root` project block (lines ~26-40)
+2. Keep only the `/workspace` project block
+3. Ensure JSON is valid after removal
+4. This will reduce file from 87 lines to ~70 lines
+
+**Expected structure after cleanup:**
+```json
+{
+  "numStartups": 4,
+  ...
+  "projects": {
+    "/workspace": {
+      "allowedTools": [],
+      "history": [],
+      ...
+    }
+  }
+}
+```
+
+### Step 5: Create Symlink
 
 ```bash
 # Remove /root/.claude if it exists as a directory
@@ -71,48 +108,40 @@ ln -s /workspace/.claude /root/.claude
 
 # Verify symlink
 ls -la /root/.claude
+# Should show: lrwxrwxrwx 1 root root 18 ... /root/.claude -> /workspace/.claude
 ```
 
-### Step 4: Clean Up .claude.json
+### Step 6: Verify Changes
 
 ```bash
-# Backup current .claude.json
-cp /workspace/.claude/.claude.json /workspace/.claude/.claude.json.pre-cleanup-backup
-
-# The cleanup will:
-# - Remove /root project entry
-# - Keep only /workspace project entry
-# - Reduce file from 87 lines to ~70 lines
-# - Match the structure of my-jarvis-erez-dev
-```
-
-**Manual Cleanup Required**: Edit `/workspace/.claude/.claude.json` to:
-1. Remove the entire `/root` project block (lines ~26-40)
-2. Keep only the `/workspace` project block
-3. Ensure JSON is valid after removal
-
-### Step 5: Verify Changes
-
-```bash
-# Check symlink exists
+# Check symlink exists and points correctly
 ls -la /root/.claude
+# Expected: lrwxrwxrwx 1 root root 18 ... /root/.claude -> /workspace/.claude
+
+# Verify both paths now point to same location
+ls -la /root/.claude/.claude.json
+ls -la /workspace/.claude/.claude.json
+# Both should show same file
 
 # Check .claude.json is smaller
 wc -l /workspace/.claude/.claude.json
+# Expected: 70-75 lines
 
-# Verify JSON is valid
-cat /workspace/.claude/.claude.json | head -50
+# Verify JSON structure (check for only /workspace project)
+cat /workspace/.claude/.claude.json | grep -A 5 '"projects"'
+# Should only show /workspace, not /root
 
 # Exit SSH
 exit
 ```
 
-### Step 6: Test in My Jarvis Desktop
+### Step 7: Test in My Jarvis Desktop
 
 1. Open `https://my-jarvis-erez.fly.dev` in browser
 2. Start a new conversation in Claude interface
 3. Verify conversation history saves correctly
-4. Verify no errors in Claude Code logs
+4. Check History button works (no "Loading project..." stuck)
+5. Verify no errors in Claude Code logs
 
 ---
 
