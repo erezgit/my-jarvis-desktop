@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import type { AllMessage } from "../../types";
 import {
   isChatMessage,
@@ -128,12 +129,16 @@ export function ChatMessages({ messages, isLoading, isLoadingHistory, isChecking
         {shouldShowGreeting ? (
           <Greeting onSendMessage={onSendMessage} />
         ) : messages.length > 0 ? (
-          <>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {/* NO SPACER DIV - messages start at top, flex-1 on parent handles scrolling */}
             {messages.map(renderMessage)}
             {isLoading && <LoadingComponent />}
             <div ref={endRef} className="shrink-0 min-h-[24px]" />
-          </>
+          </motion.div>
         ) : null}
       </div>
     </div>
