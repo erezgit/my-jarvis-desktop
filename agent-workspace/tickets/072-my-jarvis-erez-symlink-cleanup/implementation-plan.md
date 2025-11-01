@@ -60,19 +60,7 @@ ls -la /workspace/.claude/
 wc -l /workspace/.claude/.claude.json
 ```
 
-### Step 3: Backup Current Configuration
-
-```bash
-# Backup current .claude.json from workspace
-cp /workspace/.claude/.claude.json /workspace/.claude/.claude.json.pre-cleanup-backup
-
-# Backup /root/.claude if it exists as directory (not symlink)
-if [ ! -L /root/.claude ]; then
-  cp -r /root/.claude /root/.claude.backup
-fi
-```
-
-### Step 4: Clean Up .claude.json (BEFORE creating symlink)
+### Step 3: Clean Up .claude.json (BEFORE creating symlink)
 
 **⚠️ CRITICAL**: This must be done BEFORE creating the symlink, while `/workspace/.claude` and `/root/.claude` are still separate.
 
@@ -97,7 +85,7 @@ Edit `/workspace/.claude/.claude.json` to:
 }
 ```
 
-### Step 5: Create Symlink
+### Step 4: Create Symlink
 
 ```bash
 # Remove /root/.claude if it exists as a directory
@@ -111,7 +99,7 @@ ls -la /root/.claude
 # Should show: lrwxrwxrwx 1 root root 18 ... /root/.claude -> /workspace/.claude
 ```
 
-### Step 6: Verify Changes
+### Step 5: Verify Changes
 
 ```bash
 # Check symlink exists and points correctly
@@ -135,7 +123,7 @@ cat /workspace/.claude/.claude.json | grep -A 5 '"projects"'
 exit
 ```
 
-### Step 7: Test in My Jarvis Desktop
+### Step 6: Test in My Jarvis Desktop
 
 1. Open `https://my-jarvis-erez.fly.dev` in browser
 2. Start a new conversation in Claude interface
@@ -162,7 +150,6 @@ After completion:
 - [ ] Symlink created: `/root/.claude` → `/workspace/.claude`
 - [ ] `.claude.json` cleaned up (70-75 lines)
 - [ ] `/root` project entry removed from `.claude.json`
-- [ ] Backup created before cleanup
 - [ ] Claude Code starts without errors
 - [ ] New conversations save to history correctly
 - [ ] Configuration matches my-jarvis-erez-dev structure
@@ -171,22 +158,7 @@ After completion:
 
 ## Rollback Plan
 
-If issues occur:
-
-```bash
-# SSH back into my-jarvis-erez
-fly ssh console -a my-jarvis-erez
-
-# Remove symlink
-rm /root/.claude
-
-# Restore backup
-cp /workspace/.claude/.claude.json.pre-cleanup-backup /workspace/.claude/.claude.json
-
-# Restart container
-exit
-fly apps restart my-jarvis-erez
-```
+If issues occur, the changes can be reverted by redeploying the container, which will restore the original state from the Docker image and volume.
 
 ---
 
