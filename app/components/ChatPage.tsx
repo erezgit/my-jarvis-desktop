@@ -574,6 +574,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             messages={messages}
             isLoading={isLoading}
             isLoadingHistory={historyLoading}
+            isCheckingForHistory={latestLoading}
             onSendMessage={sendMessage}
           />
 

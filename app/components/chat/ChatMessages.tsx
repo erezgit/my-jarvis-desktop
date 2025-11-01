@@ -31,10 +31,11 @@ interface ChatMessagesProps {
   messages: AllMessage[];
   isLoading: boolean;
   isLoadingHistory?: boolean;
+  isCheckingForHistory?: boolean;
   onSendMessage?: (message: string) => void;
 }
 
-export function ChatMessages({ messages, isLoading, isLoadingHistory, onSendMessage }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, isLoadingHistory, isCheckingForHistory, onSendMessage }: ChatMessagesProps) {
   const { settings } = useSettings();
   const { containerRef, endRef, handleNewMessage, setScrollBehavior } = useScrollToBottom();
   const prevMessagesLengthRef = useRef(0);
@@ -114,22 +115,26 @@ export function ChatMessages({ messages, isLoading, isLoadingHistory, onSendMess
     return null;
   };
 
+  // Determine if we should show greeting
+  // Only show when we're NOT checking for history, NOT loading history, AND have no messages
+  const shouldShowGreeting = !isCheckingForHistory && !isLoadingHistory && messages.length === 0;
+
   return (
     <div
       ref={containerRef}
       className="flex-1 overflow-y-scroll bg-neutral-50 dark:bg-neutral-900"
     >
       <div className="flex flex-col py-1 sm:py-4">
-        {messages.length === 0 ? (
+        {shouldShowGreeting ? (
           <Greeting onSendMessage={onSendMessage} />
-        ) : (
+        ) : messages.length > 0 ? (
           <>
             {/* NO SPACER DIV - messages start at top, flex-1 on parent handles scrolling */}
             {messages.map(renderMessage)}
             {isLoading && <LoadingComponent />}
             <div ref={endRef} className="shrink-0 min-h-[24px]" />
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

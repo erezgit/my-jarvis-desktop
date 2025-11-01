@@ -95,26 +95,38 @@ const resetChat = useCallback(() => {
 
 **Problem**: When auto-loading latest chat or switching conversations, the app would perform a long animated scroll from top to bottom, creating poor UX.
 
-**Solution**: Implemented dynamic scroll behavior control
-1. Modified `ChatMessages` to accept `isLoadingHistory` prop
-2. Added useEffect to control scroll behavior:
-   - `instant` during history load (no animation)
-   - `smooth` after load completes (for new messages)
-3. Pass `historyLoading` state from ChatPage to ChatMessages
+**Initial Solution (Timing Issue)**: First tried using `isLoadingHistory` flag, but had timing problem:
+- `historyLoading` becomes false when fetch completes
+- Messages array updates after that
+- Scroll happens with smooth mode (already switched back)
+
+**Final Solution**: Smart bulk-load detection
+1. Use a ref to track previous messages length
+2. Detect bulk loads by checking messages added at once
+3. If >3 messages added = history load (instant scroll)
+4. If 1-3 messages added = streaming (smooth scroll)
+5. Detection happens at exact moment messages change - no timing issues
 
 **Key Code**:
 ```typescript
 // ChatMessages.tsx
-const { containerRef, endRef, handleNewMessage, setScrollBehavior } = useScrollToBottom();
+const prevMessagesLengthRef = useRef(0);
 
-// Control scroll behavior: instant during history load, smooth for new messages
 useEffect(() => {
-  if (isLoadingHistory) {
+  const prevLength = prevMessagesLengthRef.current;
+  const currentLength = messages.length;
+  const messagesAdded = currentLength - prevLength;
+
+  // Bulk load detection: >3 messages = history, use instant scroll
+  if (messagesAdded > 3) {
     setScrollBehavior('instant');
-  } else {
+  } else if (messagesAdded > 0) {
     setScrollBehavior('smooth');
   }
-}, [isLoadingHistory, setScrollBehavior]);
+
+  prevMessagesLengthRef.current = currentLength;
+  handleNewMessage();
+}, [messages, handleNewMessage, setScrollBehavior]);
 ```
 
 ## Files Changed
@@ -166,7 +178,9 @@ useEffect(() => {
 - [x] Smooth scroll for new streaming messages
 
 ## Deployment
-- Committed: 6eeb3ce5 "fix: Remove animated scroll on history load - use instant scroll"
+- Initial commit: 6eeb3ce5 "fix: Remove animated scroll on history load - use instant scroll"
+- Improved fix: 45e7a311 "fix: Improve scroll behavior detection for history loads"
+- Version: 1.33.8 (a181664c)
 - Deployed to: my-jarvis-erez-dev (https://my-jarvis-erez-dev.fly.dev)
 - Also deployed to: my-jarvis-iddo (https://my-jarvis-iddo.fly.dev)
 
