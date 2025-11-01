@@ -39,8 +39,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
 
-  // Token usage tracking - accumulate tokens from each result message
-  const { updateTokenUsage, resetTokenUsage } = useTokenUsage();
+  // Token usage tracking - set cumulative session total from backend
+  const { setTokenUsage, resetTokenUsage } = useTokenUsage();
 
   // Claude Code working directory - always /workspace for consistency
   const claudeWorkingDirectory = '/workspace';
@@ -250,7 +250,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             shouldAbort = true;
             await createAbortHandler(requestId)();
           },
-          onTokenUpdate: updateTokenUsage,
+          onTokenUpdate: setTokenUsage,
         };
 
         while (true) {

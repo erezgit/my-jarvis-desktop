@@ -586,43 +586,38 @@ export class UnifiedMessageProcessor {
     const resultMessage = convertResultMessage(message, timestamp);
     context.addMessage(resultMessage);
 
-    // Extract and set token usage from modelUsage (ABSOLUTE totals, not incremental)
-    // CRITICAL: Claude Code SDK uses modelUsage field (not usage) for actual token data
-    // - modelUsage contains per-model token counts with cumulative totals
-    // - We sum across all models to get total conversation usage
+    // Fetch cumulative session tokens from backend by parsing JSONL file
+    // This replaces the old approach of extracting per-turn tokens from modelUsage
     console.log('[TOKEN_DEBUG] ========== RESULT MESSAGE ==========');
 
-    if (context.onTokenUpdate) {
-      // Extract tokens from modelUsage field (Claude Code SDK specific)
-      const modelUsage = (message as any).modelUsage;
+    if (context.onTokenUpdate && message.session_id) {
+      console.log('[TOKEN_DEBUG] Fetching cumulative tokens for session:', message.session_id);
 
-      if (modelUsage && typeof modelUsage === 'object') {
-        let totalInputTokens = 0;
-        let totalOutputTokens = 0;
-
-        // Sum tokens across all models used
-        for (const modelName in modelUsage) {
-          const modelData = modelUsage[modelName];
-          if (modelData && typeof modelData === 'object') {
-            totalInputTokens += modelData.inputTokens || 0;
-            totalOutputTokens += modelData.outputTokens || 0;
+      // Call backend endpoint to get cumulative session total
+      fetch(`/api/session-tokens/${message.session_id}`)
+        .then((response) => {
+          if (!response.ok) {
+            console.warn('[TOKEN_DEBUG] Failed to fetch session tokens:', response.status);
+            return null;
           }
-        }
-
-        const totalTokens = totalInputTokens + totalOutputTokens;
-
-        console.log('[TOKEN_DEBUG] modelUsage data:', modelUsage);
-        console.log('[TOKEN_DEBUG] Total input tokens:', totalInputTokens);
-        console.log('[TOKEN_DEBUG] Total output tokens:', totalOutputTokens);
-        console.log('[TOKEN_DEBUG] Total tokens (ABSOLUTE):', totalTokens);
-        console.log('[TOKEN_DEBUG] Calling onTokenUpdate with ABSOLUTE total');
-
-        // Pass the absolute total
-        context.onTokenUpdate(totalTokens);
-      } else {
-        console.log('[TOKEN_DEBUG] No modelUsage data found in result message');
-      }
+          return response.json();
+        })
+        .then((data) => {
+          if (data && data.totalTokens !== undefined) {
+            console.log('[TOKEN_DEBUG] Session cumulative total:', data.totalTokens);
+            console.log('[TOKEN_DEBUG] Input tokens:', data.inputTokens);
+            console.log('[TOKEN_DEBUG] Output tokens:', data.outputTokens);
+            console.log('[TOKEN_DEBUG] Messages:', data.messageCount);
+            context.onTokenUpdate?.(data.totalTokens);
+          }
+        })
+        .catch((error) => {
+          console.error('[TOKEN_DEBUG] Error fetching session tokens:', error);
+        });
+    } else if (context.onTokenUpdate && !message.session_id) {
+      console.warn('[TOKEN_DEBUG] No session_id in result message, cannot fetch tokens');
     }
+
     console.log('[TOKEN_DEBUG] =====================================');
 
     // Clear current assistant message (streaming only)
