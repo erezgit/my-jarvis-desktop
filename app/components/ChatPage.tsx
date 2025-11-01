@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import type {
   ChatRequest,
@@ -103,11 +103,20 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     getEncodedName() || undefined
   );
 
-  // Initialize with latest chat on mount (only if no session already loaded)
+  // Track whether we've attempted initial auto-load (prevents re-triggering on New Chat)
+  const hasAttemptedInitialLoad = useRef(false);
+
+  // Initialize with latest chat on mount (only once, never re-trigger)
   useEffect(() => {
-    if (!currentSessionId && latestSessionId && !latestLoading) {
-      console.log('[CHATPAGE] Auto-loading latest chat:', latestSessionId);
+    // Only auto-load if:
+    // 1. We haven't attempted initial load yet
+    // 2. No session is currently loaded
+    // 3. Latest session is available
+    // 4. Not still loading
+    if (!hasAttemptedInitialLoad.current && !currentSessionId && latestSessionId && !latestLoading) {
+      console.log('[CHATPAGE] Auto-loading latest chat on initial mount:', latestSessionId);
       setCurrentSessionId(latestSessionId);
+      hasAttemptedInitialLoad.current = true;
     }
   }, [latestSessionId, latestLoading, currentSessionId, setCurrentSessionId]);
 
