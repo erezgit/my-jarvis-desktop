@@ -30,12 +30,22 @@ import { useScrollToBottom } from "../../hooks/useScrollToBottom";
 interface ChatMessagesProps {
   messages: AllMessage[];
   isLoading: boolean;
+  isLoadingHistory?: boolean;
   onSendMessage?: (message: string) => void;
 }
 
-export function ChatMessages({ messages, isLoading, onSendMessage }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, isLoadingHistory, onSendMessage }: ChatMessagesProps) {
   const { settings } = useSettings();
-  const { containerRef, endRef, handleNewMessage } = useScrollToBottom();
+  const { containerRef, endRef, handleNewMessage, setScrollBehavior } = useScrollToBottom();
+
+  // Control scroll behavior: instant during history load, smooth for new messages
+  useEffect(() => {
+    if (isLoadingHistory) {
+      setScrollBehavior('instant');
+    } else {
+      setScrollBehavior('smooth');
+    }
+  }, [isLoadingHistory, setScrollBehavior]);
 
   // Auto-scroll when messages change, respecting user's scroll position
   useEffect(() => {
