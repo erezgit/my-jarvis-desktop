@@ -4,6 +4,7 @@ import { ResponsiveLayout } from "./components/Layout/ResponsiveLayout";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { ChatStateProvider } from "./contexts/ChatStateProvider";
 import { TokenUsageProvider } from "./contexts/TokenUsageContext";
+import { MessageProcessorProvider } from "./contexts/MessageProcessorContext";
 import { TerminalOverlay } from "./components/TerminalOverlay";
 
 // Create QueryClient instance (singleton for the app)
@@ -21,17 +22,19 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SettingsProvider>
-        <ChatStateProvider>
-          <TokenUsageProvider>
-            {/* Three-panel responsive layout with chat, file tree, and preview */}
-            <ResponsiveLayout />
+      <MessageProcessorProvider>
+        <SettingsProvider>
+          <ChatStateProvider>
+            <TokenUsageProvider>
+              {/* Three-panel responsive layout with chat, file tree, and preview */}
+              <ResponsiveLayout />
 
-            {/* Terminal overlay - appears on top when toggled from settings */}
-            <TerminalOverlay />
-          </TokenUsageProvider>
-        </ChatStateProvider>
-      </SettingsProvider>
+              {/* Terminal overlay - appears on top when toggled from settings */}
+              <TerminalOverlay />
+            </TokenUsageProvider>
+          </ChatStateProvider>
+        </SettingsProvider>
+      </MessageProcessorProvider>
 
       {/* DevTools - only in development */}
       {import.meta.env.DEV && (

@@ -278,12 +278,18 @@ export function createVoiceMessageFromInput(
  * Convert an array of TimestampedSDKMessages to AllMessage array
  * Used for batch conversion of conversation history
  * Now uses UnifiedMessageProcessor's batch processing for optimal performance and consistency
+ *
+ * IMPORTANT: Pass the same processor instance used for streaming to maintain tool cache continuity
  */
 export function convertConversationHistory(
   timestampedMessages: TimestampedSDKMessage[],
+  processor?: UnifiedMessageProcessor,
 ): AllMessage[] {
-  const processor = new UnifiedMessageProcessor();
+  // Use provided processor instance (for cache continuity) or create new one (legacy fallback)
+  const processorInstance = processor || new UnifiedMessageProcessor();
 
   // Use the unified processor's batch processing method
-  return processor.processMessagesBatch(timestampedMessages);
+  // Note: processMessagesBatch clears the cache, but that's OK for history loading
+  // as we're processing old messages that don't need cache continuity
+  return processorInstance.processMessagesBatch(timestampedMessages);
 }

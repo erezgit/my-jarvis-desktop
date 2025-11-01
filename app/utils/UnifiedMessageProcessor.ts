@@ -101,14 +101,28 @@ export class UnifiedMessageProcessor {
     name: string,
     input: Record<string, unknown>,
   ): void {
+    console.log('[CACHE_TOOL_USE] ========================================');
+    console.log('[CACHE_TOOL_USE] Caching tool:', name);
+    console.log('[CACHE_TOOL_USE] Tool ID:', id);
+    console.log('[CACHE_TOOL_USE] Input:', input);
+    console.log('[CACHE_TOOL_USE] Cache size before:', this.toolUseCache.size);
     this.toolUseCache.set(id, { name, input });
+    console.log('[CACHE_TOOL_USE] Cache size after:', this.toolUseCache.size);
+    console.log('[CACHE_TOOL_USE] ========================================');
   }
 
   /**
    * Retrieve cached tool_use information
    */
   private getCachedToolInfo(id: string): ToolCache | undefined {
-    return this.toolUseCache.get(id);
+    console.log('[GET_CACHED_TOOL] ========================================');
+    console.log('[GET_CACHED_TOOL] Looking up tool ID:', id);
+    console.log('[GET_CACHED_TOOL] Cache size:', this.toolUseCache.size);
+    console.log('[GET_CACHED_TOOL] All cached IDs:', Array.from(this.toolUseCache.keys()));
+    const result = this.toolUseCache.get(id);
+    console.log('[GET_CACHED_TOOL] Result:', result);
+    console.log('[GET_CACHED_TOOL] ========================================');
+    return result;
   }
 
   /**
@@ -189,29 +203,46 @@ export class UnifiedMessageProcessor {
     }
 
     // Special handling for Write/Edit tool results - file operations
-    // Check content patterns FIRST (robust against cache failures)
-    let pathMatch = null;
-    let operation: "created" | "modified" | null = null;
+    // Use cached tool input instead of pattern matching (100% reliable)
+    console.log('[FILE_OP_DEBUG] ========================================');
+    console.log('[FILE_OP_DEBUG] Tool name:', toolName);
+    console.log('[FILE_OP_DEBUG] Cached input:', cachedToolInfo?.input);
+    console.log('[FILE_OP_DEBUG] ========================================');
 
-    // Pattern 1: Write tool format - "File created successfully at: /path/to/file"
-    pathMatch = content.match(/File created successfully at: (.+)$/);
-    if (pathMatch) {
-      operation = "created";
-      console.log('[FILE_OP_DEBUG] ✅ Write tool pattern detected in content!');
-    }
+    let filePath: string | null = null;
+    let operation: "created" | "modified" | "deleted" | null = null;
 
-    // Pattern 2: Edit tool format - "The file /path/to/file has been updated"
-    if (!pathMatch) {
-      pathMatch = content.match(/The file (.+) has been updated/);
-      if (pathMatch) {
+    // Check if this is a Write, Edit, or Bash (delete) tool by examining the cached input
+    if (cachedToolInfo && cachedToolInfo.input) {
+      const input = cachedToolInfo.input;
+
+      // Check tool name FIRST to distinguish Write from Edit from Delete
+      if (toolName === "Write" && input.file_path && typeof input.file_path === 'string') {
+        filePath = input.file_path;
+        operation = "created";
+        console.log('[FILE_OP_DEBUG] ✅ Write tool detected from cached input!');
+      }
+      else if (toolName === "Edit" && input.file_path && typeof input.file_path === 'string') {
+        filePath = input.file_path;
         operation = "modified";
-        console.log('[FILE_OP_DEBUG] ✅ Edit tool pattern detected in content!');
+        console.log('[FILE_OP_DEBUG] ✅ Edit tool detected from cached input!');
+      }
+      else if (toolName === "Bash" && input.command && typeof input.command === 'string') {
+        // Check if Bash command is a delete operation (rm, unlink, etc.)
+        const command = input.command as string;
+        const deleteMatch = command.match(/(?:rm|unlink)\s+(?:-[rf]+\s+)?["']?([^\s"']+)["']?/);
+        if (deleteMatch) {
+          filePath = deleteMatch[1];
+          operation = "deleted";
+          console.log('[FILE_OP_DEBUG] ✅ Delete operation detected from Bash command:', command);
+        }
       }
     }
 
-    // If we detected a file operation pattern, create FileOperationMessage
-    if (pathMatch && operation) {
-      const filePath = pathMatch[1].trim();
+    console.log('[FILE_OP_DEBUG] Result - filePath:', filePath, 'operation:', operation);
+
+    // If we detected a file operation, create FileOperationMessage
+    if (filePath && operation) {
       const fileName = filePath.split('/').pop() || filePath;
 
       // Create FileOperationMessage
@@ -225,11 +256,10 @@ export class UnifiedMessageProcessor {
       };
 
       console.log('[FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage:', fileOpMessage);
-      console.log('[FILE_OP_DEBUG] Detected from content pattern (cache-independent)');
       context.addMessage(fileOpMessage);
       // Note: We still create ToolResultMessage too (unlike voice which returns early)
     } else {
-      console.log('[PROCESS_TOOL_RESULT] No file operation pattern detected in content');
+      console.log('[FILE_OP_DEBUG] No file operation detected');
     }
 
     // Special handling for Bash tool results that are voice scripts

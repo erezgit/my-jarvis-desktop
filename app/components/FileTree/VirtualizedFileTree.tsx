@@ -51,8 +51,28 @@ function updateNodeChildren(nodes: TreeNode[], nodeId: string, newChildren: Tree
   // Create a completely new array with new object references at every level
   return nodes.map(node => {
     if (node.id === nodeId) {
-      // Found the target node - return new object with updated children
-      return { ...node, children: [...newChildren] }
+      // Found the target node - merge children while preserving isOpen state
+      // Create a map of old children by id for quick lookup
+      const oldChildrenMap = new Map(
+        (node.children || []).map(child => [child.id, child])
+      )
+
+      // Merge new children with old state
+      const mergedChildren = newChildren.map(newChild => {
+        const oldChild = oldChildrenMap.get(newChild.id)
+        if (oldChild) {
+          // Preserve isOpen and children from old node, but update data
+          return {
+            ...newChild,
+            isOpen: oldChild.isOpen,
+            // If the old child has loaded children, keep them unless new child has different children
+            children: oldChild.children && oldChild.children.length > 0 ? oldChild.children : newChild.children
+          }
+        }
+        return newChild
+      })
+
+      return { ...node, children: mergedChildren }
     }
     if (node.children && node.children.length > 0) {
       // Recursively search in children - create new object even if children don't change
@@ -276,46 +296,53 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
       }
     },
     expandToPath: async (filePath: string) => {
-      if (!treeRef.current) return
+      console.log('[expandToPath] Called with:', filePath)
 
-      // VSCode Pattern: Load parent data, then use reveal API
+      // VSCode Pattern: Refresh ALL ancestor directories
+      // Example: /workspace/tickets/050-foo/file.md
+      // We need to refresh BOTH:
+      // 1. /workspace/tickets (to show the 050-foo folder)
+      // 2. /workspace/tickets/050-foo (to show the file)
+
       const pathParts = filePath.split('/')
       pathParts.pop() // Remove filename
-      const parentPath = pathParts.join('/')
+      const immediateParent = pathParts.join('/') // e.g., /workspace/tickets/050-foo
 
-      // Refresh parent directory to ensure new file is in tree data
+      // Get grandparent directory
+      const grandParentParts = [...pathParts]
+      grandParentParts.pop() // Remove folder name
+      const grandParent = grandParentParts.join('/') // e.g., /workspace/tickets
+
+      console.log('[expandToPath] Immediate parent:', immediateParent)
+      console.log('[expandToPath] Grandparent:', grandParent)
+
       try {
-        const files = await fetchDirectory(parentPath)
-        queryClient.setQueryData(getDirectoryQueryKey(parentPath), files)
-        const children = transformToTreeNodes(files, parentPath)
-
-        // Update tree data immutably
-        setTreeData(prevData => updateNodeChildren(prevData, parentPath, children))
-
-        // Wait for state to update before revealing
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        // Use React Arborist's reveal API (VSCode pattern)
-        // This automatically expands ancestors and scrolls to the file
-        const node = treeRef.current.get(filePath)
-        if (node) {
-          // Open all parent directories
-          if (treeRef.current.openParents) {
-            treeRef.current.openParents(filePath)
-          }
-
-          // Scroll to the file
-          if (treeRef.current.scrollTo) {
-            treeRef.current.scrollTo(filePath)
-          }
-
-          // Select the node
-          if (treeRef.current.select) {
-            treeRef.current.select(filePath)
-          }
+        // Refresh grandparent first (to show the new folder appeared)
+        if (grandParent && grandParent !== workingDirectory) {
+          console.log('[expandToPath] Refreshing grandparent:', grandParent)
+          const grandParentFiles = await fetchDirectory(grandParent)
+          console.log('[expandToPath] Grandparent has', grandParentFiles.length, 'items')
+          queryClient.setQueryData(getDirectoryQueryKey(grandParent), grandParentFiles)
+          const grandParentChildren = transformToTreeNodes(grandParentFiles, grandParent)
+          setTreeData(prevData => updateNodeChildren(prevData, grandParent, grandParentChildren))
         }
+
+        // Then refresh immediate parent (to show the new file)
+        console.log('[expandToPath] Refreshing immediate parent:', immediateParent)
+        const files = await fetchDirectory(immediateParent)
+        console.log('[expandToPath] Immediate parent has', files.length, 'files')
+
+        queryClient.setQueryData(getDirectoryQueryKey(immediateParent), files)
+        const children = transformToTreeNodes(files, immediateParent)
+
+        setTreeData(prevData => updateNodeChildren(prevData, immediateParent, children))
+        console.log('[expandToPath] Updated tree data')
+
+        // That's it! No expanding, no scrolling, no selecting
+        // The directories will show the new content if they're already open
+        // If they're closed, they stay closed (respecting user's tree state)
       } catch (error) {
-        console.log('[expandToPath] Could not fetch directory:', parentPath)
+        console.log('[expandToPath] Error:', error)
       }
     }
   }), [queryClient, transformToTreeNodes])

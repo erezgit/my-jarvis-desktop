@@ -84,6 +84,34 @@ export function DesktopLayout({
       (async () => {
         console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
 
+        if (fileOpMessage.operation === 'deleted') {
+          // For delete operations, use expandToPath to refresh the parent directory
+          // This works exactly like create/modify - it fetches fresh data and updates the tree
+          console.log('[DESKTOP_LAYOUT_DEBUG] 🗑️ Delete operation detected');
+
+          const pathParts = fileOpMessage.path.split('/');
+          pathParts.pop(); // Remove the deleted file/folder name
+          const parentPath = pathParts.join('/') || '/';
+
+          console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory to refresh:', parentPath);
+
+          // Use the same method as create/edit - expandToPath will refresh the parent
+          if (fileTreeRef.current) {
+            console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 Calling expandToPath to refresh parent');
+            // Add a dummy file name so expandToPath processes the parent correctly
+            await fileTreeRef.current.expandToPath(parentPath + '/dummy');
+            console.log('[DESKTOP_LAYOUT_DEBUG] ✅ Refresh completed');
+          } else {
+            console.log('[DESKTOP_LAYOUT_DEBUG] ⚠️ fileTreeRef.current is null');
+          }
+
+          // Update last processed count
+          console.log('[DESKTOP_LAYOUT_DEBUG] 🏁 Setting lastProcessedMessageCount to:', messages.length);
+          setLastProcessedMessageCount(messages.length);
+          return;
+        }
+
+        // For created/modified operations, expand and select the file
         // Extract parent directory path
         const pathParts = fileOpMessage.path.split('/')
         const fileName = pathParts.pop() // Remove and save filename
@@ -94,39 +122,58 @@ export function DesktopLayout({
         // React Arborist's reveal method handles everything automatically!
         // Just call expandToPath which uses tree.reveal() internally
         if (fileTreeRef.current) {
+          console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 About to call expandToPath');
           await fileTreeRef.current.expandToPath(fileOpMessage.path);
+          console.log('[DESKTOP_LAYOUT_DEBUG] 🟢 expandToPath completed');
+        } else {
+          console.log('[DESKTOP_LAYOUT_DEBUG] ⚠️ fileTreeRef.current is null');
         }
 
-        // Auto-select the file and load its content
-        if (typeof window !== 'undefined' && (window as any).fileAPI) {
-          try {
-            const fileData = await (window as any).fileAPI.readFile(fileOpMessage.path);
-            if (fileData) {
-              onFileSelect({
-                name: fileOpMessage.fileName,
-                path: fileOpMessage.path,
-                isDirectory: fileOpMessage.isDirectory,
-                size: 0,
-                modified: new Date().toISOString(),
-                extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
-                content: fileData.content
-              });
-            }
-          } catch (error) {
-            console.error('[DESKTOP_LAYOUT_DEBUG] Error reading file:', error);
-            // Select without content if read fails
+        console.log('[DESKTOP_LAYOUT_DEBUG] 🔍 Reading file via backend API...');
+
+        // Auto-select the file and load its content using backend API
+        try {
+          console.log('[DESKTOP_LAYOUT_DEBUG] 📖 Fetching file:', fileOpMessage.path);
+          const response = await fetch(`/api/files/read?path=${encodeURIComponent(fileOpMessage.path)}`);
+
+          if (!response.ok) {
+            console.error('[DESKTOP_LAYOUT_DEBUG] ❌ API response not ok:', response.status);
+            throw new Error(`Failed to read file: ${response.statusText}`);
+          }
+
+          const fileData = await response.json();
+          console.log('[DESKTOP_LAYOUT_DEBUG] 📄 File read result:', fileData ? 'SUCCESS' : 'NULL');
+
+          if (fileData && fileData.content !== undefined) {
+            console.log('[DESKTOP_LAYOUT_DEBUG] 🎯 Calling onFileSelect with content');
             onFileSelect({
               name: fileOpMessage.fileName,
               path: fileOpMessage.path,
               isDirectory: fileOpMessage.isDirectory,
-              size: 0,
-              modified: new Date().toISOString(),
+              size: fileData.size || 0,
+              modified: fileData.modified || new Date().toISOString(),
               extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+              content: fileData.content
             });
+            console.log('[DESKTOP_LAYOUT_DEBUG] ✅ onFileSelect completed');
+          } else {
+            console.log('[DESKTOP_LAYOUT_DEBUG] ⚠️ fileData was null/undefined');
           }
+        } catch (error) {
+          console.error('[DESKTOP_LAYOUT_DEBUG] ❌ Error reading file:', error);
+          // Select without content if read fails
+          onFileSelect({
+            name: fileOpMessage.fileName,
+            path: fileOpMessage.path,
+            isDirectory: fileOpMessage.isDirectory,
+            size: 0,
+            modified: new Date().toISOString(),
+            extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
+          });
         }
 
         // Update last processed count AFTER all async operations complete
+        console.log('[DESKTOP_LAYOUT_DEBUG] 🏁 Setting lastProcessedMessageCount to:', messages.length);
         setLastProcessedMessageCount(messages.length);
       })();
     } else {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { AllMessage, TimestampedSDKMessage } from "../types";
 import type { ConversationHistory } from "../../../shared/types";
 import { getConversationUrl } from "../config/api";
-import { useMessageConverter } from "./useMessageConverter";
+import { useMessageProcessor } from "../contexts/MessageProcessorContext";
 
 interface HistoryLoaderState {
   messages: AllMessage[];
@@ -40,7 +40,8 @@ export function useHistoryLoader(): HistoryLoaderResult {
     sessionId: null,
   });
 
-  const { convertConversationHistory } = useMessageConverter();
+  // Use the singleton processor instance from context
+  const processor = useMessageProcessor();
 
   const loadHistory = useCallback(
     async (encodedProjectName: string, sessionId: string) => {
@@ -89,9 +90,8 @@ export function useHistoryLoader(): HistoryLoaderResult {
           }
         }
 
-        // Convert to frontend message format
-        const convertedMessages =
-          convertConversationHistory(timestampedMessages);
+        // Convert to frontend message format using singleton processor
+        const convertedMessages = processor.processMessagesBatch(timestampedMessages);
 
         setState((prev) => ({
           ...prev,
@@ -112,7 +112,7 @@ export function useHistoryLoader(): HistoryLoaderResult {
         }));
       }
     },
-    [convertConversationHistory],
+    [processor],
   );
 
   const clearHistory = useCallback(() => {

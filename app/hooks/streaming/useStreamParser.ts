@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import type {
   StreamResponse,
   SDKMessage,
@@ -12,14 +12,13 @@ import {
   isUserMessage,
 } from "../../utils/messageTypes";
 import type { StreamingContext } from "./useMessageProcessor";
-import {
-  UnifiedMessageProcessor,
-  type ProcessingContext,
-} from "../../utils/UnifiedMessageProcessor";
+import type { ProcessingContext } from "../../utils/UnifiedMessageProcessor";
+import { useMessageProcessor } from "../../contexts/MessageProcessorContext";
 
 export function useStreamParser() {
-  // Create a single unified processor instance
-  const processor = useMemo(() => new UnifiedMessageProcessor(), []);
+  // Use the singleton processor instance from context
+  // This ensures cache continuity across component remounts
+  const processor = useMessageProcessor();
 
   // Convert StreamingContext to ProcessingContext
   const adaptContext = useCallback(

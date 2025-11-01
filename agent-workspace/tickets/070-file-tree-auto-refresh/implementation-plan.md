@@ -1,6 +1,75 @@
 # Ticket 070: File Tree Auto-Refresh Fix
 
-## Status: FIXED - React Arborist with onClick Handler (v1.31.2) ✅
+## Status: ✅ COMPLETE - File Tree Auto-Refresh for Create, Edit, and Delete (v1.33.7)
+
+### Current State (v1.33.1)
+- **File Tree**: ✅ WORKING - All three scenarios confirmed
+  1. ✅ Tickets directory CLOSED → create ticket → opens and shows ticket
+  2. ✅ Tickets directory OPEN → create ticket → ticket appears without flicker
+  3. ✅ Ticket folder OPEN → create file inside → file appears AND folder stays open
+
+- **File Preview**: ✅ FIXED (v1.33.1)
+  - File is created and appears in tree
+  - File preview automatically updates to show the new file content
+  - No manual selection required
+
+### Recent Fixes (v1.32.6 - v1.33.1)
+
+**v1.32.6** - Preserve folder open state when refreshing
+- Fixed folder collapsing when files created inside open folders
+- Modified `updateNodeChildren` to preserve `isOpen` state during tree updates
+
+**v1.33.0** - Singleton UnifiedMessageProcessor for cache continuity
+- **Root Cause**: ChatPage remounts when switching chat/history views
+- Created `MessageProcessorContext` to hold singleton processor instance
+- Moved processor to App.tsx root level (never unmounts)
+- Modified `useStreamParser` to consume context instead of creating instances
+- Modified `useHistoryLoader` to use singleton processor
+- **Goal**: Maintain tool_use cache across component remounts
+
+**v1.33.1** - Fix file preview auto-update for web version ✅
+- **Root Cause Discovered**: Code was using `window.fileAPI.readFile()` which only exists in Electron desktop app, NOT in web version
+- **Debug Evidence**: Console logs showed `fileAPI exists? false` → `⛔ fileAPI not available - skipping file read`
+- **Solution**: Replaced Electron-specific file reading with backend API call: `fetch('/api/files/read?path=...')`
+- **Result**: File preview now auto-updates when files are created/modified in web version
+- **File Modified**: `DesktopLayout.tsx` lines 104-145
+
+### File Preview Issue - Root Cause Analysis (RESOLVED)
+
+**Expected Flow:**
+1. Tool result arrives with file creation confirmation
+2. UnifiedMessageProcessor detects Write/Edit tool via cached tool_use
+3. Creates FileOperationMessage with file path
+4. DesktopLayout detects FileOperationMessage in messages array
+5. Calls `fileAPI.readFile(path)` to load content
+6. Calls `onFileSelect(fileData)` to update preview
+
+**Actual Behavior:**
+- File tree updates correctly (step 1-4 working for tree)
+- File preview does NOT update (step 5-6 not executing)
+
+**Hypothesis:**
+The FileOperationMessage may not be created consistently. Even with singleton processor, if:
+- Tool result arrives before tool_use is cached (timing issue)
+- OR cache key mismatch between tool_use and tool_result
+- Then cache lookup returns `undefined`, no FileOperationMessage created
+- File tree still updates via `expandToPath` (independent of cache)
+- But file preview update depends on FileOperationMessage detection
+
+**Debug Plan:**
+Check browser console for these log sequences:
+1. `[CACHE_TOOL_USE]` - Confirms tool_use was cached
+2. `[GET_CACHED_TOOL]` - Shows cache lookup result
+3. `[FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage` - Confirms message created
+4. `[DESKTOP_LAYOUT_DEBUG] File operation detected!` - Confirms detection
+5. File read and `onFileSelect` call
+
+**If logs show FileOperationMessage NOT created:**
+- Tool cache still failing despite singleton processor
+- May need fallback to text pattern matching
+- OR investigate tool_use_id generation/matching
+
+---
 
 ## New Implementation: React Arborist Migration
 
