@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { AllMessage } from "../../types";
 import {
   isChatMessage,
@@ -37,20 +37,28 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages, isLoading, isLoadingHistory, onSendMessage }: ChatMessagesProps) {
   const { settings } = useSettings();
   const { containerRef, endRef, handleNewMessage, setScrollBehavior } = useScrollToBottom();
+  const prevMessagesLengthRef = useRef(0);
 
-  // Control scroll behavior: instant during history load, smooth for new messages
+  // Auto-scroll when messages change, with smart behavior detection
   useEffect(() => {
-    if (isLoadingHistory) {
+    const prevLength = prevMessagesLengthRef.current;
+    const currentLength = messages.length;
+    const messagesAdded = currentLength - prevLength;
+
+    // Bulk load detection: more than 3 messages added at once = history load
+    // Use instant scroll for history, smooth for streaming messages
+    if (messagesAdded > 3) {
       setScrollBehavior('instant');
-    } else {
+    } else if (messagesAdded > 0) {
       setScrollBehavior('smooth');
     }
-  }, [isLoadingHistory, setScrollBehavior]);
 
-  // Auto-scroll when messages change, respecting user's scroll position
-  useEffect(() => {
+    // Update ref for next comparison
+    prevMessagesLengthRef.current = currentLength;
+
+    // Trigger scroll
     handleNewMessage();
-  }, [messages, handleNewMessage]);
+  }, [messages, handleNewMessage, setScrollBehavior]);
 
   const renderMessage = (message: AllMessage, index: number) => {
     // Use timestamp as key for stable rendering, fallback to index if needed
