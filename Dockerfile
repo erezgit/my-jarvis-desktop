@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     make \
     g++ \
     rsync \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude CLI globally
@@ -18,13 +19,23 @@ RUN npm install -g @anthropic-ai/claude-code
 # Install Python dependencies for voice generation and PDF processing
 RUN pip3 install --break-system-packages openai python-dotenv pdfplumber
 
+# Node.js official image already includes 'node' user with UID/GID 1000
+# No need to create appuser - we'll use the existing node user
+# Set HOME environment variable for node user
+ENV HOME=/home/node
+
+# Ensure /home/node exists and is owned by node user
 # Create workspace directory for persistent storage
-RUN mkdir -p /workspace
+RUN mkdir -p /home/node && \
+    chown -R node:node /home/node && \
+    mkdir -p /workspace && \
+    chown -R node:node /workspace
 
 # Copy workspace template and scripts (available for manual execution)
 COPY workspace-template /app/workspace-template
 COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
 COPY scripts/init-claude-config.sh /app/scripts/init-claude-config.sh
+COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
 RUN chmod +x /app/scripts/*.sh
 
 # Set working directory
@@ -67,8 +78,10 @@ RUN npm run build:clean && npm run build:bundle
 # Copy the built React app to where the backend expects it
 RUN mkdir -p dist/static && cp -r /app/out/renderer/* dist/static/
 
-# Return to app root
+# Return to app root and set ownership of application files
 WORKDIR /app
+RUN chown -R root:node /app && \
+    chmod -R 750 /app
 
 # Expose ports
 EXPOSE 10000
@@ -79,18 +92,23 @@ ENV PORT=10000
 ENV TERMINAL_WS_PORT=3001
 ENV NODE_ENV=production
 ENV WORKSPACE_DIR=/workspace
-ENV ANTHROPIC_CONFIG_PATH=/workspace/.claude
-ENV CLAUDE_CONFIG_DIR=/workspace/.claude
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:10000/health || exit 1
 
+# Copy entrypoint script to system location
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Use entrypoint to fix volume permissions and drop to non-root user
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
 # Start the backend server with workspace root as working directory
 WORKDIR /workspace
 
 # DEPLOYMENT MODE: Initialize Claude config then start server
+# Entrypoint will drop to appuser before executing this CMD
 # Claude config initialization happens on every container start (idempotent)
 # For new apps: SSH in and run: /app/scripts/setup-new-app.sh
-# For workspace updates: SSH in and run: /app/scripts/update-workspace.sh [options]
 CMD ["/bin/bash", "-c", "/app/scripts/init-claude-config.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]

@@ -7,6 +7,7 @@ export interface UsePermissionModeResult {
   isPlanMode: boolean;
   isDefaultMode: boolean;
   isAcceptEditsMode: boolean;
+  isBypassPermissionsMode: boolean;
 }
 
 /**
@@ -14,12 +15,13 @@ export interface UsePermissionModeResult {
  * State is preserved across component re-renders but resets on page reload.
  * No localStorage persistence - simple React state management.
  *
- * Defaults to acceptEdits mode to auto-approve file operations while maintaining safety.
- * Works in Docker containers as root user (unlike bypassPermissions which is blocked).
+ * Defaults to bypassPermissions mode to eliminate all permission prompts.
+ * Safe to use now that containers run as non-root user (node user, UID 1000).
+ * Claude CLI's root user restriction no longer applies.
  */
 export function usePermissionMode(): UsePermissionModeResult {
   const [permissionMode, setPermissionModeState] =
-    useState<PermissionMode>("acceptEdits");
+    useState<PermissionMode>("bypassPermissions");
 
   const setPermissionMode = useCallback((mode: PermissionMode) => {
     setPermissionModeState(mode);
@@ -31,5 +33,6 @@ export function usePermissionMode(): UsePermissionModeResult {
     isPlanMode: permissionMode === "plan",
     isDefaultMode: permissionMode === "default",
     isAcceptEditsMode: permissionMode === "acceptEdits",
+    isBypassPermissionsMode: permissionMode === "bypassPermissions",
   };
 }

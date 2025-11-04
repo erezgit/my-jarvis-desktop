@@ -108,7 +108,7 @@ export async function handleChatRequest(
   );
 
   // Default to current working directory if not specified
-  // Use WORKSPACE_DIR environment variable as fallback (points to /workspace/my-jarvis in Docker)
+  // Use WORKSPACE_DIR environment variable as fallback (points to /workspace in Docker)
   const workingDirectory = chatRequest.workingDirectory || process.env.WORKSPACE_DIR || process.cwd();
 
   logger.chat.debug("Working directory for Claude CLI: {workingDirectory}", { workingDirectory });
