@@ -24,19 +24,16 @@ RUN pip3 install --break-system-packages openai python-dotenv pdfplumber
 # Set HOME environment variable for node user
 ENV HOME=/home/node
 
-# Ensure /home/node exists and is owned by node user
-# Create workspace directory for persistent storage
-RUN mkdir -p /home/node && \
-    chown -R node:node /home/node && \
-    mkdir -p /workspace && \
-    chown -R node:node /workspace
+# Note: /home/node will be provided by the mounted volume
+# No need to create it here
 
 # Copy workspace template and scripts (available for manual execution)
 COPY workspace-template /app/workspace-template
 COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
-COPY scripts/init-claude-config.sh /app/scripts/init-claude-config.sh
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
-RUN chmod +x /app/scripts/*.sh
+# Copy legacy fixes for backwards compatibility (existing deployments only)
+COPY scripts/legacy-fixes /app/scripts/legacy-fixes
+RUN chmod +x /app/scripts/*.sh /app/scripts/legacy-fixes/*.sh
 
 # Set working directory
 WORKDIR /app
@@ -60,7 +57,7 @@ COPY tsconfig*.json ./
 # Build React app for production using web-only Vite config
 ENV NODE_ENV=production
 ENV VITE_API_URL=
-ENV VITE_WORKING_DIRECTORY=/workspace
+ENV VITE_WORKING_DIRECTORY=/home/node
 RUN npx vite build --config vite.web.config.mts
 
 # Build the backend server (skip frontend copy since we already built it)
@@ -91,7 +88,7 @@ EXPOSE 3001
 ENV PORT=10000
 ENV TERMINAL_WS_PORT=3001
 ENV NODE_ENV=production
-ENV WORKSPACE_DIR=/workspace
+ENV WORKSPACE_DIR=/home/node
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -104,11 +101,11 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Use entrypoint to fix volume permissions and drop to non-root user
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
-# Start the backend server with workspace root as working directory
-WORKDIR /workspace
+# Start the backend server with home directory as working directory
+WORKDIR /home/node
 
 # DEPLOYMENT MODE: Initialize Claude config then start server
 # Entrypoint will drop to appuser before executing this CMD
 # Claude config initialization happens on every container start (idempotent)
 # For new apps: SSH in and run: /app/scripts/setup-new-app.sh
-CMD ["/bin/bash", "-c", "/app/scripts/init-claude-config.sh && node /app/lib/claude-webui-server/dist/cli/node.js --port 10000 --host 0.0.0.0"]
+CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]

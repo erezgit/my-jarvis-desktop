@@ -217,10 +217,10 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                   {/* Workspace option */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onWorkspaceChange('/workspace')}
+                      onClick={() => onWorkspaceChange('/home/node')}
                       className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
                       role="radio"
-                      aria-checked={workingDirectory === '/workspace'}
+                      aria-checked={workingDirectory === '/home/node'}
                       aria-label="Workspace - Root workspace directory"
                     >
                       <FolderIcon className="w-5 h-5 text-green-500" />
@@ -229,16 +229,16 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           Workspace
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Root workspace directory (/workspace) - File tree only
+                          Root workspace directory (/home/node) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          workingDirectory === '/workspace'
+                          workingDirectory === '/home/node'
                             ? 'bg-green-500 border-green-500'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}>
-                          {workingDirectory === '/workspace' && (
+                          {workingDirectory === '/home/node' && (
                             <div className="w-2 h-2 bg-white rounded-full"></div>
                           )}
                         </div>
@@ -249,10 +249,10 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                   {/* My Jarvis option */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onWorkspaceChange('/workspace/my-jarvis')}
+                      onClick={() => onWorkspaceChange('/home/node/my-jarvis')}
                       className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
                       role="radio"
-                      aria-checked={workingDirectory === '/workspace/my-jarvis'}
+                      aria-checked={workingDirectory === '/home/node/my-jarvis'}
                       aria-label="My Jarvis - My Jarvis project directory"
                     >
                       <FolderIcon className="w-5 h-5 text-blue-500" />
@@ -261,16 +261,16 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           My Jarvis
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          My Jarvis project directory (/workspace/my-jarvis) - File tree only
+                          My Jarvis project directory (/home/node/my-jarvis) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          workingDirectory === '/workspace/my-jarvis'
+                          workingDirectory === '/home/node/my-jarvis'
                             ? 'bg-blue-500 border-blue-500'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}>
-                          {workingDirectory === '/workspace/my-jarvis' && (
+                          {workingDirectory === '/home/node/my-jarvis' && (
                             <div className="w-2 h-2 bg-white rounded-full"></div>
                           )}
                         </div>
@@ -284,10 +284,10 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                   {/* Workspace option */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onWorkspaceChange('/workspace')}
+                      onClick={() => onWorkspaceChange('/home/node')}
                       className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
                       role="radio"
-                      aria-checked={workingDirectory === '/workspace'}
+                      aria-checked={workingDirectory === '/home/node'}
                       aria-label="Workspace - Root workspace directory"
                     >
                       <FolderIcon className="w-5 h-5 text-green-500" />
@@ -296,16 +296,16 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           Workspace
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Root workspace directory (/workspace) - File tree only
+                          Root workspace directory (/home/node) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          workingDirectory === '/workspace'
+                          workingDirectory === '/home/node'
                             ? 'bg-green-500 border-green-500'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}>
-                          {workingDirectory === '/workspace' && (
+                          {workingDirectory === '/home/node' && (
                             <div className="w-2 h-2 bg-white rounded-full"></div>
                           )}
                         </div>
@@ -316,10 +316,10 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                   {/* My Jarvis option - DEFAULT */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onWorkspaceChange('/workspace/my-jarvis')}
+                      onClick={() => onWorkspaceChange('/home/node/my-jarvis')}
                       className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 text-left flex-1"
                       role="radio"
-                      aria-checked={workingDirectory === '/workspace/my-jarvis'}
+                      aria-checked={workingDirectory === '/home/node/my-jarvis'}
                       aria-label="My Jarvis - My Jarvis project directory"
                     >
                       <FolderIcon className="w-5 h-5 text-blue-500" />
@@ -328,16 +328,16 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
                           My Jarvis
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
-                          My Jarvis project directory (/workspace/my-jarvis) - File tree only
+                          My Jarvis project directory (/home/node/my-jarvis) - File tree only
                         </div>
                       </div>
                       <div className="ml-auto">
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          workingDirectory === '/workspace/my-jarvis'
+                          workingDirectory === '/home/node/my-jarvis'
                             ? 'bg-blue-500 border-blue-500'
                             : 'border-slate-300 dark:border-slate-600'
                         }`}>
-                          {workingDirectory === '/workspace/my-jarvis' && (
+                          {workingDirectory === '/home/node/my-jarvis' && (
                             <div className="w-2 h-2 bg-white rounded-full"></div>
                           )}
                         </div>
@@ -349,7 +349,7 @@ export function GeneralSettings({ workingDirectory, onWorkspaceChange }: General
 
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {isWebMode()
-                  ? "Select which directory to display in the file tree. Claude Code will continue to run from /workspace."
+                  ? "Select which directory to display in the file tree. Claude Code will continue to run from /home/node."
                   : "Select which directory to display in the file tree. Choose between root workspace or My Jarvis project directory."
                 }
               </div>

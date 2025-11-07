@@ -313,11 +313,11 @@ RUN mkdir -p /home/node && \
 **Verified Working:**
 - ✅ my-jarvis-erez-dev (tested and confirmed)
 
-**Pending Deployment:**
-- [ ] my-jarvis-erez (production - Jarvis Ares)
-- [ ] my-jarvis-lilach
-- [ ] my-jarvis-daniel
-- [ ] my-jarvis-ido
+**Completed Deployments:**
+- ✅ my-jarvis-erez (production - Jarvis Erez) - Deployed 2025-11-04 08:12
+- ✅ my-jarvis-lilah - Deployed 2025-11-04 16:51
+- ✅ my-jarvis-daniel - Deployed 2025-11-04 12:31
+- ✅ my-jarvis-iddo - Deployed 2025-11-04 11:50
 
 ---
 
@@ -329,9 +329,9 @@ RUN mkdir -p /home/node && \
 
 2. **Deploy to all pending apps in order:**
    - Start with my-jarvis-erez (production - Jarvis Ares)
-   - Then my-jarvis-lilach
+   - Then my-jarvis-lilah
    - Then my-jarvis-daniel
-   - Finally my-jarvis-ido
+   - Finally my-jarvis-iddo
 
 3. **For each app:**
    - Run verification steps from "Deployment Process" section above

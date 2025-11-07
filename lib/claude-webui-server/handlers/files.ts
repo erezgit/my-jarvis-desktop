@@ -61,7 +61,7 @@ async function listDirectoryContents(dirPath: string): Promise<FileItem[]> {
 export async function handleFilesRequest(c: Context) {
   try {
     const requestedPath = c.req.query('path');
-    const workspaceDir = process.env.WORKSPACE_DIR || '/workspace';
+    const workspaceDir = process.env.WORKSPACE_DIR || '/home/node';
 
     // Use requested path or default to workspace directory
     const targetPath = requestedPath || workspaceDir;

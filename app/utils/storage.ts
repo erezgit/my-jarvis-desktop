@@ -46,6 +46,11 @@ export function getSettings(): AppSettings {
   );
 
   if (unifiedSettings && unifiedSettings.version === CURRENT_SETTINGS_VERSION) {
+    // Fix any lingering /workspace paths in fileTreeDirectory
+    if (unifiedSettings.fileTreeDirectory && unifiedSettings.fileTreeDirectory.includes('/workspace')) {
+      unifiedSettings.fileTreeDirectory = unifiedSettings.fileTreeDirectory.replace('/workspace', '/home/node');
+      setSettings(unifiedSettings);
+    }
     return unifiedSettings;
   }
 
@@ -111,12 +116,13 @@ function migrateSettings(oldSettings: Partial<AppSettings>): AppSettings {
 
   // Migrate from version 3 to version 4 (add workingDirectory)
   if (oldSettings.version === 3) {
+    // When migrating from v3, which had no separate directories, use defaults
     const migratedSettings: AppSettings = {
       theme: oldSettings.theme || DEFAULT_SETTINGS.theme,
       enterBehavior: oldSettings.enterBehavior || DEFAULT_SETTINGS.enterBehavior,
       messageDisplay: oldSettings.messageDisplay || DEFAULT_SETTINGS.messageDisplay,
-      workingDirectory: oldSettings.workingDirectory || DEFAULT_SETTINGS.workingDirectory,
-      fileTreeDirectory: DEFAULT_SETTINGS.fileTreeDirectory, // Add new field
+      workingDirectory: '/home/node', // Always use /home/node for Claude Code
+      fileTreeDirectory: DEFAULT_SETTINGS.fileTreeDirectory, // Use default file tree directory
       version: CURRENT_SETTINGS_VERSION,
     };
 
@@ -127,12 +133,19 @@ function migrateSettings(oldSettings: Partial<AppSettings>): AppSettings {
 
   // Migrate from version 4 to version 5 (separate fileTreeDirectory)
   if (oldSettings.version === 4) {
+    // Convert old /workspace paths to /home/node
+    let fileTreeDir = DEFAULT_SETTINGS.fileTreeDirectory;
+    if (oldSettings.workingDirectory) {
+      // Replace /workspace with /home/node in the old working directory
+      fileTreeDir = oldSettings.workingDirectory.replace('/workspace', '/home/node');
+    }
+
     const migratedSettings: AppSettings = {
       theme: oldSettings.theme || DEFAULT_SETTINGS.theme,
       enterBehavior: oldSettings.enterBehavior || DEFAULT_SETTINGS.enterBehavior,
       messageDisplay: oldSettings.messageDisplay || DEFAULT_SETTINGS.messageDisplay,
-      workingDirectory: '/workspace', // Claude Code always uses /workspace
-      fileTreeDirectory: oldSettings.workingDirectory || DEFAULT_SETTINGS.fileTreeDirectory, // Preserve user's directory choice for file tree
+      workingDirectory: '/home/node', // Claude Code always uses /home/node
+      fileTreeDirectory: fileTreeDir, // Convert /workspace to /home/node
       version: CURRENT_SETTINGS_VERSION,
     };
 
@@ -163,14 +176,14 @@ function migrateLegacySettings(): AppSettings {
   );
 
   // Get default workspace path dynamically
-  let defaultWorkspace = DEFAULT_SETTINGS.workingDirectory;
+  let defaultFileTreeDir = DEFAULT_SETTINGS.fileTreeDirectory;
 
   // For Electron apps, ensure we use the user's home directory
   if (isElectronMode()) {
     try {
       const os = require('os');
       const path = require('path');
-      defaultWorkspace = path.join(os.homedir(), 'Documents', 'MyJarvis');
+      defaultFileTreeDir = path.join(os.homedir(), 'Documents', 'MyJarvis');
     } catch (error) {
       console.error('Failed to get home directory:', error);
     }
@@ -181,8 +194,8 @@ function migrateLegacySettings(): AppSettings {
     theme: legacyTheme,
     enterBehavior: legacyEnterBehavior,
     messageDisplay: DEFAULT_SETTINGS.messageDisplay, // Add new field
-    workingDirectory: DEFAULT_SETTINGS.workingDirectory, // Claude Code always uses /workspace
-    fileTreeDirectory: defaultWorkspace, // File tree can use user's preference
+    workingDirectory: DEFAULT_SETTINGS.workingDirectory, // Claude Code always uses /home/node
+    fileTreeDirectory: defaultFileTreeDir, // Use the proper default for file tree
     version: CURRENT_SETTINGS_VERSION,
   };
 

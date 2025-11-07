@@ -92,7 +92,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # Build the command
-CMD="python3 /Users/erezfern/Workspace/my-jarvis/tools/src/cli/auto_jarvis_voice.py"
+CMD="python3 $WORKSPACE_ROOT/tools/src/cli/auto_jarvis_voice.py"
 
 # Add text (joining all remaining arguments with spaces)
 TEXT="$*"
@@ -108,7 +108,7 @@ CMD="$CMD --output-dir $OUTPUT_DIR"
 
 # Make sure we have the API key from environment
 if [ -z "$OPENAI_API_KEY" ]; then
-  ENV_FILE="/Users/erezfern/Workspace/my-jarvis/tools/config/.env"
+  ENV_FILE="$WORKSPACE_ROOT/tools/config/.env"
   
   # Try to load API key from .env file again (in case it was modified)
   if [ -f "$ENV_FILE" ]; then

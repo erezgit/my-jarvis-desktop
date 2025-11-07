@@ -195,7 +195,7 @@ my-jarvis-desktop/
 ### Cloud Deployment
 - Docker containerization
 - Fly.io platform with auto-scaling
-- Persistent volumes (1GB at /workspace)
+- Persistent volumes (10GB at /workspace)
 - Multi-user support with isolated instances
 - 2GB memory, shared CPU
 

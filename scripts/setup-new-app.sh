@@ -5,10 +5,11 @@ set -e
 # Purpose: Initialize workspace for a BRAND NEW Fly.io app
 # When to use: ONLY when creating a new app for the first time
 # Usage: SSH into new Fly.io machine and run: /app/scripts/setup-new-app.sh
+# Note: This script runs as root (via SSH) but sets up files for node user
 
-WORKSPACE_PARENT="/workspace"
+HOME_DIR="/home/node"
 TEMPLATE_DIR="/app/workspace-template"
-MARKER_FILE="$WORKSPACE_PARENT/CLAUDE.md"
+MARKER_FILE="$HOME_DIR/CLAUDE.md"
 
 echo ""
 echo "=========================================="
@@ -16,9 +17,9 @@ echo "  MY JARVIS - NEW APP SETUP"
 echo "=========================================="
 echo ""
 
-# Check if workspace is already initialized
+# Check if home directory is already initialized
 if [ -f "$MARKER_FILE" ]; then
-    echo "❌ ERROR: Workspace already initialized!"
+    echo "❌ ERROR: Home directory already initialized!"
     echo "   CLAUDE.md marker file exists at: $MARKER_FILE"
     echo ""
     echo "   This script should ONLY be run on new apps."
@@ -27,89 +28,120 @@ if [ -f "$MARKER_FILE" ]; then
     exit 1
 fi
 
-echo "✅ Confirmed: This is a new workspace (no CLAUDE.md marker)"
+echo "✅ Confirmed: This is a new installation (no CLAUDE.md marker)"
 echo ""
 
-# Copy ALL template files to workspace
+# Copy ALL template files to home directory
 if [ ! -d "$TEMPLATE_DIR" ]; then
     echo "❌ ERROR: Template directory not found at $TEMPLATE_DIR"
     exit 1
 fi
 
-echo "[Setup] 🚀 Copying all template files to workspace..."
+echo "[Setup] 🚀 Copying all template files to home directory..."
 echo ""
 
-# Copy CLAUDE.md to workspace root (marker file)
+# Copy CLAUDE.md to home directory root (marker file)
 if [ -f "$TEMPLATE_DIR/CLAUDE.md" ]; then
-    cp "$TEMPLATE_DIR/CLAUDE.md" "$WORKSPACE_PARENT/"
-    echo "[Setup] ✅ Copied CLAUDE.md to workspace root"
+    cp "$TEMPLATE_DIR/CLAUDE.md" "$HOME_DIR/"
+    echo "[Setup] ✅ Copied CLAUDE.md to home directory"
 fi
 
-# Copy tools directory to workspace root
+# Copy tools directory to home directory
 if [ -d "$TEMPLATE_DIR/tools" ]; then
-    cp -r "$TEMPLATE_DIR/tools" "$WORKSPACE_PARENT/"
+    cp -r "$TEMPLATE_DIR/tools" "$HOME_DIR/"
     echo "[Setup] ✅ Copied tools/ directory"
 fi
 
 # Copy my-jarvis project directory
 if [ -d "$TEMPLATE_DIR/my-jarvis" ]; then
-    cp -r "$TEMPLATE_DIR/my-jarvis" "$WORKSPACE_PARENT/"
+    cp -r "$TEMPLATE_DIR/my-jarvis" "$HOME_DIR/"
     echo "[Setup] ✅ Copied my-jarvis/ project directory"
 fi
 
-# Copy spaces directories if they exist
-if [ -d "$TEMPLATE_DIR/spaces" ]; then
-    cp -r "$TEMPLATE_DIR/spaces" "$WORKSPACE_PARENT/"
-    echo "[Setup] ✅ Copied spaces/ directories"
-fi
+# Spaces directory no longer needed in simplified architecture
 
 echo ""
 echo "[Setup] ✅ All template files copied successfully"
 
+# CRITICAL: Fix ownership for node user (since we're running as root via SSH)
+echo ""
+echo "[Setup] 🔧 Fixing file ownership for node user..."
+chown -R node:node "$HOME_DIR"
+chmod -R 755 "$HOME_DIR/tools"
+echo "[Setup] ✅ Set ownership to node:node and fixed permissions"
+
 # ============================================
-# CLAUDE CONFIG SETUP - PERSISTENT AUTHENTICATION
+# CLAUDE CONFIGURATION - CREATE .claude.json
 # ============================================
 echo ""
-echo "[Claude Setup] Setting up .claude directory on PERSISTENT DISK..."
+echo "[Claude Setup] Creating Claude configuration..."
 
-# Verify .claude directory exists on PERSISTENT DISK (should be created by init-claude-config.sh)
-if [ ! -d "$WORKSPACE_PARENT/.claude" ]; then
-    echo "[Claude Setup] Creating .claude directory structure..."
-    mkdir -p "$WORKSPACE_PARENT/.claude/projects"
-
-    # Create .claude.json config file INSIDE .claude directory (single source of truth)
-    cat > "$WORKSPACE_PARENT/.claude/.claude.json" <<'EOF'
+# CRITICAL: Backend needs /home/node/.claude.json file (at HOME root, NOT inside .claude directory)
+# This is required for the API to find projects when running as node user
+# IMPORTANT: Must use Claude Code's expected format to prevent it from overwriting during login
+if [ ! -f "$HOME_DIR/.claude.json" ]; then
+    cat > "$HOME_DIR/.claude.json" <<'EOF'
 {
   "projects": {
-    "/workspace": {}
+    "/home/node": {
+      "allowedTools": [],
+      "mcpContextUris": [],
+      "mcpServers": {},
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": false,
+      "ignorePatterns": [],
+      "projectOnboardingSeenCount": 0,
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "exampleFiles": []
+    }
   }
 }
 EOF
-
-    # Create encoded project directory for history storage
-    # Path encoding: "/workspace" → "-workspace"
-    ENCODED_NAME="-workspace"
-    mkdir -p "$WORKSPACE_PARENT/.claude/projects/$ENCODED_NAME"
-
-    echo "[Claude Setup] ✅ Created /workspace/.claude structure"
+    chown node:node "$HOME_DIR/.claude.json"
+    echo "[Claude Setup] ✅ Created /home/node/.claude.json with Claude Code format for backend"
 else
-    echo "[Claude Setup] ✅ /workspace/.claude already exists (created by init-claude-config.sh)"
+    echo "[Claude Setup] ✅ .claude.json already exists"
 fi
 
+# Create .claude directory structure for history storage
+mkdir -p "$HOME_DIR/.claude/projects/-home-node"
+chown -R node:node "$HOME_DIR/.claude"
+echo "[Claude Setup] ✅ Created .claude directory structure for history"
+
 # ============================================
-# VERIFY SYMLINK FROM CONTAINER HOME TO PERSISTENT DISK
+# CLAUDE CODE - NO AUTO-AUTHENTICATION
 # ============================================
 echo ""
-echo "[Claude Setup] Verifying symlink for Claude CLI compatibility..."
+echo "[Claude Code] User will need to authenticate Claude Code manually"
+echo "              Run 'claude login' in the terminal when ready to use agent features"
 
-# Ensure symlink exists (should be created by init-claude-config.sh)
-if [ ! -L /root/.claude ]; then
-    echo "[Claude Setup] Creating symlink..."
-    rm -rf /root/.claude
-    ln -sf "$WORKSPACE_PARENT/.claude" /root/.claude
-    echo "[Claude Setup] ✅ Created symlink: /root/.claude -> /workspace/.claude"
+# ============================================
+# API CONFIGURATION - CREATE .ENV FROM EXAMPLE
+# ============================================
+echo ""
+echo "[API Setup] Creating .env file from example template..."
+
+# Create .env file from .env.example
+if [ ! -f "$HOME_DIR/tools/config/.env" ]; then
+    if [ -f "$HOME_DIR/tools/config/.env.example" ]; then
+        # Create .env with onboarding key for initial voice interaction
+        # User will replace this with their own key during onboarding
+        cat > "$HOME_DIR/tools/config/.env" <<'EOF'
+# OpenAI API Key for voice generation
+# This is a temporary onboarding key for first interaction
+# You will be asked to provide your own OpenAI API key during setup
+OPENAI_API_KEY=your-openai-api-key-here
+EOF
+        chown node:node "$HOME_DIR/tools/config/.env"
+        chmod 600 "$HOME_DIR/tools/config/.env"  # Secure permissions
+        echo "[API Setup] ✅ Created .env file with onboarding key (enables voice from first interaction)"
+    else
+        echo "[API Setup] ⚠️  Warning: .env.example not found, skipping .env creation"
+    fi
 else
-    echo "[Claude Setup] ✅ Symlink already exists: /root/.claude -> /workspace/.claude"
+    echo "[API Setup] ✅ .env file already exists"
 fi
 
 # ============================================
@@ -120,22 +152,26 @@ echo "=========================================="
 echo "  🎉 NEW APP SETUP COMPLETE!"
 echo "=========================================="
 echo ""
-echo "Workspace initialized at: $WORKSPACE_PARENT"
+echo "App initialized at: $HOME_DIR"
 echo ""
 echo "Final structure:"
 ls -la "$WORKSPACE_PARENT"
 echo ""
-echo "Claude configuration:"
-ls -la "$WORKSPACE_PARENT/.claude/"
+echo "File ownership verification:"
+stat -c "Owner: %U:%G" "$WORKSPACE_PARENT/tools"
 echo ""
 echo "✅ This app is now ready to use!"
-echo "🔒 Authentication will persist across container restarts"
+echo "🔊 Voice enabled from first interaction (onboarding key installed)"
+echo "👤 Files owned by node user for proper web access"
 echo ""
 echo "Next steps:"
 echo "  1. Exit this SSH session"
-echo "  2. Access your app via the web interface"
-echo "  3. Authenticate with Claude CLI (one-time)"
-echo "  4. Start working!"
+echo "  2. Access your app at: https://<app-name>.fly.dev"
+echo "  3. Start using the application!"
+echo ""
+echo "Note: Claude configuration has been initialized:"
+echo "      - Config: /home/node/.claude.json (for API project discovery)"
+echo "      - History: /home/node/.claude/ (for conversation storage)"
 echo ""
 
 exit 0

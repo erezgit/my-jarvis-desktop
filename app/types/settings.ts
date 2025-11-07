@@ -10,8 +10,8 @@ export interface AppSettings {
   theme: Theme;
   enterBehavior: EnterBehavior;
   messageDisplay: MessageDisplaySettings;
-  workingDirectory: string; // For Claude Code execution - always /workspace
-  fileTreeDirectory: string; // For file tree display - can be /workspace or /workspace/my-jarvis
+  workingDirectory: string; // For Claude Code execution - always /home/node
+  fileTreeDirectory: string; // For file tree display - can be /home/node or /home/node/my-jarvis
   version: number;
 }
 
@@ -35,16 +35,16 @@ export interface SettingsContextType {
   toggleTerminal: () => void;
 }
 
-// Get default Claude working directory - always /workspace for consistent execution
+// Get default Claude working directory - always /home/node for Docker deployment
 function getDefaultClaudeWorkspace(): string {
-  // Claude Code always runs in /workspace for consistent behavior
-  return '/workspace';
+  // Claude Code always runs in /home/node for consistent behavior in Docker
+  return '/home/node';
 }
 
 // Get default file tree directory - can be customized by user
 function getDefaultFileTreeDirectory(): string {
   // File tree can default to my-jarvis subdirectory for user convenience
-  return import.meta.env.VITE_WORKING_DIRECTORY || '/workspace/my-jarvis';
+  return import.meta.env.VITE_WORKING_DIRECTORY || '/home/node/my-jarvis';
 }
 
 // Default settings
@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   messageDisplay: {
     mode: "jarvis"  // Default to consumer experience
   },
-  workingDirectory: getDefaultClaudeWorkspace(), // Claude Code always in /workspace
+  workingDirectory: getDefaultClaudeWorkspace(), // Claude Code always in /home/node
   fileTreeDirectory: getDefaultFileTreeDirectory(), // File tree can show my-jarvis
   version: 5,  // Increment for migration
 };

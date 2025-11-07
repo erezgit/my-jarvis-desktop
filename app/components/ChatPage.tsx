@@ -42,8 +42,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
   // Token usage tracking - set cumulative session total from backend
   const { setTokenUsage, resetTokenUsage } = useTokenUsage();
 
-  // Claude Code working directory - always /workspace for consistency
-  const claudeWorkingDirectory = '/workspace';
+  // Claude Code working directory - always /home/node for Docker deployment
+  const claudeWorkingDirectory = '/home/node';
 
   // Use currentView from props
   const isHistoryView = currentView === "history";
@@ -216,7 +216,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             requestId,
             ...(currentSessionId ? { sessionId: currentSessionId } : {}),
             allowedTools: tools || allowedTools,
-            workingDirectory: '/workspace', // Claude Code always runs in /workspace
+            workingDirectory: '/home/node', // Claude Code always runs in /home/node
             permissionMode: overridePermissionMode || permissionMode,
           } as ChatRequest),
         });
