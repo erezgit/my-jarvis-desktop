@@ -18,7 +18,7 @@ RUN npm install -g @anthropic-ai/claude-code
 
 # Install Python dependencies for voice generation and PDF processing
 RUN pip3 install --break-system-packages --no-cache-dir \
-    openai==1.3.5 \
+    openai>=2.7.1 \
     python-dotenv==1.0.0 \
     pdfplumber==0.7.6 \
     pdf2image==1.16.3 \
