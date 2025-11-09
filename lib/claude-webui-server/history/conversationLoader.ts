@@ -73,9 +73,19 @@ async function parseConversationFile(
 
   const rawLines: RawHistoryLine[] = [];
 
+  // Define allowed message types for conversation display
+  const allowedTypes = ["user", "assistant", "system", "result"];
+
   for (const line of lines) {
     try {
       const parsed = JSON.parse(line) as RawHistoryLine;
+
+      // Filter out internal Claude Code operational messages
+      if (!allowedTypes.includes(parsed.type)) {
+        logger.history.debug(`Skipping unsupported message type in conversation: ${parsed.type}`);
+        continue;
+      }
+
       rawLines.push(parsed);
     } catch (parseError) {
       logger.history.error(`Failed to parse line in ${filePath}: {error}`, {

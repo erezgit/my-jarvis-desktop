@@ -62,9 +62,19 @@ async function parseHistoryFile(
     let lastTime = "";
     let lastMessagePreview = "";
 
+    // Define allowed message types for conversation display
+    const allowedTypes = ["user", "assistant", "system", "result"];
+
     for (const line of lines) {
       try {
         const parsed = JSON.parse(line) as RawHistoryLine;
+
+        // Filter out internal Claude Code operational messages
+        if (!allowedTypes.includes(parsed.type)) {
+          logger.history.debug(`Skipping unsupported message type: ${parsed.type}`);
+          continue;
+        }
+
         messages.push(parsed);
 
         // Track message IDs from assistant messages

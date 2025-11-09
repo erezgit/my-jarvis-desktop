@@ -1,4 +1,9 @@
-app = "my-jarvis-daniel"
+# fly.toml for my-jarvis-iddo migration
+# STEP 1: Deploy with OLD mount point (/workspace)
+# STEP 2: Run migration commands
+# STEP 3: Change destination to /home/node and redeploy
+
+app = "my-jarvis-iddo"
 primary_region = "sjc"
 
 [build]
@@ -34,5 +39,5 @@ primary_region = "sjc"
 
 [mounts]
   source = "workspace_data"
-  destination = "/home/node"  # Migrated from /workspace to /home/node
+  destination = "/home/node"  # NEW mount point - data migrated
   initial_size = "10gb"

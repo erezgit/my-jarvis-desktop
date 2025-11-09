@@ -1,4 +1,7 @@
-app = "my-jarvis-daniel"
+# fly.toml template for My Jarvis Desktop Web Deployment
+# Use: cp fly.toml.template fly.toml && sed -i '' 's/my-jarvis-erez-dev/your-app-name/g' fly.toml
+
+app = "my-jarvis-erez-dev"
 primary_region = "sjc"
 
 [build]
@@ -28,11 +31,21 @@ primary_region = "sjc"
     method = "GET"
     path = "/health"
 
+# REMOVED: Port 3001 service causing routing conflicts
+# [[services]]
+#   internal_port = 3001
+#   protocol = "tcp"
+#   processes = ["app"]
+#
+#   [[services.ports]]
+#     port = 3001
+#     handlers = []
+
 [[vm]]
   size = "shared-cpu-1x"
   memory = "2gb"
 
 [mounts]
   source = "workspace_data"
-  destination = "/home/node"  # Migrated from /workspace to /home/node
+  destination = "/home/node"
   initial_size = "10gb"

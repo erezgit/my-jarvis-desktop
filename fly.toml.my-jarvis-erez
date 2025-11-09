@@ -1,4 +1,9 @@
-app = "my-jarvis-daniel"
+# fly.toml for my-jarvis-erez migration
+# STEP 1: Deploy with OLD mount point (/workspace)
+# STEP 2: Run migration script
+# STEP 3: Change destination to /home/node and redeploy
+
+app = "my-jarvis-erez"
 primary_region = "sjc"
 
 [build]
@@ -34,5 +39,5 @@ primary_region = "sjc"
 
 [mounts]
   source = "workspace_data"
-  destination = "/home/node"  # Migrated from /workspace to /home/node
+  destination = "/workspace"  # OLD mount point - will change after migration
   initial_size = "10gb"

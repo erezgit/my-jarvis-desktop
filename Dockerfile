@@ -17,11 +17,24 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g @anthropic-ai/claude-code
 
 # Install Python dependencies for voice generation and PDF processing
-RUN pip3 install --break-system-packages openai python-dotenv pdfplumber
+RUN pip3 install --break-system-packages --no-cache-dir \
+    openai==1.3.5 \
+    python-dotenv==1.0.0 \
+    pdfplumber==0.7.6 \
+    pdf2image==1.16.3 \
+    PyMuPDF==1.23.8 \
+    Pillow==10.1.0 \
+    python-docx==1.1.0 \
+    openpyxl==3.1.2 \
+    requests==2.31.0 \
+    beautifulsoup4==4.12.2 \
+    pytesseract==0.3.10
 
 # Node.js official image already includes 'node' user with UID/GID 1000
-# No need to create appuser - we'll use the existing node user
-# Set HOME environment variable for node user
+# No SSH server configuration - use Fly.io's native SSH access
+# Environment configuration moved to ENTRYPOINT script for proper SSH session handling
+
+# Set HOME environment variable for node user (for container runtime)
 ENV HOME=/home/node
 
 # Note: /home/node will be provided by the mounted volume
@@ -31,6 +44,7 @@ ENV HOME=/home/node
 COPY workspace-template /app/workspace-template
 COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
+COPY scripts/migrate-to-home-node.sh /app/scripts/migrate-to-home-node.sh
 # Copy legacy fixes for backwards compatibility (existing deployments only)
 COPY scripts/legacy-fixes /app/scripts/legacy-fixes
 RUN chmod +x /app/scripts/*.sh /app/scripts/legacy-fixes/*.sh
@@ -104,8 +118,11 @@ ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 # Start the backend server with home directory as working directory
 WORKDIR /home/node
 
+# NOTE: Keep root user for entrypoint to fix permissions
+# SSH will be handled by configuring the SSH daemon
+
 # DEPLOYMENT MODE: Initialize Claude config then start server
-# Entrypoint will drop to appuser before executing this CMD
+# Entrypoint will drop to node user before executing this CMD
 # Claude config initialization happens on every container start (idempotent)
 # For new apps: SSH in and run: /app/scripts/setup-new-app.sh
 CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]

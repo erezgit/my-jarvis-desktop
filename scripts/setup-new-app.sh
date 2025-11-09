@@ -52,6 +52,12 @@ if [ -d "$TEMPLATE_DIR/tools" ]; then
     echo "[Setup] ✅ Copied tools/ directory"
 fi
 
+# Copy guides directory
+if [ -d "$TEMPLATE_DIR/guides" ]; then
+    cp -r "$TEMPLATE_DIR/guides" "$HOME_DIR/"
+    echo "[Setup] ✅ Copied guides/ directory"
+fi
+
 # Copy my-jarvis project directory
 if [ -d "$TEMPLATE_DIR/my-jarvis" ]; then
     cp -r "$TEMPLATE_DIR/my-jarvis" "$HOME_DIR/"
@@ -109,6 +115,19 @@ fi
 mkdir -p "$HOME_DIR/.claude/projects/-home-node"
 chown -R node:node "$HOME_DIR/.claude"
 echo "[Claude Setup] ✅ Created .claude directory structure for history"
+
+# CRITICAL: Create initial history.jsonl file for boilerplate auto-loading
+# The Claude Code Web UI boilerplate expects this file to exist for auto-loading logic
+if [ ! -f "$HOME_DIR/.claude/history.jsonl" ]; then
+    TIMESTAMP=$(date +%s)000
+    cat > "$HOME_DIR/.claude/history.jsonl" <<EOF
+{"display":"System initialized","pastedContents":{},"timestamp":$TIMESTAMP,"project":"/home/node"}
+EOF
+    chown node:node "$HOME_DIR/.claude/history.jsonl"
+    echo "[Claude Setup] ✅ Created history.jsonl for boilerplate auto-loading (CRITICAL for first-time chat)"
+else
+    echo "[Claude Setup] ✅ history.jsonl already exists"
+fi
 
 # ============================================
 # CLAUDE CODE - NO AUTO-AUTHENTICATION

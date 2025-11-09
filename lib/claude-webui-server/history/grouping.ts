@@ -45,11 +45,16 @@ export function groupConversations(
   );
 
   // Sort by start time, newest first
-  summaries.sort(
+  // Filter out conversations with no messages or invalid start times first
+  const validSummaries = summaries.filter(conv =>
+    conv.messageCount > 0 && conv.startTime && conv.startTime.trim() !== ""
+  );
+
+  validSummaries.sort(
     (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
   );
 
-  return summaries;
+  return validSummaries;
 }
 
 /**

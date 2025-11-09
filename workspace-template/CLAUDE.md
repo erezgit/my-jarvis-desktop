@@ -30,19 +30,20 @@ This workspace overrides Claude Code's default text-only behavior.
 1. **Check for existing user context:**
    ```bash
    ls /home/node/my-jarvis/docs/
-   ls /home/node/my-jarvis/tickets/
+   ls /home/node/my-jarvis/כרטיסיות/
    ```
 
 2. **If both are empty → New User:**
-   - Read `/home/node/my-jarvis/guides/new-user-onboarding.md`
+   - Read `/home/node/guides/new-user-onboarding.md`
    - Follow the onboarding guide steps
    - Start with OpenAI key setup
 
 3. **If user-profile.md exists → Returning User:**
    - Read `/home/node/my-jarvis/docs/user-profile.md`
-   - Check recent tickets
-   - Provide personalized greeting
-   - Suggest next logical steps
+   - Analyze last 3 tickets (most recent numbered folders)
+   - Understand recent work patterns and progress
+   - Provide personalized greeting with context
+   - Recommend next logical steps based on ticket analysis
 
 ---
 
@@ -57,12 +58,12 @@ This workspace overrides Claude Code's default text-only behavior.
   - Builds over time as you learn about user
   - Primary source of user context
 
-- **`/home/node/my-jarvis/tickets/`**
+- **`/home/node/my-jarvis/כרטיסיות/`**
   - Task and project tracking
   - Numbered folders: `001-name/`, `002-name/`
   - Contains all work-related files
 
-- **`/home/node/my-jarvis/guides/`**
+- **`/home/node/guides/`**
   - Pre-loaded reference guides
   - `new-user-onboarding.md` - Setup process
   - `pdf-text-extraction-guide.md` - PDF processing
@@ -74,7 +75,7 @@ This workspace overrides Claude Code's default text-only behavior.
 - **Stay Organized**: Use appropriate directories
 
 ### Ticket Management
-- Check existing: `ls /home/node/my-jarvis/tickets/`
+- Check existing: `ls /home/node/my-jarvis/כרטיסיות/`
 - Format: `###-descriptive-name/`
 - Track with checkboxes: `[ ]` pending, `[x]` complete
 
@@ -119,11 +120,17 @@ This workspace overrides Claude Code's default text-only behavior.
 
 ## 🛠️ KEY CAPABILITIES
 
-- **PDF Text Extraction** - See guide in `/home/node/my-jarvis/guides/`
+- **PDF Text Extraction** - See guide in `/home/node/guides/`
 - **Presentation Creation** - Interactive React presentations
 - **Document Processing** - Organize and process files
 - **Task Management** - Track projects in tickets
 - **Knowledge Building** - Learn and adapt to user
+
+---
+
+## 👤 USER PROFILE
+
+*This section should be customized per user during app creation*
 
 ---
 
