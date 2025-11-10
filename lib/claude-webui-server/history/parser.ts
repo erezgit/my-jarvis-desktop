@@ -137,6 +137,8 @@ async function parseHistoryFile(
 
 /**
  * Get all JSONL files in a history directory
+ * Filters out agent sidechain session files (agent-*.jsonl) to prevent
+ * them from appearing in the frontend chat history list.
  * @private - Internal function used by parseAllHistoryFiles
  */
 async function getHistoryFiles(historyDir: string): Promise<string[]> {
@@ -145,6 +147,11 @@ async function getHistoryFiles(historyDir: string): Promise<string[]> {
 
     for await (const entry of readDir(historyDir)) {
       if (entry.isFile && entry.name.endsWith(".jsonl")) {
+        // Filter out agent sidechain files by filename pattern
+        if (entry.name.startsWith("agent-")) {
+          logger.history.debug(`Filtering out agent sidechain file: ${entry.name}`);
+          continue;
+        }
         files.push(`${historyDir}/${entry.name}`);
       }
     }
