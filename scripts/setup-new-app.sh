@@ -77,57 +77,24 @@ chmod -R 755 "$HOME_DIR/tools"
 echo "[Setup] ✅ Set ownership to node:node and fixed permissions"
 
 # ============================================
-# CLAUDE CONFIGURATION - CREATE .claude.json
+# CLAUDE CONFIGURATION - AUTO-PATCHED POST-INIT
 # ============================================
 echo ""
-echo "[Claude Setup] Creating Claude configuration..."
+echo "[Claude Setup] Claude configuration will be auto-patched..."
 
-# CRITICAL: Backend needs /home/node/.claude.json file (at HOME root, NOT inside .claude directory)
-# This is required for the API to find projects when running as node user
-# IMPORTANT: Must use Claude Code's expected format to prevent it from overwriting during login
-if [ ! -f "$HOME_DIR/.claude.json" ]; then
-    cat > "$HOME_DIR/.claude.json" <<'EOF'
-{
-  "projects": {
-    "/home/node": {
-      "allowedTools": [],
-      "mcpContextUris": [],
-      "mcpServers": {},
-      "enabledMcpjsonServers": [],
-      "disabledMcpjsonServers": [],
-      "hasTrustDialogAccepted": false,
-      "ignorePatterns": [],
-      "projectOnboardingSeenCount": 0,
-      "hasClaudeMdExternalIncludesApproved": false,
-      "hasClaudeMdExternalIncludesWarningShown": false,
-      "exampleFiles": []
-    }
-  }
-}
-EOF
-    chown node:node "$HOME_DIR/.claude.json"
-    echo "[Claude Setup] ✅ Created /home/node/.claude.json with Claude Code format for backend"
-else
-    echo "[Claude Setup] ✅ .claude.json already exists"
-fi
+# NOTE: .claude.json is now automatically created by Claude WebUI during initialization
+# The projects object will be merged into it by the background patcher script
+# This approach preserves Claude's required metadata while adding our projects config
+echo "[Claude Setup] ✅ Claude config will be patched automatically after WebUI starts"
 
 # Create .claude directory structure for history storage
 mkdir -p "$HOME_DIR/.claude/projects/-home-node"
 chown -R node:node "$HOME_DIR/.claude"
 echo "[Claude Setup] ✅ Created .claude directory structure for history"
 
-# CRITICAL: Create initial history.jsonl file for boilerplate auto-loading
-# The Claude Code Web UI boilerplate expects this file to exist for auto-loading logic
-if [ ! -f "$HOME_DIR/.claude/history.jsonl" ]; then
-    TIMESTAMP=$(date +%s)000
-    cat > "$HOME_DIR/.claude/history.jsonl" <<EOF
-{"display":"System initialized","pastedContents":{},"timestamp":$TIMESTAMP,"project":"/home/node"}
-EOF
-    chown node:node "$HOME_DIR/.claude/history.jsonl"
-    echo "[Claude Setup] ✅ Created history.jsonl for boilerplate auto-loading (CRITICAL for first-time chat)"
-else
-    echo "[Claude Setup] ✅ history.jsonl already exists"
-fi
+# NOTE: history.jsonl is Claude Code's command history (not chat history)
+# It gets created automatically when user runs commands in Claude Code terminal
+# Not needed for chat history auto-loading - that uses individual conversation JSONL files
 
 # ============================================
 # CLAUDE CODE - NO AUTO-AUTHENTICATION

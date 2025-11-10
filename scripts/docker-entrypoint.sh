@@ -26,9 +26,15 @@ chmod +x /etc/profile.d/node-env.sh
 export HOME=/home/node
 export USER=node
 
+# Launch Claude config patcher as background task
+# This patches .claude.json AFTER Claude WebUI initializes to add projects object
+echo "[Entrypoint] Starting Claude config patcher in background..."
+nohup /app/scripts/patch-claude-config.sh > /dev/null 2>&1 &
+
 # Drop privileges to node user and execute the command
 echo "[Entrypoint] Switching to node user (UID 1000) with HOME=$HOME"
 echo "[Entrypoint] SSH sessions will source /etc/profile.d/node-env.sh for proper environment"
+echo "[Entrypoint] Claude config will be automatically patched after WebUI initialization"
 echo "[Entrypoint] Executing: $@"
 
 # Use gosu to switch user and execute command

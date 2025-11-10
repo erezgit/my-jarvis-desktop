@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     g++ \
     rsync \
     gosu \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude CLI globally
