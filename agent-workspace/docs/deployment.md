@@ -10,9 +10,9 @@
 
 ---
 
-## Create New App (4 Simple Steps)
+## Create New App (3 Simple Steps)
 
-**When user requests "create new app [name]", Jarvis executes Steps 1-3, then user handles Step 4. Do not create any documentation or guides - just follow the steps.**
+**When user requests "create new app [name]", Jarvis executes all steps 1-3. User can then immediately access the working app. Do not create any documentation or guides - just follow the steps.**
 
 ### Step 1: Create Fly.io App
 ```bash
@@ -30,11 +30,6 @@ fly ssh console -a my-jarvis-newuser
 /app/scripts/setup-new-app.sh
 exit
 ```
-
-### Step 4: User Authentication
-- Access `https://my-jarvis-newuser.fly.dev`
-- Open terminal in web interface
-- Run `claude login` and authenticate with Anthropic API key
 
 **Result**: Fully working app with chat history auto-loading and voice generation.
 
@@ -77,8 +72,20 @@ fly deploy --app my-jarvis-user --update-only
 # Check .claude.json exists with projects object
 flyctl ssh console -a APP_NAME -C "cat /home/node/.claude.json"
 
-# Re-run setup if missing
-flyctl ssh console -a APP_NAME -C "/app/scripts/setup-new-app.sh"
+# If missing projects object, recreate it
+flyctl ssh console -a APP_NAME -C 'cat > /home/node/.claude.json << '\''EOF'\''
+{
+  "projects": {
+    "/home/node": {
+      "allowedTools": ["Read", "Write", "Edit", "Bash"],
+      "history": [],
+      "mcpServers": {},
+      "exampleFiles": [],
+      "mcpContextUris": []
+    }
+  }
+}
+EOF'
 
 # Verify API works
 curl https://app-name.fly.dev/api/projects

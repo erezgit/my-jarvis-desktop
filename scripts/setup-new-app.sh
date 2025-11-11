@@ -77,20 +77,31 @@ chmod -R 755 "$HOME_DIR/tools"
 echo "[Setup] ✅ Set ownership to node:node and fixed permissions"
 
 # ============================================
-# CLAUDE CONFIGURATION - AUTO-PATCHED POST-INIT
+# CLAUDE CONFIGURATION - CREATE PROJECTS OBJECT
 # ============================================
 echo ""
-echo "[Claude Setup] Claude configuration will be auto-patched..."
+echo "[Claude Setup] Creating Claude configuration with projects object..."
 
-# NOTE: .claude.json is now automatically created by Claude WebUI during initialization
-# The projects object will be merged into it by the background patcher script
-# This approach preserves Claude's required metadata while adding our projects config
-echo "[Claude Setup] ✅ Claude config will be patched automatically after WebUI starts"
+# Create .claude.json with projects object for chat history API
+cat > "$HOME_DIR/.claude.json" << 'EOF'
+{
+  "projects": {
+    "/home/node": {
+      "allowedTools": ["Read", "Write", "Edit", "Bash"],
+      "history": [],
+      "mcpServers": {},
+      "exampleFiles": [],
+      "mcpContextUris": []
+    }
+  }
+}
+EOF
 
 # Create .claude directory structure for history storage
 mkdir -p "$HOME_DIR/.claude/projects/-home-node"
 chown -R node:node "$HOME_DIR/.claude"
-echo "[Claude Setup] ✅ Created .claude directory structure for history"
+chown node:node "$HOME_DIR/.claude.json"
+echo "[Claude Setup] ✅ Created .claude.json with projects object for chat history"
 
 # NOTE: history.jsonl is Claude Code's command history (not chat history)
 # It gets created automatically when user runs commands in Claude Code terminal

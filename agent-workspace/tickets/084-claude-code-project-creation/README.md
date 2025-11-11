@@ -64,9 +64,78 @@ This should create the projects object that the SDK will then use.
 
 ## Status
 - **Priority**: High
-- **Status**: Research complete, solution identified
-- **Assignee**: To be addressed in future session
+- **Status**: ✅ COMPLETED - Solution implemented and tested successfully
+- **Assignee**: Completed 2025-11-11
 - **Created**: 2025-11-10
+- **Resolved**: 2025-11-11
+
+## ✅ SOLUTION IMPLEMENTED
+
+### Final Approach: Direct .claude.json Creation in Setup Script
+
+Instead of complex patcher scripts or manual SSH steps, we implemented the simplest solution:
+
+**Modified `setup-new-app.sh` to create `.claude.json` directly:**
+```bash
+# Create .claude.json with projects object for chat history API
+cat > "$HOME_DIR/.claude.json" << 'EOF'
+{
+  "projects": {
+    "/home/node": {
+      "allowedTools": ["Read", "Write", "Edit", "Bash"],
+      "history": [],
+      "mcpServers": {},
+      "exampleFiles": [],
+      "mcpContextUris": []
+    }
+  }
+}
+EOF
+```
+
+### Test Results - my-jarvis-erez-dev-1
+
+✅ **DEPLOYMENT TEST SUCCESSFUL:**
+1. App created and deployed
+2. Setup script created `.claude.json` with projects object
+3. `/api/projects` returned: `{"projects":[{"path":"/home/node","encodedName":"-home-node"}]}`
+4. Claude SDK triggered via chat message
+5. **Critical Discovery**: SDK merges metadata with existing file, doesn't overwrite
+6. Projects object preserved perfectly
+7. Chat history API working immediately
+
+### Key Discovery: SDK Merge Behavior
+
+**Before SDK Call:**
+```json
+{
+  "projects": {
+    "/home/node": { "allowedTools": ["Read", "Write", "Edit", "Bash"], ... }
+  }
+}
+```
+
+**After SDK Call:**
+```json
+{
+  "installMethod": "unknown",
+  "userID": "...",
+  "projects": {
+    "/home/node": { "allowedTools": ["Read", "Write", "Edit", "Bash"], ... }
+  }
+}
+```
+
+The Claude Code SDK intelligently **merges** its metadata with existing `.claude.json` files rather than overwriting them.
+
+### Deployment Process Now Fully Automated
+
+Updated deployment.md to reflect the streamlined 3-step process:
+1. Create Fly.io app
+2. Deploy Docker image
+3. Run setup script (includes .claude.json creation)
+
+**Result**: Users get immediate access to working chat history with no manual steps required.
 
 ## Related Files
 - `agent-workspace/docs/deployment.md`
