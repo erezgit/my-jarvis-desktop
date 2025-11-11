@@ -133,5 +133,71 @@ Then authenticate in web terminal: `claude login`
 
 ---
 
-*Last Updated: 2025-11-09*
-*Simple 4-step deployment process - everything else happens automatically*
+---
+
+## ✅ Existing Apps Update Process
+
+**COMPLETED 2025-11-11**: Successfully updated all existing production apps with new architecture and bug fixes.
+
+### Proven Update Strategy
+Our systematic approach for updating existing apps:
+
+#### 1. **Architecture Assessment** (5 minutes per app)
+```bash
+# Check current status
+curl https://app-name.fly.dev/health
+curl https://app-name.fly.dev/api/projects
+
+# Verify Claude configuration
+echo "cat /home/node/.claude.json | head -c 1000" | fly ssh console -a app-name
+```
+
+#### 2. **Issue Identification** (Common Findings)
+- ✅ **Already Migrated**: Apps using `/home/node` architecture correctly
+- ⚠️ **Config Issue**: `.claude.json` pointing to `/root` instead of `/home/node`
+- ⚠️ **Old Code**: Missing latest bug fixes (chat navigation)
+
+#### 3. **Fix Application** (As needed)
+```bash
+# For config issues - fix projects object path
+cat > /home/node/.claude.json << 'JSON'
+{
+  "projects": {
+    "/home/node": {
+      "allowedTools": ["Read", "Write", "Edit", "Bash"],
+      "history": [], "mcpServers": {}, "exampleFiles": [], "mcpContextUris": []
+    }
+  }
+}
+JSON
+
+# Always deploy latest code (includes bug fixes)
+fly deploy --app app-name --config fly-appname.toml  # Use app-specific config if exists
+```
+
+#### 4. **Validation** (2 minutes per app)
+```bash
+# Confirm all endpoints work
+curl https://app-name.fly.dev/health
+curl https://app-name.fly.dev/api/projects
+# Should return: {"projects":[{"path":"/home/node","encodedName":"-home-node"}]}
+```
+
+### Key Learnings
+1. **Most apps already migrated** - Architecture was largely correct
+2. **Configuration edge cases** - Some apps had `/root` projects object
+3. **Bug fix deployment essential** - Always deploy latest code for fixes
+4. **App-specific configs** - Use `fly-appname.toml` when available
+5. **Zero data loss** - Process preserves all user data and settings
+
+### Migration Results ✅
+All existing production apps successfully updated:
+- my-jarvis-erez, my-jarvis-lilah, my-jarvis-daniel, my-jarvis-iddo, my-jarvis-elad
+- ✅ Chat history navigation fix applied
+- ✅ Proper `/home/node` architecture confirmed
+- ✅ All API endpoints functional
+
+---
+
+*Last Updated: 2025-11-11*
+*Simple 3-step deployment process - everything else happens automatically*

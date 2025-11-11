@@ -544,15 +544,18 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
   }, [claudeWorkingDirectory]);
 
   const handleConversationSelect = useCallback((sessionId: string) => {
-    // Reset tokens when switching to a different conversation
-    resetTokenUsage();
-    // Clear voice message tracking to prevent cross-conversation playback
-    voicePlayedTracker.clearAll();
-    // Clear messages immediately to prevent showing old conversation
-    setMessages([]);
-    setCurrentSessionId(sessionId);
-    onViewChange('chat'); // Exit history view and show the conversation
-  }, [onViewChange, resetTokenUsage, setCurrentSessionId, setMessages]);
+    // Only reset state if we're actually switching to a different conversation
+    if (sessionId !== currentSessionId) {
+      // Reset tokens when switching to a different conversation
+      resetTokenUsage();
+      // Clear voice message tracking to prevent cross-conversation playback
+      voicePlayedTracker.clearAll();
+      // Clear messages immediately to prevent showing old conversation
+      setMessages([]);
+      setCurrentSessionId(sessionId);
+    }
+    onViewChange('chat'); // Always exit history view and show the conversation
+  }, [onViewChange, resetTokenUsage, setCurrentSessionId, setMessages, currentSessionId]);
 
   // Handle global keyboard shortcuts
   useEffect(() => {

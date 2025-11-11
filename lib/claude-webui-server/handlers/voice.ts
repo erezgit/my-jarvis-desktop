@@ -34,7 +34,7 @@ export async function handleVoiceRequest(c: Context) {
       }, 400);
     }
 
-    const workspaceDir = process.env.WORKSPACE_DIR || '/workspace';
+    const workspaceDir = process.env.WORKSPACE_DIR || '/home/node';
     const voiceDir = join(workspaceDir, 'tools', 'voice');
     const filePath = join(voiceDir, filename);
 
