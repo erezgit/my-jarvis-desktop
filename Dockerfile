@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude CLI globally
+# Install Claude CLI globally - CACHE BUST 2025-11-15-migration
 RUN npm install -g @anthropic-ai/claude-agent-sdk
 
 # Install Python dependencies for voice generation and PDF processing
