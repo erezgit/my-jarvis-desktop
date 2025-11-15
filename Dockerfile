@@ -14,8 +14,12 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude CLI globally (for terminal interface)
-RUN npm install -g @anthropic-ai/claude-code
+# CACHE BUST: Claude CLI upgrade to 2.0.42 for thinking support - 2025-11-15-16:30
+# Force Docker cache invalidation to ensure Claude CLI update
+ARG CLAUDE_VERSION_BUST=2025-11-15-16:30
+# Uninstall old version and install latest Claude CLI globally (for terminal interface)
+RUN npm uninstall -g @anthropic-ai/claude-code || true && \
+    npm install -g @anthropic-ai/claude-code@2.0.42
 
 # Install Python dependencies for voice generation and PDF processing
 RUN pip3 install --break-system-packages --no-cache-dir \
