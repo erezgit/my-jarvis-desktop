@@ -14,8 +14,17 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude CLI globally - CACHE BUST 2025-11-15-migration
-RUN npm install -g @anthropic-ai/claude-agent-sdk
+# FORCE CACHE INVALIDATION - Migration 2025-11-15T13:15:00Z
+ARG CACHEBUST=2025-11-15T13:15:00Z
+RUN echo "Cache bust: $CACHEBUST"
+
+# Explicitly remove any existing Claude installations first
+RUN npm uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
+
+# Install Claude Agent SDK globally (NEW VERSION)
+RUN npm install -g @anthropic-ai/claude-agent-sdk && \
+    which claude && \
+    claude --version
 
 # Install Python dependencies for voice generation and PDF processing
 RUN pip3 install --break-system-packages --no-cache-dir \
