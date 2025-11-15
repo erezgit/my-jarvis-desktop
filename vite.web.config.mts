@@ -34,7 +34,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     react(),
-    // Copy favicon to output directory
+    // Copy favicon files to output directory
     {
       name: 'copy-favicon',
       writeBundle() {
@@ -43,9 +43,13 @@ export default defineConfig({
             resolve(__dirname, 'public/favicon.ico'),
             resolve(__dirname, 'out/renderer/favicon.ico')
           );
-          console.log('✅ Favicon copied to build output');
+          copyFileSync(
+            resolve(__dirname, 'public/favicon.svg'),
+            resolve(__dirname, 'out/renderer/favicon.svg')
+          );
+          console.log('✅ Favicon files copied to build output');
         } catch (error) {
-          console.warn('⚠️ Could not copy favicon:', error);
+          console.warn('⚠️ Could not copy favicon files:', error);
         }
       }
     }

@@ -64,6 +64,7 @@ RUN npm rebuild node-pty
 
 # Copy application source code (only web-needed directories)
 COPY app ./app
+COPY public ./public
 COPY lib/claude-webui-server ./lib/claude-webui-server
 COPY lib/terminal ./lib/terminal
 COPY vite.web.config.mts ./

@@ -71,6 +71,7 @@ function deleteSession(sessionId: string): void {
 // SECURE: Explicit allowlist with path traversal protection (2025 OWASP compliance)
 const PUBLIC_ASSETS = [
   '/favicon.ico',
+  '/favicon.svg',
   '/robots.txt',
   '/manifest.json'
 ] as const;
