@@ -58,8 +58,14 @@
     "@hono/node-server": "^1.0.0",
     "@logtape/logtape": "^1.0.0",
     "@logtape/pretty": "^1.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.10",
     "commander": "^14.0.0",
-    "hono": "^4.8.5"
+    "cookie-parser": "^1.4.7",
+    "express-session": "^1.18.2",
+    "hono": "^4.8.5",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

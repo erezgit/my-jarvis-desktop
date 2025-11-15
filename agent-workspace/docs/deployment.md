@@ -24,14 +24,19 @@ fly apps create my-jarvis-newuser
 fly deploy --app my-jarvis-newuser
 ```
 
-### Step 3: Initialize Workspace
+### Step 3: Set Authentication Environment Variables
+```bash
+fly secrets set JWT_SECRET="dEf2vFruOirvQX/GtVV14NfQr3X9HkEG99+QEvf9Y2g=" LOGIN_URL="https://www.myjarvis.io/login" --app my-jarvis-newuser
+```
+
+### Step 4: Initialize Workspace
 ```bash
 fly ssh console -a my-jarvis-newuser
 /app/scripts/setup-new-app.sh
 exit
 ```
 
-**Result**: Fully working app with chat history auto-loading and voice generation.
+**Result**: Fully working app with authentication and chat history auto-loading.
 
 ---
 
@@ -130,6 +135,9 @@ Then authenticate in web terminal: `claude login`
 - **Memory**: 2GB (fly.toml: `memory = "2gb"`)
 - **Ports**: 10000 (HTTP/HTTPS), 3001 (WebSocket for terminal)
 - **Volume**: 10GB mounted at `/home/node`
+- **Environment Variables**:
+  - `JWT_SECRET`: Must be `dEf2vFruOirvQX/GtVV14NfQr3X9HkEG99+QEvf9Y2g=` (exact match with web app)
+  - `LOGIN_URL`: Must be `https://www.myjarvis.io/login`
 
 ---
 

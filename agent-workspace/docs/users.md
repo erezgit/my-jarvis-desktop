@@ -1,48 +1,82 @@
 # Users
 
-## my-jarvis-erez
+## 1. my-jarvis-erez
 - **URL**: https://my-jarvis-erez.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
 - **Architecture**: /home/node ✅
-- **Notes**: Already had correct configuration, chat history working
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: erez.test@gmail.com
+  - **Password**: Erez2024MyJarvis!
+- **Notes**: Updated with Excel editing solution - formula preservation, real-time preview, virtualized spreadsheet. Authentication integrated 2025-11-14.
 
-## my-jarvis-lilah
+## 2. my-jarvis-lilah
 - **URL**: https://my-jarvis-lilah.fly.dev
 - **Version**: 1.34.2
-- **Status**: ✅ Working
+- **Status**: ✅ Working (Authentication Required)
 - **Architecture**: /home/node ✅
-- **Notes**: Already had correct configuration, chat history working
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: lilah@myjarvis.io
+  - **Password**: Lilah123test
+- **Notes**: Authentication gateway integrated 2025-11-14, user account created in database
 
-## my-jarvis-daniel
+## 3. my-jarvis-daniel
 - **URL**: https://my-jarvis-daniel.fly.dev
 - **Version**: 1.34.2
 - **Status**: ✅ Working
 - **Architecture**: /home/node ✅
 - **Notes**: Had Claude config pointing to /root - FIXED 2025-11-11
 
-## my-jarvis-iddo
+## 4. my-jarvis-iddo
 - **URL**: https://my-jarvis-iddo.fly.dev
 - **Version**: 1.34.2
 - **Status**: ✅ Working
 - **Architecture**: /home/node ✅
 - **Notes**: Already had correct configuration, deployed latest code 2025-11-11
 
-## my-jarvis-elad
+## 5. my-jarvis-elad
 - **URL**: https://my-jarvis-elad.fly.dev
 - **Version**: 1.34.2
 - **Status**: ✅ Working
 - **Architecture**: /home/node ✅
 - **Notes**: Already had correct configuration, deployed latest code 2025-11-11
 
-## my-jarvis-yaron
+## 6. my-jarvis-yaron
 - **URL**: https://my-jarvis-yaron.fly.dev
 - **Version**: 1.34.2
 - **Status**: ✅ Working
 - **Architecture**: /home/node ✅
 - **Notes**: New app created 2025-11-11, fully initialized with chat history
 
+## 7. my-jarvis-guy
+- **URL**: https://my-jarvis-guy.fly.dev
+- **Version**: 1.34.2
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: guy@test.com
+  - **Password**: Guy123test
+- **Notes**: Created 2025-11-12 with full authentication gateway integration
+
+## 8. my-jarvis-tamar
+- **URL**: https://my-jarvis-tamar.fly.dev
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: tamar@myjarvis.io
+  - **Password**: Tamar2024MyJarvis!
+- **Notes**: Created 2025-11-14 with full authentication gateway integration and latest deployment
+
 ---
 
-**Last Update**: 2025-11-11
-**All apps**: Chat navigation bug fix applied, all endpoints validated
+**Last Update**: 2025-11-14
+**my-jarvis-erez**: Excel editing functionality deployed - hybrid FastAPI + React solution with formula preservation. Authentication integrated.
+**my-jarvis-tamar**: NEW - Full deployment with authentication gateway integration
+**my-jarvis-guy**: Authentication credentials updated - Password: Guy123test
+**All other apps**: Chat navigation bug fix applied, all endpoints validated

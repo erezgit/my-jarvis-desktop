@@ -2,6 +2,7 @@ import { MarkdownRenderer } from './mdx/MarkdownRenderer';
 import { MDXRenderer } from './mdx/MDXRenderer';
 import { PDFViewer } from './PDFViewer';
 import { SandpackPreview } from './SandpackPreview';
+import { ExcelViewer } from './ExcelViewer';
 
 interface FileItem {
   name: string;
@@ -80,6 +81,17 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
     return (
       <PDFViewer
         fileUrl={streamUrl}
+        fileName={file.name}
+        className={className}
+      />
+    );
+  }
+
+  // Excel files - use Excel viewer with spreadsheet support
+  if (file.extension === '.xlsx' || file.extension === '.xls') {
+    return (
+      <ExcelViewer
+        filePath={file.path}
         fileName={file.name}
         className={className}
       />

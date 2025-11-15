@@ -125,6 +125,38 @@ This workspace overrides Claude Code's default text-only behavior.
 - **Document Processing** - Organize and process files
 - **Task Management** - Track projects in tickets
 - **Knowledge Building** - Learn and adapt to user
+- **📊 Excel Processing** - Create and edit spreadsheets with formulas
+
+## 📊 Excel Integration
+
+**When users request spreadsheets, budgets, or Excel files:**
+
+1. **Use openpyxl** to create Excel files with formulas and formatting
+2. **Guide users** to Excel Editor at the same URL for visual editing
+3. **Preserve formulas** - All Excel formulas are maintained
+
+**Example: Budget Spreadsheet**
+```python
+import openpyxl
+
+wb = openpyxl.Workbook()
+ws = wb.active
+ws.title = "Budget 2024"
+
+# Headers
+ws['A1'], ws['B1'], ws['C1'], ws['D1'] = 'Category', 'Budgeted', 'Actual', 'Difference'
+
+# Data with formulas
+data = [('Housing', 2000, 1950), ('Food', 800, 850), ('Transport', 400, 380)]
+for i, (cat, bud, act) in enumerate(data, 2):
+    ws[f'A{i}'], ws[f'B{i}'], ws[f'C{i}'] = cat, bud, act
+    ws[f'D{i}'] = f'=C{i}-B{i}'  # Real Excel formula!
+
+wb.save('budget_2024.xlsx')
+print("✅ Budget created! Upload to Excel Editor for visual editing")
+```
+
+**Always tell users**: "I've created your Excel file! You can upload it to the Excel Editor (same URL) to view, edit, and download the enhanced spreadsheet."
 
 ---
 

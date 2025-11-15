@@ -1,0 +1,7 @@
+METHODOLOGY DISCUSSION TRANSLATION
+
+At this time, my practice is to work just as I worked yesterday with Lichtman, and as I am currently working with you. Essentially, I come in, sort out this situation, do my login with both the cloud code and the AI approach, to give you a good initial experience, and once you've experienced it, it's as if with Lichtman, for example, I haven't yet switched it entirely to my user. I've totally transferred it to my user account, and I don’t want him to think about it all. As long as he understands and is on board, in the next meeting I'll fully switch him over to my user profile. 
+
+It's simply a matter of working with the MD cloud. A matter of improving the MD cloud and telling it, "From now on you're writing primarily in TSX". It's like having a dashboard, Markdown file is for these sorts of things, TSX is for those sorts of things. If a user now requests to create some kind of action plan, then produce it attractively in Markdown, as if it's already a TSX file. And then, the user doesn’t need to make a request. He already knows which format to provide. 
+
+Everything needs to progress in baby steps, okay? First of all, I tell everyone who's involved, this thing is experimental. Cloud code is an experimental tool.

@@ -12,6 +12,7 @@ import {
   type ConfigContext,
   createConfigMiddleware,
 } from "./middleware/config.ts";
+import { authMiddleware, requireAuth } from "./middleware/auth.ts";
 import { handleProjectsRequest } from "./handlers/projects.ts";
 import { handleHistoriesRequest } from "./handlers/histories.ts";
 import { handleConversationRequest } from "./handlers/conversations.ts";
@@ -61,6 +62,9 @@ export function createApp(
     }),
   );
 
+  // Authentication middleware - validates JWT tokens and manages sessions
+  app.use("*", authMiddleware);
+
   // Health check endpoints
   // Fly.io health check endpoint (simpler path)
   app.get("/health", (c) => {
@@ -80,42 +84,42 @@ export function createApp(
     });
   });
 
-  app.get("/api/projects", (c) => handleProjectsRequest(c));
+  app.get("/api/projects", requireAuth, (c) => handleProjectsRequest(c));
 
-  app.get("/api/projects/:encodedProjectName/histories", (c) =>
+  app.get("/api/projects/:encodedProjectName/histories", requireAuth, (c) =>
     handleHistoriesRequest(c),
   );
 
-  app.get("/api/projects/:encodedProjectName/histories/:sessionId", (c) =>
+  app.get("/api/projects/:encodedProjectName/histories/:sessionId", requireAuth, (c) =>
     handleConversationRequest(c),
   );
 
-  app.post("/api/abort/:requestId", (c) =>
+  app.post("/api/abort/:requestId", requireAuth, (c) =>
     handleAbortRequest(c, requestAbortControllers),
   );
 
-  app.post("/api/chat", (c) => handleChatRequest(c, requestAbortControllers));
+  app.post("/api/chat", requireAuth, (c) => handleChatRequest(c, requestAbortControllers));
 
   // Session tokens route - get cumulative token usage for a session
-  app.get("/api/session-tokens/:sessionId", (c) => getSessionTokens(c));
+  app.get("/api/session-tokens/:sessionId", requireAuth, (c) => getSessionTokens(c));
 
   // Document upload route
-  app.post("/api/upload-document", (c) => handleUploadRequest(c));
+  app.post("/api/upload-document", requireAuth, (c) => handleUploadRequest(c));
 
   // PDF save route
-  app.post("/api/save-pdf", (c) => handleSavePDFRequest(c));
+  app.post("/api/save-pdf", requireAuth, (c) => handleSavePDFRequest(c));
 
   // File system API routes (for web mode)
-  app.get("/api/files", (c) => handleFilesRequest(c));
-  app.get("/api/files/read", (c) => handleReadFileRequest(c));
+  app.get("/api/files", requireAuth, (c) => handleFilesRequest(c));
+  app.get("/api/files/read", requireAuth, (c) => handleReadFileRequest(c));
 
   // File streaming route (streams files without loading into memory)
-  app.get("/api/stream-file", (c) => handleStreamFileRequest(c));
+  app.get("/api/stream-file", requireAuth, (c) => handleStreamFileRequest(c));
 
   // Voice file API route (for web mode)
-  app.get("/api/voice/:filename", (c) => handleVoiceRequest(c));
+  app.get("/api/voice/:filename", requireAuth, (c) => handleVoiceRequest(c));
 
-  app.post("/api/voice-generate", async (c) => {
+  app.post("/api/voice-generate", requireAuth, async (c) => {
     try {
       const { message } = await c.req.json();
 
