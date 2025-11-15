@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { query, type PermissionMode } from "@anthropic-ai/claude-code";
+import { query, type PermissionMode } from "@anthropic-ai/claude-agent-sdk";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
 
@@ -39,7 +39,7 @@ async function* executeClaudeCommand(
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
-    // Build SDK options - use same configuration as working my-jarvis-erez
+    // Build SDK options with 2025 best practices
     const queryOptions = {
       abortController,
       executable: "node" as const, // Use "node" to let SDK find it in PATH (works for both Electron and Docker)
@@ -47,6 +47,23 @@ async function* executeClaudeCommand(
       pathToClaudeCodeExecutable: cliPath,
       cwd: workingDirectory, // Set working directory for Claude CLI process
       additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
+
+      // ✅ REQUIRED: Thinking parameter configuration (fixes clear_thinking_20251015)
+      thinking: {
+        type: "enabled" as const,
+        budget_tokens: 10000 // Optimal balance of performance and speed
+      },
+
+      // ✅ BEST PRACTICE: Explicit system prompt configuration
+      systemPrompt: {
+        type: "preset" as const,
+        preset: "claude_code" as const // Maintains Claude Code behavior
+      },
+
+      // ✅ ENHANCEMENT: Enable CLAUDE.md project context loading
+      settingSources: ['project' as const],
+
+      // ✅ MAINTAINED: Existing functionality
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? { allowedTools } : {}),
       ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend

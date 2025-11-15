@@ -20,7 +20,7 @@
     "verify:safe-push": "npm run test:production && echo '✅ Safe to push to remote'"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "1.0.108",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.42",
     "@codesandbox/sandpack-react": "^2.20.0",
     "@heroicons/react": "^2.2.0",
     "@logtape/logtape": "^1.1.1",

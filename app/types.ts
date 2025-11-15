@@ -4,7 +4,7 @@ import type {
   SDKSystemMessage,
   SDKResultMessage,
   PermissionMode as SDKPermissionMode,
-} from "@anthropic-ai/claude-code";
+} from "@anthropic-ai/claude-agent-sdk";
 
 // Token usage tracking
 export interface TokenUsageData {
