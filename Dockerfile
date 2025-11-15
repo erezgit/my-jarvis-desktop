@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude CLI globally
-RUN npm install -g @anthropic-ai/claude-code
+RUN npm install -g @anthropic-ai/claude-agent-sdk
 
 # Install Python dependencies for voice generation and PDF processing
 RUN pip3 install --break-system-packages --no-cache-dir \
