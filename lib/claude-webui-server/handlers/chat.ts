@@ -43,11 +43,19 @@ const jarvisToolsServer = createSdkMcpServer({
             }]
           };
         } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
           logger.chat.error("Voice generation failed: {error}", { error });
+          logger.chat.error("Voice generation config: {config}", {
+            text: args.message,
+            voice: args.voice,
+            speed: args.speed,
+            baseDir: process.env.WORKSPACE_DIR || process.cwd()
+          });
+
           return {
             content: [{
               type: "text",
-              text: `Voice generation failed: ${error instanceof Error ? error.message : String(error)}`
+              text: `🔊 Voice generation failed: ${errorMsg}\nCheck logs for details. Ensure voice tools are available in environment.`
             }],
             isError: true
           };
@@ -122,12 +130,13 @@ async function* executeClaudeCommand(
         "jarvis-tools": jarvisToolsServer
       },
 
-      // ✅ ENHANCED: Existing functionality with MCP tool support
+      // ✅ ENHANCED: Clean architecture - only MCP tools, no Bash fallback
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? {
         allowedTools: [
-          ...allowedTools,
-          "mcp__jarvis-tools__voice_generate" // Add our new voice tool
+          // Filter out Bash tool to prevent unreliable fallbacks
+          ...allowedTools.filter(tool => tool !== "Bash"),
+          "mcp__jarvis-tools__voice_generate" // Our reliable MCP voice tool
         ]
       } : {
         allowedTools: ["mcp__jarvis-tools__voice_generate"] // Default to just our voice tool
