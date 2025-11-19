@@ -81,6 +81,54 @@
 - **User Profile**: **Organization Leader + Solo Entrepreneur** - Manages organization of ~few hundred people, acts like solo entrepreneur due to small org size. Creates strategy documents, yearly plans, interested in CRM functionality for client management.
 - **Notes**: Created 2025-11-14 with full authentication gateway integration and latest deployment
 
+## 9. my-jarvis-jennifer
+- **URL**: https://my-jarvis-jennifer.fly.dev
+- **Version**: 1.34.2
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: jennifer@myjarvis.io
+  - **Password**: Jennifer2024MyJarvis!
+- **User Profile**: **New User** - Profile to be determined based on usage patterns.
+- **Notes**: Created 2025-11-19 with stable codebase deployment and full authentication integration
+
+## 10. my-jarvis-liron
+- **URL**: https://my-jarvis-liron.fly.dev
+- **Version**: 1.34.2
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: liron@myjarvis.io
+  - **Password**: Liron2024MyJarvis!
+- **User Profile**: **New User** - Profile to be determined based on usage patterns.
+- **Notes**: Created 2025-11-19 with full authentication gateway integration
+
+## 11. my-jarvis-daniel
+- **URL**: https://my-jarvis-daniel.fly.dev
+- **Version**: 1.34.2
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: daniel@myjarvis.io
+  - **Password**: Daniel2024MyJarvis!
+- **User Profile**: **Therapist + Web Creator** - Performs general knowledge work like Lilah, but also creates websites (built questionnaire site) and educational materials/notebooks for teaching.
+- **Notes**: Authentication integration completed 2025-11-19 - previously had bypass issue, now fully secured
+
+## 12. my-jarvis-daniel-stern
+- **URL**: https://my-jarvis-daniel-stern.fly.dev
+- **Version**: 1.34.2
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: danielstern@myjarvis.io
+  - **Password**: DanielStern2024MyJarvis!
+- **User Profile**: **New User** - Profile to be determined based on usage patterns.
+- **Notes**: Created 2025-11-19 with stable codebase deployment and full authentication integration
+
 ---
 
 **Last Update**: 2025-11-15
