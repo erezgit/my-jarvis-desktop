@@ -169,6 +169,14 @@ export class UnifiedMessageProcessor {
     options: ProcessingOptions,
     toolUseResult?: unknown,
   ): void {
+    // ADD DETAILED STRUCTURE LOGGING
+    console.log('[SDK_STRUCTURE_DEBUG] ========================================');
+    console.log('[SDK_STRUCTURE_DEBUG] contentItem full object:', JSON.stringify(contentItem, null, 2));
+    console.log('[SDK_STRUCTURE_DEBUG] contentItem type:', typeof contentItem);
+    console.log('[SDK_STRUCTURE_DEBUG] contentItem keys:', Object.keys(contentItem));
+    console.log('[SDK_STRUCTURE_DEBUG] toolUseResult:', toolUseResult);
+    console.log('[SDK_STRUCTURE_DEBUG] toolUseResult type:', typeof toolUseResult);
+    console.log('[SDK_STRUCTURE_DEBUG] ========================================');
     const content =
       typeof contentItem.content === "string"
         ? contentItem.content
@@ -200,6 +208,52 @@ export class UnifiedMessageProcessor {
     if (toolName === "TodoWrite") {
       console.log('[PROCESS_TOOL_RESULT] Skipping TodoWrite (already handled)');
       return;
+    }
+
+    // 🎵 NEW: Handle structured voice message responses from MCP tools
+    if (toolUseResult && typeof toolUseResult === 'object') {
+      const result = toolUseResult as any;
+
+      // Check if this is a structured response with content array
+      if (result.content && Array.isArray(result.content)) {
+        for (const contentItem of result.content) {
+          console.log('[STRUCTURED_RESPONSE] Processing content item:', contentItem);
+
+          if (contentItem.type === "voice_message") {
+            const voiceData = contentItem.data;
+            console.log('[STRUCTURED_VOICE] ✅ Found structured voice message:', voiceData);
+
+            // Generate audioUrl based on deployment mode
+            let audioUrl: string;
+            const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
+
+            if (deploymentMode === 'electron') {
+              // Electron mode: Use file:// protocol
+              audioUrl = `file://${voiceData.audioPath}`;
+            } else if (deploymentMode === 'web') {
+              // Web mode: Use HTTP API endpoint
+              const filename = voiceData.audioPath.split('/').pop() || '';
+              audioUrl = `/api/voice/${filename}`;
+            } else {
+              // Fallback to file://
+              audioUrl = `file://${voiceData.audioPath}`;
+            }
+
+            // Create VoiceMessage with structured data
+            const voiceMessage = {
+              type: "voice" as const,
+              content: voiceData.message,
+              audioUrl,
+              timestamp: options.timestamp || voiceData.timestamp || Date.now(),
+              autoPlay: options.isStreaming || false
+            };
+
+            console.log('[STRUCTURED_VOICE] ✅✅✅ Creating VoiceMessage:', voiceMessage);
+            context.addMessage(voiceMessage);
+            return; // Skip creating ToolResultMessage for structured voice
+          }
+        }
+      }
     }
 
     // Special handling for Write/Edit tool results - file operations
@@ -262,50 +316,16 @@ export class UnifiedMessageProcessor {
       console.log('[FILE_OP_DEBUG] No file operation detected');
     }
 
-    // Special handling for Bash tool results that are voice scripts
+    // 🗑️ REMOVED: Old bash wrapper voice detection logic (replaced by structured MCP responses)
+    // The new MCP voice_generate tool returns structured responses that are handled above
+    // Legacy bash script detection is no longer needed and causes 90% reliability issues
+
+    // Special handling for other Bash tool results
     if (toolName === "Bash") {
       const cachedInput = this.getCachedToolInfo(toolUseId)?.input;
       const command = cachedInput?.command as string;
 
-      if (command?.includes('jarvis_voice.sh')) {
-        // Parse audio file path from content
-        const audioPathMatch = content.match(/Audio generated successfully at: (.+\.mp3)/);
-        if (audioPathMatch) {
-          const audioPath = audioPathMatch[1];
-          const messageMatch = command.match(/--voice echo "([^"]+)"/);
-          const message = messageMatch ? messageMatch[1] : "Voice message";
-
-          // Generate audioUrl based on deployment mode
-          let audioUrl: string;
-          const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
-
-          if (deploymentMode === 'electron') {
-            // Electron mode: Use file:// protocol for local filesystem access
-            audioUrl = `file://${audioPath}`;
-          } else if (deploymentMode === 'web') {
-            // Web mode: Use HTTP API endpoint to serve voice files
-            // Extract filename from path (e.g., /workspace/tools/voice/file.mp3 -> file.mp3)
-            const filename = audioPath.split('/').pop() || '';
-            audioUrl = `/api/voice/${filename}`;
-          } else {
-            // Fallback to file:// for unknown modes
-            audioUrl = `file://${audioPath}`;
-          }
-
-          // Create VoiceMessage instead of ToolResultMessage
-          // Only auto-play during streaming (first creation), never during history load
-          const voiceMessage = {
-            type: "voice" as const,
-            content: message,
-            audioUrl,
-            timestamp: options.timestamp || Date.now(),
-            autoPlay: options.isStreaming || false
-          };
-
-          context.addMessage(voiceMessage);
-          return; // Skip creating ToolResultMessage
-        }
-      }
+      // Note: jarvis_voice.sh detection removed - now handled by structured MCP tool responses
 
       // Special handling for PDF export trigger
       if (command?.includes('jarvis_pdf_export.sh')) {
@@ -393,6 +413,13 @@ export class UnifiedMessageProcessor {
     context: ProcessingContext,
     options: ProcessingOptions,
   ): void {
+    // ADD DETAILED STRUCTURE LOGGING FOR TOOL USE
+    console.log('[SDK_TOOL_USE_DEBUG] ========================================');
+    console.log('[SDK_TOOL_USE_DEBUG] contentItem full object:', JSON.stringify(contentItem, null, 2));
+    console.log('[SDK_TOOL_USE_DEBUG] contentItem type:', typeof contentItem);
+    console.log('[SDK_TOOL_USE_DEBUG] contentItem keys:', Object.keys(contentItem));
+    console.log('[SDK_TOOL_USE_DEBUG] ========================================');
+
     // Cache tool_use information for later permission error handling and tool_result correlation
     if (contentItem.id && contentItem.name) {
       this.cacheToolUse(

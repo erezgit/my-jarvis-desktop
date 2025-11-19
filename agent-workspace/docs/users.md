@@ -27,25 +27,40 @@
 
 ## 3. my-jarvis-daniel
 - **URL**: https://my-jarvis-daniel.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
 - **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: daniel@myjarvis.io
+  - **Password**: Daniel2024MyJarvis!
 - **User Profile**: **Therapist + Web Creator** - Performs general knowledge work like Lilah, but also creates websites (built questionnaire site) and educational materials/notebooks for teaching.
-- **Notes**: Had Claude config pointing to /root - FIXED 2025-11-11
+- **Notes**: Updated 2025-11-18 with Claude CLI 2.0.42, full authentication integration, and proper deployment process. Authentication gateway integrated and user account created.
 
 ## 4. my-jarvis-iddo
 - **URL**: https://my-jarvis-iddo.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
 - **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: iddo@myjarvis.io
+  - **Password**: 30&iPIGp9dv6
 - **User Profile**: **Crypto Trader + Researcher** - Consolidates and analyzes YouTube transcripts, performs research for trading decisions, and creates investment advice by connecting dots across data sources.
-- **Notes**: Already had correct configuration, deployed latest code 2025-11-11
+- **Notes**: Updated to Claude CLI 2.0.42 with full authentication integration 2025-11-16. User created through official Supabase Auth API. Volume data preserved (157MB).
 
 ## 5. my-jarvis-elad
 - **URL**: https://my-jarvis-elad.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
 - **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: elad@myjarvis.io
+  - **Password**: K8mR3nPq9XvL
 - **User Profile**: **Control Engineer** - Similar to us but focused on engineering. Creates client specifications, goes through discovery → product architecture → development cycle, writes code and specifications.
 - **Notes**: Already had correct configuration, deployed latest code 2025-11-11
 
@@ -81,7 +96,46 @@
 - **User Profile**: **Organization Leader + Solo Entrepreneur** - Manages organization of ~few hundred people, acts like solo entrepreneur due to small org size. Creates strategy documents, yearly plans, interested in CRM functionality for client management.
 - **Notes**: Created 2025-11-14 with full authentication gateway integration and latest deployment
 
-## 9. my-jarvis-jennifer
+## 9. my-jarvis-omer
+- **URL**: https://my-jarvis-omer.fly.dev
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: omer@myjarvis.io
+  - **Password**: TPsIqIMbqRYz
+- **User Profile**: **TBD** - New user, profile to be determined based on usage patterns.
+- **Notes**: Created 2025-11-16 with Claude CLI 2.0.42, full authentication integration, and proper user_instances mapping. Complete new app deployment following updated process.
+
+## 10. my-jarvis-yaron-dev
+- **URL**: https://my-jarvis-yaron-dev.fly.dev
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: yarondev@myjarvis.io
+  - **Password**: HGhhxeMF#Vs^
+- **User Profile**: **Development User** - Yaron's development environment for testing and feature development.
+- **Notes**: Created 2025-11-18 with Claude CLI 2.0.42. Fixed database URL format issue (removed https:// protocol from fly_app_url field) to resolve malformed authentication redirect URLs. Full authentication integration now working correctly.
+
+## 11. my-jarvis-liron
+- **URL**: https://my-jarvis-liron.fly.dev
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing (NEW!)
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: liron@myjarvis.io
+  - **Password**: Liron2024MyJarvis!
+- **User Profile**: **TBD** - New user, profile to be determined based on usage patterns.
+- **Notes**: Created 2025-11-18 with Claude CLI 2.0.42, full authentication integration, and proper deployment process. App deployed and initialized successfully.
+
+## 12. my-jarvis-jennifer
 - **URL**: https://my-jarvis-jennifer.fly.dev
 - **Version**: 1.34.2
 - **Status**: ✅ Working (Authentication Required)
@@ -93,31 +147,7 @@
 - **User Profile**: **New User** - Profile to be determined based on usage patterns.
 - **Notes**: Created 2025-11-19 with stable codebase deployment and full authentication integration
 
-## 10. my-jarvis-liron
-- **URL**: https://my-jarvis-liron.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working (Authentication Required)
-- **Architecture**: /home/node ✅
-- **Authentication**:
-  - **Login URL**: https://www.myjarvis.io/login
-  - **Email**: liron@myjarvis.io
-  - **Password**: Liron2024MyJarvis!
-- **User Profile**: **New User** - Profile to be determined based on usage patterns.
-- **Notes**: Created 2025-11-19 with full authentication gateway integration
-
-## 11. my-jarvis-daniel
-- **URL**: https://my-jarvis-daniel.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working (Authentication Required)
-- **Architecture**: /home/node ✅
-- **Authentication**:
-  - **Login URL**: https://www.myjarvis.io/login
-  - **Email**: daniel@myjarvis.io
-  - **Password**: Daniel2024MyJarvis!
-- **User Profile**: **Therapist + Web Creator** - Performs general knowledge work like Lilah, but also creates websites (built questionnaire site) and educational materials/notebooks for teaching.
-- **Notes**: Authentication integration completed 2025-11-19 - previously had bypass issue, now fully secured
-
-## 12. my-jarvis-daniel-stern
+## 13. my-jarvis-daniel-stern
 - **URL**: https://my-jarvis-daniel-stern.fly.dev
 - **Version**: 1.34.2
 - **Status**: ✅ Working (Authentication Required)
@@ -131,7 +161,7 @@
 
 ---
 
-**Last Update**: 2025-11-15
+**Last Update**: 2025-11-18
 **Security Update**: Favicon and authentication middleware fix deployed across all instances
 - ✅ **Favicon Issue Resolved**: All instances now show proper Jarvis Orb favicon
 - ✅ **Security Enhanced**: 2025 OWASP-compliant authentication middleware with path traversal protection

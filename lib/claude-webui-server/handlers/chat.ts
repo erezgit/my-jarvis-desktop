@@ -1,7 +1,61 @@
 import { Context } from "hono";
-import { query, type PermissionMode } from "@anthropic-ai/claude-agent-sdk";
+import { query, type PermissionMode, createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
+import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
+import { generateVoiceResponse } from "../utils/voiceGenerator.ts";
+
+/**
+ * Create JARVIS Tools MCP Server with voice generation capability
+ */
+const jarvisToolsServer = createSdkMcpServer({
+  name: "jarvis-tools",
+  version: "1.0.0",
+  tools: [
+    tool(
+      "voice_generate",
+      "Generate voice message with text-to-speech using JARVIS voice system",
+      {
+        message: z.string().describe("Text to convert to speech"),
+        voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).default("nova").describe("Voice model to use"),
+        speed: z.number().min(0.25).max(4.0).default(1.0).describe("Speech speed (0.25 to 4.0)")
+      },
+      async (args) => {
+        try {
+          const result = await generateVoiceResponse({
+            text: args.message,
+            voice: args.voice,
+            speed: args.speed
+          });
+
+          // Return structured JSON response following 2025 best practices
+          return {
+            content: [{
+              type: "voice_message",
+              data: {
+                message: args.message,
+                audioPath: result.audioPath,
+                voice: args.voice,
+                speed: args.speed,
+                success: result.success,
+                timestamp: Date.now()
+              }
+            }]
+          };
+        } catch (error) {
+          logger.chat.error("Voice generation failed: {error}", { error });
+          return {
+            content: [{
+              type: "text",
+              text: `Voice generation failed: ${error instanceof Error ? error.message : String(error)}`
+            }],
+            isError: true
+          };
+        }
+      }
+    )
+  ]
+});
 
 /**
  * Executes a Claude command and yields streaming responses
@@ -39,7 +93,7 @@ async function* executeClaudeCommand(
     abortController = new AbortController();
     requestAbortControllers.set(requestId, abortController);
 
-    // Build SDK options with 2025 best practices
+    // Build SDK options with 2025 best practices + MCP server integration
     const queryOptions = {
       abortController,
       executable: "node" as const, // Use "node" to let SDK find it in PATH (works for both Electron and Docker)
@@ -63,9 +117,21 @@ async function* executeClaudeCommand(
       // ✅ ENHANCEMENT: Enable CLAUDE.md project context loading
       settingSources: ['project' as const],
 
-      // ✅ MAINTAINED: Existing functionality
+      // ✅ NEW: MCP server integration for custom tools
+      mcpServers: {
+        "jarvis-tools": jarvisToolsServer
+      },
+
+      // ✅ ENHANCED: Existing functionality with MCP tool support
       ...(sessionId ? { resume: sessionId } : {}),
-      ...(allowedTools ? { allowedTools } : {}),
+      ...(allowedTools ? {
+        allowedTools: [
+          ...allowedTools,
+          "mcp__jarvis-tools__voice_generate" // Add our new voice tool
+        ]
+      } : {
+        allowedTools: ["mcp__jarvis-tools__voice_generate"] // Default to just our voice tool
+      }),
       ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend
     };
 

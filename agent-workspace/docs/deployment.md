@@ -10,9 +10,9 @@
 
 ---
 
-## Create New App (3 Simple Steps)
+## Create New App (5 Simple Steps)
 
-**When user requests "create new app [name]", Jarvis executes all steps 1-3. User can then immediately access the working app. Do not create any documentation or guides - just follow the steps.**
+**When user requests "create new app [name]", Jarvis executes all steps 1-5. User can then immediately access the working app. Do not create any documentation or guides - just follow the steps.**
 
 ### Step 1: Create Fly.io App
 ```bash
@@ -29,7 +29,37 @@ fly deploy --app my-jarvis-newuser
 fly secrets set JWT_SECRET="dEf2vFruOirvQX/GtVV14NfQr3X9HkEG99+QEvf9Y2g=" LOGIN_URL="https://www.myjarvis.io/login" --app my-jarvis-newuser
 ```
 
-### Step 4: Initialize Workspace
+### Step 4: Create User Account (Supabase Auth)
+```bash
+# Create user through official Supabase Auth API (NOT manual SQL inserts)
+# Use supabase.auth.signUp() with email/password
+# Generate secure password (8+ characters, mixed characters)
+```
+
+### Step 5: Create Database Instance Mapping
+```sql
+-- CRITICAL: Link user account to Fly.io app in user_instances table
+-- ⚠️  WARNING: fly_app_url MUST be hostname-only (NO https://)
+-- ✅ CORRECT: 'my-jarvis-newuser.fly.dev'
+-- ❌ WRONG:   'https://my-jarvis-newuser.fly.dev'
+INSERT INTO user_instances (
+  user_id,
+  fly_app_name,
+  fly_app_url,
+  status,
+  provisioned_at
+) VALUES (
+  '[USER_ID_FROM_AUTH_USERS]',
+  'my-jarvis-newuser',
+  'my-jarvis-newuser.fly.dev',
+  'ready',
+  now()
+);
+```
+
+**CRITICAL**: The `fly_app_url` field MUST contain only the hostname (`app.fly.dev`). Including `https://` will cause malformed redirect URLs like `https://https://app.fly.dev?token=xxx` and break authentication completely.
+
+### Step 6: Initialize Workspace
 ```bash
 fly ssh console -a my-jarvis-newuser
 /app/scripts/setup-new-app.sh

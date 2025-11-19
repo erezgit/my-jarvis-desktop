@@ -1,0 +1,363 @@
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] USER message content: [{…}]
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Processing user message, content type: object isArray: true
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Content is array, length: 1
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ContentItem[0] type: tool_result full item: {"tool_use_id":"toolu_01TZ4LTYbhPXHkEJLVkkkNjX","type":"tool_result","content":"","is_error":false}
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ✅ FOUND tool_result! Processing...
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Looking up tool ID: toolu_01TZ4LTYbhPXHkEJLVkkkNjX
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Cache size: 28
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] All cached IDs: (28) ['toolu_01H7M5DBYJZfFMHYwSSoKYUP', 'toolu_016dtFzSjf4XzqjiaEvdXwsA', 'toolu_017aaNqy3HJyhMiAnD2Do3u9', 'toolu_01UyKoFZWACHhNRTmHG52pyL', 'toolu_012HCqU7V81fC5uoNFrntk9U', 'toolu_01G19bBFTNwxLwDuVX2fd94a', 'toolu_01UyrPRRteNNJrKUsyeJSav4', 'toolu_01GsjNiV67anW4JRbF2xcwzY', 'toolu_01T9zsqwWF1P6PKoJzaxxWrN', 'toolu_011Pd3wtq6NpQgdqx9wwam8N', 'toolu_018TrYuBwsgXfngkhE7F4QKd', 'toolu_01FsyDSnRHiyGSNt1PKJQDue', 'toolu_01JZaxNffd69o8TSfioM5MeD', 'toolu_01C3o9PnjDHBBaScdfDKf4Gu', 'toolu_017fLiB19L1j1WmZrK6WcZe6', 'toolu_01SAkU5qYxokcRhS9BdX9Ttk', 'toolu_01EuibDAWsYSghR62faeMTns', 'toolu_01ECWX2GNEZ3pAxRzaiSvL7y', 'toolu_01Hsd9yzuTpv3FRmiyTMmkkx', 'toolu_015SwjAP3fv13iH2euhEjXfe', 'toolu_01AuYuo3VsBJwGc2upZ3NLCb', 'toolu_01M8Bd6aKLPthwe2QAVxiAfs', 'toolu_015hBvHS9WnWAtw8voQVwqgs', 'toolu_01VCbSPEU3KaKSGXpuueHcs6', 'toolu_01VMEEEC1URkt96qLXxyNyaD', 'toolu_01LDGbX2KwyeChoDAk7APnyQ', 'toolu_01Nn2QsBTKH8PtR3DgsBy5u6', 'toolu_01TZ4LTYbhPXHkEJLVkkkNjX']
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Result: {name: 'Bash', input: {…}}
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Called with toolName: Bash
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content length: 0
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content preview: 
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Full content: 
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Tool name: Bash
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Cached input: {command: 'mkdir -p /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign', description: 'Create ticket 003 directory'}
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Result - filePath: null operation: null
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] No file operation detected
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Looking up tool ID: toolu_01TZ4LTYbhPXHkEJLVkkkNjX
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Cache size: 28
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] All cached IDs: (28) ['toolu_01H7M5DBYJZfFMHYwSSoKYUP', 'toolu_016dtFzSjf4XzqjiaEvdXwsA', 'toolu_017aaNqy3HJyhMiAnD2Do3u9', 'toolu_01UyKoFZWACHhNRTmHG52pyL', 'toolu_012HCqU7V81fC5uoNFrntk9U', 'toolu_01G19bBFTNwxLwDuVX2fd94a', 'toolu_01UyrPRRteNNJrKUsyeJSav4', 'toolu_01GsjNiV67anW4JRbF2xcwzY', 'toolu_01T9zsqwWF1P6PKoJzaxxWrN', 'toolu_011Pd3wtq6NpQgdqx9wwam8N', 'toolu_018TrYuBwsgXfngkhE7F4QKd', 'toolu_01FsyDSnRHiyGSNt1PKJQDue', 'toolu_01JZaxNffd69o8TSfioM5MeD', 'toolu_01C3o9PnjDHBBaScdfDKf4Gu', 'toolu_017fLiB19L1j1WmZrK6WcZe6', 'toolu_01SAkU5qYxokcRhS9BdX9Ttk', 'toolu_01EuibDAWsYSghR62faeMTns', 'toolu_01ECWX2GNEZ3pAxRzaiSvL7y', 'toolu_01Hsd9yzuTpv3FRmiyTMmkkx', 'toolu_015SwjAP3fv13iH2euhEjXfe', 'toolu_01AuYuo3VsBJwGc2upZ3NLCb', 'toolu_01M8Bd6aKLPthwe2QAVxiAfs', 'toolu_015hBvHS9WnWAtw8voQVwqgs', 'toolu_01VCbSPEU3KaKSGXpuueHcs6', 'toolu_01VMEEEC1URkt96qLXxyNyaD', 'toolu_01LDGbX2KwyeChoDAk7APnyQ', 'toolu_01Nn2QsBTKH8PtR3DgsBy5u6', 'toolu_01TZ4LTYbhPXHkEJLVkkkNjX']
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Result: {name: 'Bash', input: {…}}
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 80
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[79]: tool_result {type: 'tool_result', toolName: 'Bash', content: '', summary: '', timestamp: 1763400692195, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 80
+installHook.js:1 Failed to parse stream line: SyntaxError: Unterminated string in JSON at position 1007 (line 1 column 1008)
+    at JSON.parse (<anonymous>)
+    at index-BOg5SUcB.js:1303:13931
+    at index-BOg5SUcB.js:1477:58
+overrideMethod @ installHook.js:1
+(anonymous) @ index-BOg5SUcB.js:1303
+(anonymous) @ index-BOg5SUcB.js:1477
+await in (anonymous)
+onSubmit @ index-BOg5SUcB.js:1477
+en @ index-BOg5SUcB.js:1303
+Ye @ index-BOg5SUcB.js:1303
+xp @ index-BOg5SUcB.js:49
+(anonymous) @ index-BOg5SUcB.js:49
+Tn @ index-BOg5SUcB.js:49
+Dd @ index-BOg5SUcB.js:49
+Kd @ index-BOg5SUcB.js:50
+Yg @ index-BOg5SUcB.js:50Understand this error
+installHook.js:1 Failed to parse stream line: SyntaxError: Unexpected token 'e', "endations\"... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at index-BOg5SUcB.js:1303:13931
+    at index-BOg5SUcB.js:1477:58
+overrideMethod @ installHook.js:1
+(anonymous) @ index-BOg5SUcB.js:1303
+(anonymous) @ index-BOg5SUcB.js:1477
+await in (anonymous)
+onSubmit @ index-BOg5SUcB.js:1477
+en @ index-BOg5SUcB.js:1303
+Ye @ index-BOg5SUcB.js:1303
+xp @ index-BOg5SUcB.js:49
+(anonymous) @ index-BOg5SUcB.js:49
+Tn @ index-BOg5SUcB.js:49
+Dd @ index-BOg5SUcB.js:49
+Kd @ index-BOg5SUcB.js:50
+Yg @ index-BOg5SUcB.js:50Understand this error
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: user
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: user isStreaming: true message: {type: 'user', message: {…}, parent_tool_use_id: null, session_id: '28ac9cb5-7d55-41ba-a84a-f35de0635521', uuid: '6d5a07cf-bb78-4972-bed9-4d87c9701c1b'}
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] USER message content: [{…}]
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Processing user message, content type: object isArray: true
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Content is array, length: 1
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ContentItem[0] type: tool_result full item: {"tool_use_id":"toolu_019nFtuFTU7dYfUJoAAHpFk6","type":"tool_result","content":"File created successfully at: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/project-overview.md"}
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ✅ FOUND tool_result! Processing...
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Looking up tool ID: toolu_019nFtuFTU7dYfUJoAAHpFk6
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Cache size: 28
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] All cached IDs: (28) ['toolu_01H7M5DBYJZfFMHYwSSoKYUP', 'toolu_016dtFzSjf4XzqjiaEvdXwsA', 'toolu_017aaNqy3HJyhMiAnD2Do3u9', 'toolu_01UyKoFZWACHhNRTmHG52pyL', 'toolu_012HCqU7V81fC5uoNFrntk9U', 'toolu_01G19bBFTNwxLwDuVX2fd94a', 'toolu_01UyrPRRteNNJrKUsyeJSav4', 'toolu_01GsjNiV67anW4JRbF2xcwzY', 'toolu_01T9zsqwWF1P6PKoJzaxxWrN', 'toolu_011Pd3wtq6NpQgdqx9wwam8N', 'toolu_018TrYuBwsgXfngkhE7F4QKd', 'toolu_01FsyDSnRHiyGSNt1PKJQDue', 'toolu_01JZaxNffd69o8TSfioM5MeD', 'toolu_01C3o9PnjDHBBaScdfDKf4Gu', 'toolu_017fLiB19L1j1WmZrK6WcZe6', 'toolu_01SAkU5qYxokcRhS9BdX9Ttk', 'toolu_01EuibDAWsYSghR62faeMTns', 'toolu_01ECWX2GNEZ3pAxRzaiSvL7y', 'toolu_01Hsd9yzuTpv3FRmiyTMmkkx', 'toolu_015SwjAP3fv13iH2euhEjXfe', 'toolu_01AuYuo3VsBJwGc2upZ3NLCb', 'toolu_01M8Bd6aKLPthwe2QAVxiAfs', 'toolu_015hBvHS9WnWAtw8voQVwqgs', 'toolu_01VCbSPEU3KaKSGXpuueHcs6', 'toolu_01VMEEEC1URkt96qLXxyNyaD', 'toolu_01LDGbX2KwyeChoDAk7APnyQ', 'toolu_01Nn2QsBTKH8PtR3DgsBy5u6', 'toolu_01TZ4LTYbhPXHkEJLVkkkNjX']
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Result: undefined
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Called with toolName: Tool
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content length: 113
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content preview: File created successfully at: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/project-overview.md
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Full content: File created successfully at: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/project-overview.md
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Tool name: Tool
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Cached input: undefined
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Result - filePath: null operation: null
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] No file operation detected
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 81
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[80]: tool_result {type: 'tool_result', toolName: 'Tool', content: 'File created successfully at: /home/node/my-jarvis…/003-coffee-shop-app-redesign/project-overview.md', summary: '113 chars', timestamp: 1763400715220, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 81
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: assistant
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: assistant isStreaming: true message: {type: 'assistant', message: {…}, parent_tool_use_id: null, session_id: '28ac9cb5-7d55-41ba-a84a-f35de0635521', uuid: 'e549bf34-7ed6-4a60-aec2-7217c9ea1de9'}
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] ========================================
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Caching tool: Write
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Tool ID: toolu_016NuXtwoUtNiczAJYjkRp52
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Input: {file_path: '/home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md', content: '# User Research Notes - Brew & Bean App\n\n## Interv…ext Steps**: Create wireframes based on insights\n'}
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Cache size before: 28
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Cache size after: 29
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] ========================================
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: user
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: user isStreaming: true message: {type: 'user', message: {…}, parent_tool_use_id: null, session_id: '28ac9cb5-7d55-41ba-a84a-f35de0635521', uuid: '82e88878-9be3-47cf-9c7e-2810dd898653'}
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] USER message content: [{…}]
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Processing user message, content type: object isArray: true
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Content is array, length: 1
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ContentItem[0] type: tool_result full item: {"tool_use_id":"toolu_016NuXtwoUtNiczAJYjkRp52","type":"tool_result","content":"File created successfully at: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md"}
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ✅ FOUND tool_result! Processing...
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Looking up tool ID: toolu_016NuXtwoUtNiczAJYjkRp52
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Cache size: 29
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] All cached IDs: (29) ['toolu_01H7M5DBYJZfFMHYwSSoKYUP', 'toolu_016dtFzSjf4XzqjiaEvdXwsA', 'toolu_017aaNqy3HJyhMiAnD2Do3u9', 'toolu_01UyKoFZWACHhNRTmHG52pyL', 'toolu_012HCqU7V81fC5uoNFrntk9U', 'toolu_01G19bBFTNwxLwDuVX2fd94a', 'toolu_01UyrPRRteNNJrKUsyeJSav4', 'toolu_01GsjNiV67anW4JRbF2xcwzY', 'toolu_01T9zsqwWF1P6PKoJzaxxWrN', 'toolu_011Pd3wtq6NpQgdqx9wwam8N', 'toolu_018TrYuBwsgXfngkhE7F4QKd', 'toolu_01FsyDSnRHiyGSNt1PKJQDue', 'toolu_01JZaxNffd69o8TSfioM5MeD', 'toolu_01C3o9PnjDHBBaScdfDKf4Gu', 'toolu_017fLiB19L1j1WmZrK6WcZe6', 'toolu_01SAkU5qYxokcRhS9BdX9Ttk', 'toolu_01EuibDAWsYSghR62faeMTns', 'toolu_01ECWX2GNEZ3pAxRzaiSvL7y', 'toolu_01Hsd9yzuTpv3FRmiyTMmkkx', 'toolu_015SwjAP3fv13iH2euhEjXfe', 'toolu_01AuYuo3VsBJwGc2upZ3NLCb', 'toolu_01M8Bd6aKLPthwe2QAVxiAfs', 'toolu_015hBvHS9WnWAtw8voQVwqgs', 'toolu_01VCbSPEU3KaKSGXpuueHcs6', 'toolu_01VMEEEC1URkt96qLXxyNyaD', 'toolu_01LDGbX2KwyeChoDAk7APnyQ', 'toolu_01Nn2QsBTKH8PtR3DgsBy5u6', 'toolu_01TZ4LTYbhPXHkEJLVkkkNjX', 'toolu_016NuXtwoUtNiczAJYjkRp52']
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Result: {name: 'Write', input: {…}}
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Called with toolName: Write
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content length: 116
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content preview: File created successfully at: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Full content: File created successfully at: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Tool name: Write
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Cached input: {file_path: '/home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md', content: '# User Research Notes - Brew & Bean App\n\n## Interv…ext Steps**: Create wireframes based on insights\n'}
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ✅ Write tool detected from cached input!
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Result - filePath: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md operation: created
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage: {type: 'file_operation', operation: 'created', path: '/home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md', fileName: 'user-research-notes.md', isDirectory: false, …}
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 84
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[83]: tool_result {type: 'tool_result', toolName: 'Write', content: 'File created successfully at: /home/node/my-jarvis…3-coffee-shop-app-redesign/user-research-notes.md', summary: '116 chars', timestamp: 1763400742493, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[82]: file_operation {type: 'file_operation', operation: 'created', path: '/home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md', fileName: 'user-research-notes.md', isDirectory: false, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] ✅ FOUND FileOperationMessage at index 82
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: {type: 'file_operation', operation: 'created', path: '/home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md', fileName: 'user-research-notes.md', isDirectory: false, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] File operation detected! {type: 'file_operation', operation: 'created', path: '/home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md', fileName: 'user-research-notes.md', isDirectory: false, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Parent directory: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 🔵 About to call expandToPath
+index-BOg5SUcB.js:163 [expandToPath] Called with: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md
+index-BOg5SUcB.js:163 [expandToPath] Immediate parent: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign
+index-BOg5SUcB.js:163 [expandToPath] Grandparent: /home/node/my-jarvis-erez/כרטיסיות
+index-BOg5SUcB.js:163 [expandToPath] Refreshing grandparent: /home/node/my-jarvis-erez/כרטיסיות
+index-BOg5SUcB.js:163 [expandToPath] Grandparent has 3 items
+index-BOg5SUcB.js:163 [expandToPath] Refreshing immediate parent: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:163 [expandToPath] Immediate parent has 2 files
+index-BOg5SUcB.js:163 [expandToPath] Updated tree data
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 🟢 expandToPath completed
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 🔍 Reading file via backend API...
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 📖 Fetching file: /home/node/my-jarvis-erez/כרטיסיות/003-coffee-shop-app-redesign/user-research-notes.md
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 📄 File read result: SUCCESS
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 🎯 Calling onFileSelect with content
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] ✅ onFileSelect completed
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] 🏁 Setting lastProcessedMessageCount to: 84
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 84
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: assistant
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: assistant isStreaming: true message: {type: 'assistant', message: {…}, parent_tool_use_id: null, session_id: '28ac9cb5-7d55-41ba-a84a-f35de0635521', uuid: '683f38d9-0146-4998-b1b1-afbf60cf59d4'}
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] ========================================
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Caching tool: Bash
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Tool ID: toolu_01RccdLRP428Ex14acWgVizf
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Input: {command: './tools/src/jarvis_voice.sh --voice echo "מוכן! יצ…פרויקט ומחקר משתמשים עם ראיונות אמיתיים וממצאים."', description: 'Voice confirmation of coffee shop app ticket'}
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Cache size before: 29
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] Cache size after: 30
+index-BOg5SUcB.js:1303 [CACHE_TOOL_USE] ========================================
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 85
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[84]: tool {type: 'tool', content: 'Bash(./tools/src/jarvis_voice.sh --voice echo "מוכ…רויקט ומחקר משתמשים עם ראיונות אמיתיים וממצאים.")', timestamp: 1763400748477}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 85
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: user
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: user isStreaming: true message: {type: 'user', message: {…}, parent_tool_use_id: null, session_id: '28ac9cb5-7d55-41ba-a84a-f35de0635521', uuid: '08d49d6c-3e25-4f57-9622-bcb67079ad49'}
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] USER message content: [{…}]
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Processing user message, content type: object isArray: true
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] Content is array, length: 1
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ContentItem[0] type: tool_result full item: {"tool_use_id":"toolu_01RccdLRP428Ex14acWgVizf","type":"tool_result","content":"Generating Jarvis voice response...\nProcessing response (147 chars, voiced as 147 chars)\nAudio generated successfully 
+index-BOg5SUcB.js:1303 [USER_MESSAGE_DEBUG] ✅ FOUND tool_result! Processing...
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Looking up tool ID: toolu_01RccdLRP428Ex14acWgVizf
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Cache size: 30
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] All cached IDs: (30) ['toolu_01H7M5DBYJZfFMHYwSSoKYUP', 'toolu_016dtFzSjf4XzqjiaEvdXwsA', 'toolu_017aaNqy3HJyhMiAnD2Do3u9', 'toolu_01UyKoFZWACHhNRTmHG52pyL', 'toolu_012HCqU7V81fC5uoNFrntk9U', 'toolu_01G19bBFTNwxLwDuVX2fd94a', 'toolu_01UyrPRRteNNJrKUsyeJSav4', 'toolu_01GsjNiV67anW4JRbF2xcwzY', 'toolu_01T9zsqwWF1P6PKoJzaxxWrN', 'toolu_011Pd3wtq6NpQgdqx9wwam8N', 'toolu_018TrYuBwsgXfngkhE7F4QKd', 'toolu_01FsyDSnRHiyGSNt1PKJQDue', 'toolu_01JZaxNffd69o8TSfioM5MeD', 'toolu_01C3o9PnjDHBBaScdfDKf4Gu', 'toolu_017fLiB19L1j1WmZrK6WcZe6', 'toolu_01SAkU5qYxokcRhS9BdX9Ttk', 'toolu_01EuibDAWsYSghR62faeMTns', 'toolu_01ECWX2GNEZ3pAxRzaiSvL7y', 'toolu_01Hsd9yzuTpv3FRmiyTMmkkx', 'toolu_015SwjAP3fv13iH2euhEjXfe', 'toolu_01AuYuo3VsBJwGc2upZ3NLCb', 'toolu_01M8Bd6aKLPthwe2QAVxiAfs', 'toolu_015hBvHS9WnWAtw8voQVwqgs', 'toolu_01VCbSPEU3KaKSGXpuueHcs6', 'toolu_01VMEEEC1URkt96qLXxyNyaD', 'toolu_01LDGbX2KwyeChoDAk7APnyQ', 'toolu_01Nn2QsBTKH8PtR3DgsBy5u6', 'toolu_01TZ4LTYbhPXHkEJLVkkkNjX', 'toolu_016NuXtwoUtNiczAJYjkRp52', 'toolu_01RccdLRP428Ex14acWgVizf']
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Result: {name: 'Bash', input: {…}}
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Called with toolName: Bash
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content length: 210
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Content preview: Generating Jarvis voice response...
+Processing response (147 chars, voiced as 147 chars)
+Audio generated successfully at: /home/node/tools/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] Full content: Generating Jarvis voice response...
+Processing response (147 chars, voiced as 147 chars)
+Audio generated successfully at: /home/node/tools/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3
+index-BOg5SUcB.js:1303 [PROCESS_TOOL_RESULT] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Tool name: Bash
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Cached input: {command: './tools/src/jarvis_voice.sh --voice echo "מוכן! יצ…פרויקט ומחקר משתמשים עם ראיונות אמיתיים וממצאים."', description: 'Voice confirmation of coffee shop app ticket'}
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] ========================================
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] Result - filePath: null operation: null
+index-BOg5SUcB.js:1303 [FILE_OP_DEBUG] No file operation detected
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Looking up tool ID: toolu_01RccdLRP428Ex14acWgVizf
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Cache size: 30
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] All cached IDs: (30) ['toolu_01H7M5DBYJZfFMHYwSSoKYUP', 'toolu_016dtFzSjf4XzqjiaEvdXwsA', 'toolu_017aaNqy3HJyhMiAnD2Do3u9', 'toolu_01UyKoFZWACHhNRTmHG52pyL', 'toolu_012HCqU7V81fC5uoNFrntk9U', 'toolu_01G19bBFTNwxLwDuVX2fd94a', 'toolu_01UyrPRRteNNJrKUsyeJSav4', 'toolu_01GsjNiV67anW4JRbF2xcwzY', 'toolu_01T9zsqwWF1P6PKoJzaxxWrN', 'toolu_011Pd3wtq6NpQgdqx9wwam8N', 'toolu_018TrYuBwsgXfngkhE7F4QKd', 'toolu_01FsyDSnRHiyGSNt1PKJQDue', 'toolu_01JZaxNffd69o8TSfioM5MeD', 'toolu_01C3o9PnjDHBBaScdfDKf4Gu', 'toolu_017fLiB19L1j1WmZrK6WcZe6', 'toolu_01SAkU5qYxokcRhS9BdX9Ttk', 'toolu_01EuibDAWsYSghR62faeMTns', 'toolu_01ECWX2GNEZ3pAxRzaiSvL7y', 'toolu_01Hsd9yzuTpv3FRmiyTMmkkx', 'toolu_015SwjAP3fv13iH2euhEjXfe', 'toolu_01AuYuo3VsBJwGc2upZ3NLCb', 'toolu_01M8Bd6aKLPthwe2QAVxiAfs', 'toolu_015hBvHS9WnWAtw8voQVwqgs', 'toolu_01VCbSPEU3KaKSGXpuueHcs6', 'toolu_01VMEEEC1URkt96qLXxyNyaD', 'toolu_01LDGbX2KwyeChoDAk7APnyQ', 'toolu_01Nn2QsBTKH8PtR3DgsBy5u6', 'toolu_01TZ4LTYbhPXHkEJLVkkkNjX', 'toolu_016NuXtwoUtNiczAJYjkRp52', 'toolu_01RccdLRP428Ex14acWgVizf']
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] Result: {name: 'Bash', input: {…}}
+index-BOg5SUcB.js:1303 [GET_CACHED_TOOL] ========================================
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1309 [VoiceMessage] useEffect running - Component mount/update
+index-BOg5SUcB.js:1309 [VoiceMessage] message.autoPlay: true
+index-BOg5SUcB.js:1309 [VoiceMessage] message.audioUrl: /api/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3
+index-BOg5SUcB.js:1309 [VoiceMessage] Tracker state: {played: Array(2), playing: Array(0)}
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] hasPlayed check for: /api/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] - In played set? false
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] - In playing set? false
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] - Result: false
+index-BOg5SUcB.js:1309 [VoiceMessage] hasPlayed check: false
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] hasPlayed check for: /api/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] - In played set? false
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] - In playing set? false
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] - Result: false
+index-BOg5SUcB.js:1309 [VoiceMessage] ✅ PLAYING - All conditions met
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] Marking as playing: /api/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 86
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[85]: voice {type: 'voice', content: 'מוכן! יצרתי כרטיסייה 003 עם פרויקט מעניין - עיצוב …הפרויקט ומחקר משתמשים עם ראיונות אמיתיים וממצאים.', audioUrl: '/api/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3', timestamp: 1763400753146, autoPlay: true}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 86
+index-BOg5SUcB.js:1309 [VoiceMessage] ✅ Auto-play started successfully
+index-BOg5SUcB.js:1309 [VoicePlayedTracker] Marking as played: /api/voice/jarvis_response_20251117_173232_מוכן_יצרתי_כרטיסייה_003_עם_פר.mp3
+index-BOg5SUcB.js:1309 [VoiceMessage] Tracker state after play: {played: Array(3), playing: Array(0)}
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: assistant
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: assistant isStreaming: true message: {type: 'assistant', message: {…}, parent_tool_use_id: null, session_id: '28ac9cb5-7d55-41ba-a84a-f35de0635521', uuid: '95b54265-9fa8-4fe4-bd37-8880c083481e'}
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 87
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[86]: chat {type: 'chat', role: 'assistant', content: "✅ **Done!** I've created ticket **003-coffee-shop-… from user pain points to technical requirements!", timestamp: 1763400758433}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 87
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: claude_json
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Processing claude_json, message type: result
+index-BOg5SUcB.js:1303 [PROCESS_MESSAGE] Type: result isStreaming: true message: {type: 'result', subtype: 'success', is_error: false, duration_ms: 81029, duration_api_ms: 84485, …}
+index-BOg5SUcB.js:1303 [TOKEN_DEBUG] ========== RESULT MESSAGE ==========
+index-BOg5SUcB.js:1303 [TOKEN_DEBUG] Fetching cumulative tokens for session: 28ac9cb5-7d55-41ba-a84a-f35de0635521
+index-BOg5SUcB.js:1303 [TOKEN_DEBUG] =====================================
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 88
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Checking message[87]: result {type: 'result', subtype: 'success', is_error: false, duration_ms: 81029, duration_api_ms: 84485, …}
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1301 [DESKTOP_LAYOUT_DEBUG] Messages changed, count: 88
+index-BOg5SUcB.js:1303 [STREAM_PARSER] Received stream data type: done
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1476 [CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] workingDirectory: /home/node
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] rootFiles: (11) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] isLoading: false
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] error: null
+index-BOg5SUcB.js:163 [FILE_TREE_DEBUG] treeData length: 11
+index-BOg5SUcB.js:1303  GET https://my-jarvis-erez.fly.dev/api/session-tokens/28ac9cb5-7d55-41ba-a84a-f35de0635521 404 (Not Found)
+processResultMessage @ index-BOg5SUcB.js:1303
+processMessage @ index-BOg5SUcB.js:1303
+(anonymous) @ index-BOg5SUcB.js:1303
+(anonymous) @ index-BOg5SUcB.js:1303
+(anonymous) @ index-BOg5SUcB.js:1477
+await in (anonymous)
+onSubmit @ index-BOg5SUcB.js:1477
+en @ index-BOg5SUcB.js:1303
+Ye @ index-BOg5SUcB.js:1303
+xp @ index-BOg5SUcB.js:49
+(anonymous) @ index-BOg5SUcB.js:49
+Tn @ index-BOg5SUcB.js:49
+Dd @ index-BOg5SUcB.js:49
+Kd @ index-BOg5SUcB.js:50
+Yg @ index-BOg5SUcB.js:50Understand this error
+installHook.js:1 [TOKEN_DEBUG] Failed to fetch session tokens: 404
