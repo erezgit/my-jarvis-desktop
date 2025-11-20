@@ -19,7 +19,9 @@ interface UsePermissionsOptions {
 
 export function usePermissions(options: UsePermissionsOptions = {}) {
   const { onPermissionModeChange } = options;
-  const [allowedTools, setAllowedTools] = useState<string[]>([]);
+  const [allowedTools, setAllowedTools] = useState<string[]>([
+    "mcp__jarvis-tools__voice_generate" // Always include MCP voice tool by default
+  ]);
   const [permissionRequest, setPermissionRequest] =
     useState<PermissionRequest | null>(null);
   const [planModeRequest, setPlanModeRequest] =

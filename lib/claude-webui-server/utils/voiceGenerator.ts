@@ -39,8 +39,8 @@ export async function generateVoiceResponse(config: VoiceGenerationConfig): Prom
       maxLength = 1000
     } = config;
 
-    // Define paths - environment agnostic
-    const baseDir = process.env.WORKSPACE_DIR || process.cwd();
+    // Define paths - ALWAYS use WORKSPACE_DIR (never fallback to process.cwd())
+    const baseDir = process.env.WORKSPACE_DIR || '/home/node';
     const pythonScript = `${baseDir}/tools/src/cli/auto_jarvis_voice.py`;
     const outputDir = `${baseDir}/tools/voice`;
 

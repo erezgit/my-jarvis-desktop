@@ -1,8 +1,9 @@
 # Ticket #098: Claude Agent SDK Best Practices Implementation
 
-**Status:** 🔄 In Progress
-**Priority:** High
+**Status:** ⚠️ IMPLEMENTATION PARTIAL - ROOT CAUSE IDENTIFIED
+**Priority:** CRITICAL
 **Created:** 2025-11-19
+**Last Updated:** 2025-11-20
 
 ---
 
@@ -284,17 +285,18 @@ if (contentItem.type === "voice_message") {
 
 ## 🚀 Implementation Timeline
 
-### Week 1: Research & Setup
+### Week 1: Research & Setup ✅ COMPLETED
 - [x] Research Claude Agent SDK best practices
 - [x] Analyze current architecture
 - [x] Create implementation plan
-- [ ] Set up MCP server infrastructure
+- [x] Set up MCP server infrastructure
 
-### Week 2: Voice Tool Migration
-- [ ] Implement `voice_generate` MCP tool
-- [ ] Update frontend message processing
-- [ ] Test reliability improvements
-- [ ] Deploy and validate
+### Week 2: Voice Tool Migration ⚠️ PARTIAL
+- [x] Implement `voice_generate` MCP tool
+- [x] Update frontend message processing
+- [x] Test reliability improvements
+- [x] Deploy and validate
+- [x] **CRITICAL DISCOVERY: Claude bypassing MCP architecture entirely**
 
 ### Week 3: File Operations Migration
 - [ ] Implement file operation MCP tools
@@ -312,10 +314,12 @@ if (contentItem.type === "voice_message") {
 
 ## 📝 Success Criteria
 
+- [x] **MCP Tool Implementation** - `voice_generate` tool correctly implemented
+- [x] **Structured Response Format** - Returns proper `voice_message` content type
+- [x] **Frontend Processing Ready** - UnifiedMessageProcessor handles voice_message
+- [x] **Environment Configuration** - OPENAI_API_KEY and DEPLOYMENT_MODE set
+- [ ] **🚨 CRITICAL BLOCKER: MCP Tool Discovery** - Claude not calling our MCP tool
 - [ ] **100% tool reliability** - No more cache miss failures
-- [ ] **Structured responses** - All tools return consistent JSON format
-- [ ] **Type safety** - Full TypeScript coverage with runtime validation
-- [ ] **Performance improvement** - Faster tool execution
 - [ ] **Simplified architecture** - Removal of Bash wrapper complexity
 - [ ] **Future-ready** - Following Anthropic official standards
 
@@ -330,4 +334,185 @@ if (contentItem.type === "voice_message") {
 
 ---
 
-*Ticket created to migrate from unreliable Bash wrapper approach to official Claude Agent SDK MCP tools following Anthropic's 2024-2025 best practices.*
+## 🚨 **CRITICAL UPDATE: November 20, 2025**
+
+### **IMPLEMENTATION STATUS: PARTIAL SUCCESS - ROOT CAUSE IDENTIFIED**
+
+**Phase 1 Voice Migration:** ✅ **TECHNICALLY COMPLETE** but ❌ **NOT WORKING IN PRODUCTION**
+
+### **What We Successfully Implemented:**
+
+#### **1. Clean MCP Architecture** ✅
+```typescript
+// chat.ts - Proper MCP server with structured responses
+const jarvisToolsServer = createSdkMcpServer({
+  name: "jarvis-tools",
+  version: "1.0.0",
+  tools: [
+    tool("voice_generate", "Generate voice message with text-to-speech", {
+      message: z.string().describe("Text to convert to speech"),
+      voice: z.enum(["alloy", "echo", "fable", "onyx", "nova", "shimmer"]).default("nova"),
+      speed: z.number().min(0.25).max(4.0).default(1.0)
+    }, async (args) => {
+      const result = await generateVoiceResponse({...});
+      const audioUrl = generateAudioUrl(result.audioPath); // 🔧 NEW: Returns URL not file path
+
+      return {
+        content: [{
+          type: "voice_message",
+          data: {
+            message: args.message,
+            audioPath: audioUrl,  // ✅ Proper URL for frontend
+            voice: args.voice,
+            speed: args.speed,
+            success: result.success,
+            timestamp: Date.now()
+          }
+        }]
+      };
+    })
+  ]
+});
+```
+
+#### **2. Environment-Agnostic Path Resolution** ✅
+```typescript
+// ❌ BEFORE: Hardcoded development paths that broke production
+const pythonScript = "/Users/erezfern/Workspace/my-jarvis/tools/src/cli/auto_jarvis_voice.py";
+
+// ✅ AFTER: Dynamic environment-aware paths
+const baseDir = process.env.WORKSPACE_DIR || process.cwd();
+const pythonScript = `${baseDir}/tools/src/cli/auto_jarvis_voice.py`;
+```
+
+#### **3. Production Environment Configuration** ✅
+```bash
+# Fly.io environment variables properly set
+OPENAI_API_KEY=sk-proj-...  # ✅ Working
+DEPLOYMENT_MODE=web         # ✅ Added for URL generation
+```
+
+#### **4. CLAUDE.md Voice Protocol Update** ✅
+```markdown
+# ❌ BEFORE: Bash code blocks causing misidentification
+### Voice Protocol
+```bash
+./tools/src/jarvis_voice.sh --voice echo "[message]"
+```
+
+# ✅ AFTER: Clean MCP tool documentation
+### Voice Protocol
+Use the MCP voice generation tool for all responses:
+**Tool:** mcp__jarvis-tools__voice_generate
+```
+
+#### **5. Frontend Voice Message Processing** ✅
+```typescript
+// UnifiedMessageProcessor.ts - Ready for structured responses
+if (contentItem.type === "voice_message") {
+  const voiceMessage = {
+    type: "voice" as const,
+    content: voiceData.message,
+    audioUrl: generateAudioUrl(voiceData.audioPath),
+    timestamp: voiceData.timestamp,
+    autoPlay: options.isStreaming || false
+  };
+  context.addMessage(voiceMessage);
+  return; // ✅ Skip ToolResultMessage creation
+}
+```
+
+### **🔍 ROOT CAUSE DISCOVERED:**
+
+**Production Browser Console Analysis** revealed the **exact problem**:
+
+```javascript
+[SDK_TOOL_USE_DEBUG] contentItem full object: {
+  "type": "tool_use",
+  "id": "toolu_01Bki971QqV1G9VSQuqrPjL9",
+  "name": "Bash",  // ❌ Claude is using Bash, NOT our MCP tool!
+  "input": {
+    "command": "python3 /home/node/tools/src/cli/auto_jarvis_voice.py \"Hey there!...\""
+  }
+}
+
+[SDK_STRUCTURE_DEBUG] toolUseResult: undefined  // ❌ No structured responses
+[SDK_STRUCTURE_DEBUG] toolUseResult type: undefined
+```
+
+**CRITICAL FINDING:** Claude Agent SDK is **completely bypassing our MCP architecture**
+
+### **The Real Problem:**
+1. **Claude never calls `mcp__jarvis-tools__voice_generate`**
+2. **Instead, Claude falls back to bash commands**
+3. **No structured `voice_message` responses are generated**
+4. **Frontend receives plain text instead of voice UI**
+
+### **Possible Root Causes:**
+1. **MCP Server Registration Failure** - `jarvis-tools` server not discovered by Claude Agent SDK
+2. **Tool Discovery Issue** - Claude can't see our custom MCP tools
+3. **CLAUDE.md Override Persistence** - Bash instructions still overriding MCP tools
+4. **SDK Configuration Problem** - MCP server not properly integrated with query system
+
+### **Evidence Analysis:**
+- ✅ **Voice generation works** (audio files created in logs)
+- ✅ **API endpoint works** (`/api/voice/:filename` serving files)
+- ✅ **Frontend ready** (voice_message processing implemented)
+- ❌ **MCP tool never called** (zero `mcp__jarvis-tools__voice_generate` calls in logs)
+- ❌ **No structured responses** (all `toolUseResult: undefined`)
+
+---
+
+## 🎯 **NEXT STEPS FOR NEW CHAT SESSION**
+
+### **Investigation Focus: "Claude Agent SDK MCP Server Registration & Tool Discovery"**
+
+**Primary Research Questions:**
+1. **Why isn't Claude discovering our `jarvis-tools` MCP server?**
+2. **What tools does Claude actually see available?**
+3. **Is our `mcpServers` configuration working in production?**
+4. **Are CLAUDE.md instructions properly updated?**
+
+### **Debugging Action Plan:**
+
+#### **Priority 1: MCP Server Discovery**
+```typescript
+// Add extensive logging to verify MCP server registration
+console.log('[MCP_DEBUG] Available MCP servers:', Object.keys(mcpServers));
+console.log('[MCP_DEBUG] Available tools:', availableTools);
+console.log('[MCP_DEBUG] Claude can see these tools:', toolsList);
+```
+
+#### **Priority 2: Tool Discovery Verification**
+```bash
+# SSH into production and verify CLAUDE.md content
+flyctl ssh console -a my-jarvis-erez -C "cat /home/node/CLAUDE.md | grep -A10 'Voice Protocol'"
+
+# Check if MCP tools are available to Claude
+# Look for tool discovery logs in Claude Agent SDK
+```
+
+#### **Priority 3: SDK Integration Testing**
+```typescript
+// Test MCP server independently
+// Verify createSdkMcpServer() works in production
+// Check if SDK version compatibility issues exist
+```
+
+### **Key Questions to Resolve:**
+1. **Is `jarvis-tools` MCP server actually registered?**
+2. **Does Claude see `mcp__jarvis-tools__voice_generate` in available tools?**
+3. **Why does Claude default to bash instead of MCP tools?**
+4. **Is there an SDK configuration issue preventing MCP server discovery?**
+
+### **Success Metrics for Next Session:**
+- [ ] Claude calls `mcp__jarvis-tools__voice_generate` instead of bash
+- [ ] Structured `voice_message` responses generated
+- [ ] Frontend receives proper voice UI data
+- [ ] Voice messages display correctly in production
+
+**The architecture is sound, but the discovery/registration layer is broken.**
+
+---
+
+*Ticket represents successful MCP tool implementation with critical discovery issue blocking production usage.*

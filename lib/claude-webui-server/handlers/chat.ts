@@ -3,7 +3,7 @@ import { query, type PermissionMode, createSdkMcpServer, tool } from "@anthropic
 import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
-import { generateVoiceResponse } from "../utils/voiceGenerator.ts";
+import { generateVoiceResponse, generateAudioUrl } from "../utils/voiceGenerator.ts";
 
 /**
  * Create JARVIS Tools MCP Server with voice generation capability
@@ -28,13 +28,16 @@ const jarvisToolsServer = createSdkMcpServer({
             speed: args.speed
           });
 
+          // Generate proper audio URL based on deployment mode
+          const audioUrl = generateAudioUrl(result.audioPath);
+
           // Return structured JSON response following 2025 best practices
           return {
             content: [{
               type: "voice_message",
               data: {
                 message: args.message,
-                audioPath: result.audioPath,
+                audioPath: audioUrl, // Use URL instead of file path
                 voice: args.voice,
                 speed: args.speed,
                 success: result.success,
@@ -130,13 +133,17 @@ async function* executeClaudeCommand(
         "jarvis-tools": jarvisToolsServer
       },
 
-      // ✅ ENHANCED: Clean architecture - only MCP tools, no Bash fallback
+      // ✅ ENHANCED: Clean architecture - MCP tools ALWAYS prioritized
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? {
         allowedTools: [
-          // Filter out Bash tool to prevent unreliable fallbacks
-          ...allowedTools.filter(tool => tool !== "Bash"),
-          "mcp__jarvis-tools__voice_generate" // Our reliable MCP voice tool
+          "mcp__jarvis-tools__voice_generate", // Always include MCP voice tool FIRST
+          // Filter out Bash tool and bash voice scripts to prevent unreliable fallbacks
+          ...allowedTools.filter(tool =>
+            tool !== "Bash" &&
+            !tool.includes("jarvis_voice.sh") &&
+            !tool.startsWith("mcp__jarvis-tools__") // Avoid duplicates
+          )
         ]
       } : {
         allowedTools: ["mcp__jarvis-tools__voice_generate"] // Default to just our voice tool
@@ -144,7 +151,13 @@ async function* executeClaudeCommand(
       ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend
     };
 
+    // ✅ CRITICAL: Add MCP discovery debugging
     logger.chat.debug("SDK query options: {queryOptions}", { queryOptions });
+    logger.chat.debug("[MCP_DISCOVERY] MCP servers available: {mcpServers}", {
+      mcpServers: Object.keys(queryOptions.mcpServers || {}),
+      allowedTools: queryOptions.allowedTools,
+      jarvisToolsRegistered: !!jarvisToolsServer
+    });
 
     for await (const sdkMessage of query({
       prompt: processedMessage,
