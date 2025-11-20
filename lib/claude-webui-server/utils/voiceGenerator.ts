@@ -69,10 +69,18 @@ export async function generateVoiceResponse(config: VoiceGenerationConfig): Prom
     }
 
     logger.chat.debug("Generating voice with Python script: {args}", { args, voice, speed });
+    logger.chat.debug("Voice generation environment: {env}", {
+      baseDir,
+      pythonScript,
+      outputDir,
+      cwd: process.cwd(),
+      workspaceDir: process.env.WORKSPACE_DIR
+    });
 
-    // Execute Python script
+    // Execute Python script with correct working directory
     const pythonProcess = spawn("python3", args, {
       env,
+      cwd: baseDir, // ✅ CRITICAL: Set working directory to /home/node
       stdio: ["pipe", "pipe", "pipe"]
     });
 
@@ -121,8 +129,15 @@ export async function generateVoiceResponse(config: VoiceGenerationConfig): Prom
           }
         }
       } else {
-        logger.chat.error("Voice generation process failed: {code} {stderr}", { code, stderr });
-        reject(new Error(`Voice generation process failed with code ${code}: ${stderr}`));
+        logger.chat.error("Voice generation process failed: {code} {stderr} {stdout}", {
+          code,
+          stderr,
+          stdout,
+          args,
+          baseDir,
+          pythonScript
+        });
+        reject(new Error(`Voice generation process failed with code ${code}. STDERR: ${stderr}. STDOUT: ${stdout}`));
       }
     });
 
