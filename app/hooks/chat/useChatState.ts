@@ -43,7 +43,15 @@ export function useChatState(options: ChatStateOptions = {}) {
   }, [initialSessionId]);
 
   const addMessage = useCallback((msg: AllMessage) => {
-    setMessages((prev) => [...prev, msg]);
+    console.log('[CHAT_STATE_DEBUG] addMessage called with:', msg.type, msg);
+    if (msg.type === 'file_operation') {
+      console.log('[CHAT_STATE_DEBUG] 🚨 FileOperationMessage being added to state!', msg);
+    }
+    setMessages((prev) => {
+      const newMessages = [...prev, msg];
+      console.log('[CHAT_STATE_DEBUG] Messages array now has', newMessages.length, 'items');
+      return newMessages;
+    });
   }, []);
 
   const updateLastMessage = useCallback((content: string) => {

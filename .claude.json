@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "jarvis-tools": {
+      "command": "node",
+      "args": ["./jarvis-mcp-server.js"],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "WORKSPACE_DIR": "${WORKSPACE_DIR}"
+      }
+    }
+  }
+}

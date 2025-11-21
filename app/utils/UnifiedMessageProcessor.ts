@@ -210,51 +210,73 @@ export class UnifiedMessageProcessor {
       return;
     }
 
-    // 🎵 NEW: Handle structured voice message responses from MCP tools
-    if (toolUseResult && typeof toolUseResult === 'object') {
-      const result = toolUseResult as any;
+    // 🎵 UPDATED: Handle voice generation tool responses with custom fields
+    if (toolName === "mcp__jarvis-tools__voice_generate") {
+      console.log('[VOICE_TOOL_DETECT] ✅ Voice generation tool detected:', toolName);
+      console.log('[VOICE_TOOL_DETECT] toolUseResult:', toolUseResult);
+      console.log('[VOICE_TOOL_DETECT] content:', content);
 
-      // Check if this is a structured response with content array
-      if (result.content && Array.isArray(result.content)) {
-        for (const contentItem of result.content) {
-          console.log('[STRUCTURED_RESPONSE] Processing content item:', contentItem);
-
-          if (contentItem.type === "voice_message") {
-            const voiceData = contentItem.data;
-            console.log('[STRUCTURED_VOICE] ✅ Found structured voice message:', voiceData);
-
-            // Generate audioUrl based on deployment mode
-            let audioUrl: string;
-            const deploymentMode = import.meta.env.VITE_DEPLOYMENT_MODE;
-
-            if (deploymentMode === 'electron') {
-              // Electron mode: Use file:// protocol
-              audioUrl = `file://${voiceData.audioPath}`;
-            } else if (deploymentMode === 'web') {
-              // Web mode: Use HTTP API endpoint
-              const filename = voiceData.audioPath.split('/').pop() || '';
-              audioUrl = `/api/voice/${filename}`;
-            } else {
-              // Fallback to file://
-              audioUrl = `file://${voiceData.audioPath}`;
-            }
-
-            // Create VoiceMessage with structured data
-            const voiceMessage = {
-              type: "voice" as const,
-              content: voiceData.message,
-              audioUrl,
-              timestamp: options.timestamp || voiceData.timestamp || Date.now(),
-              autoPlay: options.isStreaming || false
-            };
-
-            console.log('[STRUCTURED_VOICE] ✅✅✅ Creating VoiceMessage:', voiceMessage);
-            context.addMessage(voiceMessage);
-            return; // Skip creating ToolResultMessage for structured voice
-          }
+      // 🔧 TEST: Check if simple custom fields come through
+      let result: any = toolUseResult;
+      if (!result) {
+        try {
+          result = JSON.parse(content);
+        } catch (e) {
+          console.log('[VOICE_TOOL_DETECT] Failed to parse content as JSON');
+          result = null;
         }
       }
+
+      console.log('[VOICE_TOOL_DETECT] Parsed result:', result);
+
+      // Try to extract JSON embedded in text content
+      let voiceData = null;
+      const textContent = Array.isArray(result) && result[0]?.text ? result[0].text : content;
+      console.log('[VOICE_TOOL_DETECT] Checking for embedded VOICE_DATA in text:', textContent.substring(0, 200));
+
+      const voiceDataMatch = textContent.match(/VOICE_DATA:(\{[^}]+\})/);
+      if (voiceDataMatch) {
+        try {
+          voiceData = JSON.parse(voiceDataMatch[1]);
+          console.log('[VOICE_TOOL_DETECT] ✅ Found embedded VOICE_DATA:', voiceData);
+        } catch (e) {
+          console.log('[VOICE_TOOL_DETECT] ❌ Failed to parse embedded VOICE_DATA:', e);
+        }
+      }
+
+      // Check if this response has audioUrl (embedded JSON, _meta, or direct)
+      const audioUrl = voiceData?.audioUrl || result?.audioUrl || result?._meta?.audioUrl;
+      if (audioUrl) {
+        console.log('[VOICE_TOOL_DETECT] ✅ Found audioUrl field - Voice metadata working!');
+        console.log('[VOICE_TOOL_DETECT] Audio URL source:', voiceData ? 'embedded' : result?.audioUrl ? 'direct' : '_meta');
+
+        // Extract message from the cached tool input
+        const cachedToolInfo = this.getCachedToolInfo(contentItem.tool_use_id || "");
+        const originalMessage = cachedToolInfo?.input?.message as string || "Generated voice message";
+
+        // Create VoiceMessage with embedded JSON data
+        const voiceMessage = {
+          type: "voice" as const,
+          content: originalMessage,
+          audioUrl: audioUrl,
+          voice: voiceData?.voiceType || result?.voiceType || result?._meta?.voiceType || 'nova',
+          timestamp: voiceData?.timestamp || options.timestamp || Date.now(),
+          autoPlay: options.isStreaming !== false
+        };
+
+        console.log('[VOICE_TOOL_DETECT] ✅✅✅ Creating VoiceMessage with simple fields:', voiceMessage);
+        context.addMessage(voiceMessage);
+        return; // Skip creating ToolResultMessage for voice tool
+      } else {
+        console.log('[VOICE_TOOL_DETECT] ❌ No audioUrl found in any location (embedded, _meta, or direct)');
+        console.log('[VOICE_TOOL_DETECT] voiceData:', voiceData);
+        console.log('[VOICE_TOOL_DETECT] result._meta:', result?._meta);
+        console.log('[VOICE_TOOL_DETECT] result.audioUrl:', result?.audioUrl);
+      }
     }
+
+    // ✅ Legacy voice_message content type handling REMOVED
+    // All voice generation now uses voiceData field approach (lines 209-267)
 
     // Special handling for Write/Edit tool results - file operations
     // Use cached tool input instead of pattern matching (100% reliable)
@@ -293,6 +315,32 @@ export class UnifiedMessageProcessor {
       }
     }
 
+    // Additional detection: Check for embedded FILE_OPERATION JSON in MCP tool responses
+    // This provides a fallback if cache-based detection fails
+    if (!filePath && content) {
+      console.log('[FILE_OP_DEBUG] 🔍 Checking for embedded FILE_OPERATION JSON...');
+      const fileOpMatch = content.match(/FILE_OPERATION:(\{[^}]+\})/);
+      if (fileOpMatch) {
+        try {
+          const fileOpData = JSON.parse(fileOpMatch[1]);
+          console.log('[FILE_OP_DEBUG] ✅ Found embedded FILE_OPERATION data:', fileOpData);
+
+          if (fileOpData.path && fileOpData.operation) {
+            filePath = fileOpData.path;
+            // Map operation types: file_created -> created, file_modified -> modified
+            if (fileOpData.operation === 'file_created') {
+              operation = "created";
+            } else if (fileOpData.operation === 'file_modified') {
+              operation = "modified";
+            }
+            console.log('[FILE_OP_DEBUG] ✅ Extracted from embedded JSON - path:', filePath, 'operation:', operation);
+          }
+        } catch (e) {
+          console.log('[FILE_OP_DEBUG] ❌ Failed to parse embedded FILE_OPERATION JSON:', e);
+        }
+      }
+    }
+
     console.log('[FILE_OP_DEBUG] Result - filePath:', filePath, 'operation:', operation);
 
     // If we detected a file operation, create FileOperationMessage
@@ -310,15 +358,20 @@ export class UnifiedMessageProcessor {
       };
 
       console.log('[FILE_OP_DEBUG] ✅✅✅ Creating FileOperationMessage:', fileOpMessage);
+      console.log('[FILE_OP_DEBUG] 🔍 About to call context.addMessage with:', {
+        messageType: fileOpMessage.type,
+        contextType: typeof context,
+        hasAddMessage: !!context.addMessage,
+        isStreaming: options.isStreaming,
+        contextKeys: Object.keys(context)
+      });
       context.addMessage(fileOpMessage);
+      console.log('[FILE_OP_DEBUG] ✅ Called context.addMessage - message should now be in state');
       // Note: We still create ToolResultMessage too (unlike voice which returns early)
     } else {
       console.log('[FILE_OP_DEBUG] No file operation detected');
     }
 
-    // 🗑️ REMOVED: Old bash wrapper voice detection logic (replaced by structured MCP responses)
-    // The new MCP voice_generate tool returns structured responses that are handled above
-    // Legacy bash script detection is no longer needed and causes 90% reliability issues
 
     // Special handling for other Bash tool results
     if (toolName === "Bash") {
@@ -469,8 +522,8 @@ export class UnifiedMessageProcessor {
         const toolMessage = createToolMessage(contentItem, options.timestamp);
         context.addMessage(toolMessage);
       }
-    } else if (contentItem.name === "VoiceGenerate") {
-      // Special handling for VoiceGenerate - create voice message from input
+    } else if (contentItem.name === "mcp__jarvis-tools__voice_generate") {
+      // ✅ FIXED: Special handling for MCP Voice Generation - create voice message from input
       const voiceMessage = createVoiceMessageFromInput(
         contentItem.input || {},
         options.timestamp,
@@ -666,12 +719,14 @@ export class UnifiedMessageProcessor {
 
     // For batch processing, collect messages to return
     // For streaming, messages are added directly via context
+    console.log('[USER_MESSAGE_DEBUG] Creating localContext, isStreaming:', options.isStreaming);
     const localContext = options.isStreaming
       ? context
       : {
           ...context,
           addMessage: (msg: AllMessage) => messages.push(msg),
         };
+    console.log('[USER_MESSAGE_DEBUG] localContext type:', options.isStreaming ? 'REAL CONTEXT' : 'LOCAL ARRAY COLLECTOR');
 
     const messageContent = message.message.content;
     console.log('[USER_MESSAGE_DEBUG] Processing user message, content type:', typeof messageContent, 'isArray:', Array.isArray(messageContent));

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useLayoutEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   PanelGroup,
@@ -60,7 +60,7 @@ export function DesktopLayout({
   const { messages } = useChatStateContext()
 
   // Listen for file operation messages and refresh file tree
-  useEffect(() => {
+  useLayoutEffect(() => {
     console.log('[DESKTOP_LAYOUT_DEBUG] Messages changed, count:', messages.length);
 
     // Only check NEW messages that were added since last time

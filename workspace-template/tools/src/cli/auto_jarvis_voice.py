@@ -47,8 +47,8 @@ def main():
                         help="Speech speed, 0.25 to 4.0 (default: 1.0)")
     parser.add_argument("--max-length", default=1000, type=int,
                         help="Maximum text length (default: 1000)")
-    parser.add_argument("--output-dir", default="workspace/generated_audio",
-                        help="Directory to save audio file (default: workspace/generated_audio)")
+    parser.add_argument("--output-dir", default="tools/voice",
+                        help="Directory to save audio file (default: tools/voice)")
     parser.add_argument("--api-key",
                         help="OpenAI API key (overrides environment variable)")
     parser.add_argument("--json-output", action="store_true",

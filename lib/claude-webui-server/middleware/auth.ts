@@ -89,12 +89,14 @@ export const authMiddleware = createMiddleware<AuthContext>(async (c, next) => {
     return next();
   }
 
-  // 2. Explicit public asset allowlist (OWASP 2025 standard)
+  // 2. (REMOVED) Internal API authentication bypass - no longer needed with shared service approach
+
+  // 3. Explicit public asset allowlist (OWASP 2025 standard)
   if (PUBLIC_ASSETS.includes(path as any)) {
     return next();
   }
 
-  // 3. Static directory patterns with security validation
+  // 4. Static directory patterns with security validation
   if (STATIC_PATTERNS.some(pattern => path.startsWith(pattern))) {
     // CVE-2025 Protection: Prevent path traversal attacks
     if (path.includes('..') || path.includes('\\') || path.includes('%2e') || path.includes('%2E')) {

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Folder, FileText, MessageSquare, Settings, PlusCircle } from 'lucide-react'
 import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
@@ -61,7 +61,7 @@ export function MobileLayout({
   const { messages } = useChatStateContext()
 
   // Listen for file operation messages and refresh file tree (same as desktop)
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Only check NEW messages that were added since last time
     if (messages.length <= lastProcessedMessageCount) {
       return;

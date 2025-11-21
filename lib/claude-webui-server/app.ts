@@ -26,6 +26,7 @@ import { handleStreamFileRequest } from "./handlers/stream-file.ts";
 import { getSessionTokens } from "./handlers/session-tokens.ts";
 import { logger } from "./utils/logger.ts";
 import { readBinaryFile } from "./utils/fs.ts";
+import { generateVoiceResponse, generateAudioUrl } from "./utils/voiceGenerator.ts";
 
 export interface AppConfig {
   debugMode: boolean;
@@ -119,30 +120,67 @@ export function createApp(
   // Voice file API route (for web mode)
   app.get("/api/voice/:filename", requireAuth, (c) => handleVoiceRequest(c));
 
+  // ✅ FIXED: Server-side voice generation API using shared service
   app.post("/api/voice-generate", requireAuth, async (c) => {
     try {
-      const { message } = await c.req.json();
+      const { message, voice = "nova", speed = 1.0 } = await c.req.json();
 
       if (!message) {
         return c.json({ success: false, error: "Message is required" }, 400);
       }
 
-      // Execute voice script
-      const voiceScript = '/Users/erezfern/Workspace/jarvis/spaces/my-jarvis-desktop/tickets/017-claude-code-sdk-chat-integration/example-projects/claude-code-webui/tools/jarvis_voice.sh';
-      const result = await runtime.runCommand(voiceScript, ['--voice', 'echo', message]);
-
-      // Parse audio file path from output
-      const audioPathMatch = result.stdout.match(/Audio generated successfully at: (.+\.mp3)/);
-      const audioPath = audioPathMatch ? audioPathMatch[1] : null;
-
-      return c.json({
-        success: true,
-        message,
-        audioPath,
-        output: result.stdout
+      logger.app.info("[API_VOICE] Voice generation request using shared service: {request}", {
+        message: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
+        voice,
+        speed,
+        approach: "SHARED_SERVICE_CALL",
+        timestamp: new Date().toISOString()
       });
+
+      // Use shared voice generation service
+      const result = await generateVoiceResponse({
+        text: message,
+        voice,
+        speed
+      });
+
+      logger.app.info("[API_VOICE] Voice generation result: {result}", {
+        success: result.success,
+        audioPath: result.audioPath,
+        error: result.error
+      });
+
+      if (result.success && result.audioPath) {
+        // Generate web-compatible URL
+        const audioUrl = generateAudioUrl(result.audioPath);
+
+        logger.app.info("[API_VOICE] Voice generation successful: {success}", {
+          audioPath: result.audioPath,
+          audioUrl
+        });
+
+        return c.json({
+          success: true,
+          message,
+          audioPath: audioUrl, // Return web URL for frontend
+          voice,
+          speed,
+          timestamp: Date.now()
+        });
+      } else {
+        logger.app.error("[API_VOICE] Voice generation failed: {failure}", {
+          error: result.error
+        });
+        return c.json({
+          success: false,
+          error: result.error || "Voice generation failed"
+        }, 500);
+      }
     } catch (error) {
-      logger.app.error("Voice generation error: {error}", { error });
+      logger.app.error("[API_VOICE] Voice generation error: {error}", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return c.json({
         success: false,
         error: error instanceof Error ? error.message : String(error)

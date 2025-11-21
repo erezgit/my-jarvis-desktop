@@ -118,7 +118,7 @@ const jarvisToolsServer = createSdkMcpServer({
           };
         }
       }
-    )
+    ),
   ]
 });
 
@@ -191,16 +191,16 @@ async function* executeClaudeCommand(
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? {
         allowedTools: [
-          "mcp__jarvis-tools__voice_generate", // Always include MCP voice tool FIRST
-          // Filter out Bash tool and bash voice scripts to prevent unreliable fallbacks
+          "mcp__jarvis-tools__voice_generate",     // Only keep voice tool
+          // Include all other non-MCP file tools (native Claude Code tools work perfectly)
           ...allowedTools.filter(tool =>
-            tool !== "Bash" &&
-            !tool.includes("jarvis_voice.sh") &&
-            tool !== "mcp__jarvis-tools__voice_generate" // Avoid duplicates of our own tool
+            tool !== "mcp__jarvis-tools__voice_generate"
           )
         ]
       } : {
-        allowedTools: ["mcp__jarvis-tools__voice_generate"] // Default to just our voice tool
+        allowedTools: [
+          "mcp__jarvis-tools__voice_generate"     // Default: only voice tool
+        ]
       }),
       ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend
     };

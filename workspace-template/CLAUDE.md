@@ -7,10 +7,9 @@
 This workspace overrides Claude Code's default text-only behavior.
 
 ### Voice Protocol
-```bash
-# MANDATORY - Use for every response
-./tools/src/jarvis_voice.sh --voice echo "[your message]"
-```
+**Use the MCP voice generation tool for all responses:**
+- **Tool:** `mcp__jarvis-tools__voice_generate`
+- **Parameters:** message, voice (nova/echo/alloy/onyx/fable/shimmer), speed (0.25-4.0)
 
 **Rules:**
 - Voice messages ARE the response (contain full transcript)

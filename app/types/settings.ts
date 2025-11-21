@@ -41,10 +41,10 @@ function getDefaultClaudeWorkspace(): string {
   return '/home/node';
 }
 
-// Get default file tree directory - can be customized by user
+// Get default file tree directory - aligned with Claude Code working directory
 function getDefaultFileTreeDirectory(): string {
-  // File tree can default to my-jarvis subdirectory for user convenience
-  return import.meta.env.VITE_WORKING_DIRECTORY || '/home/node/my-jarvis';
+  // File tree now watches Claude's working directory to ensure consistency
+  return import.meta.env.VITE_WORKING_DIRECTORY || '/home/node';
 }
 
 // Default settings

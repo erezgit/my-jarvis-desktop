@@ -273,7 +273,7 @@ export function generateAudioUrl(audioPath: string): string {
   const filename = path.basename(audioPath);
 
   // Check deployment mode from environment
-  const deploymentMode = process.env.VITE_DEPLOYMENT_MODE || process.env.DEPLOYMENT_MODE;
+  const deploymentMode = process.env.DEPLOYMENT_MODE;
 
   if (deploymentMode === 'electron') {
     // Electron mode: Use file:// protocol for local filesystem access
