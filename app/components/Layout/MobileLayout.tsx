@@ -210,7 +210,6 @@ export function MobileLayout({
       <div className="flex-1 relative overflow-hidden">
         <div
           className="h-full transition-opacity duration-200 ease-in-out"
-          key={currentPanel}
         >
           {/* Render only the active panel */}
           {currentPanel === 'files' && (
