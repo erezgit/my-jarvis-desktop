@@ -74,6 +74,9 @@ COPY lib/terminal ./lib/terminal
 COPY vite.web.config.mts ./
 COPY tsconfig*.json ./
 
+# Copy MCP server file for voice generation
+COPY jarvis-mcp-server.js /home/node/jarvis-mcp-server.js
+
 # Build React app for production using web-only Vite config
 ENV NODE_ENV=production
 ENV VITE_API_URL=

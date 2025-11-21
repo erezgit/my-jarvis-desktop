@@ -3,7 +3,7 @@ import { query, type PermissionMode, createSdkMcpServer, tool } from "@anthropic
 import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
-import { generateVoiceResponse, generateAudioUrl } from "../utils/voiceGenerator.ts";
+import { generateVoiceResponse, generateAudioUrl, sanitizeForJson } from "../utils/voiceGenerator.ts";
 
 /**
  * Create JARVIS Tools MCP Server with voice generation capability
@@ -21,44 +21,98 @@ const jarvisToolsServer = createSdkMcpServer({
         speed: z.number().min(0.25).max(4.0).default(1.0).describe("Speech speed (0.25 to 4.0)")
       },
       async (args) => {
+        // 🔍 ENHANCED DEBUG: Log MCP tool invocation
+        logger.chat.info("[MCP_VOICE_TOOL] Voice generation requested: {request}", {
+          message: args.message,
+          voice: args.voice,
+          speed: args.speed,
+          timestamp: new Date().toISOString(),
+          pid: process.pid,
+          cwd: process.cwd(),
+          env: {
+            WORKSPACE_DIR: process.env.WORKSPACE_DIR,
+            DEPLOYMENT_MODE: process.env.DEPLOYMENT_MODE,
+            OPENAI_API_KEY_SET: !!process.env.OPENAI_API_KEY,
+            NODE_ENV: process.env.NODE_ENV
+          }
+        });
+
         try {
-          const result = await generateVoiceResponse({
-            text: args.message,
-            voice: args.voice,
-            speed: args.speed
-          });
-
-          // Generate proper audio URL based on deployment mode
-          const audioUrl = generateAudioUrl(result.audioPath);
-
-          // Return structured JSON response following 2025 best practices
-          return {
-            content: [{
-              type: "voice_message",
-              data: {
-                message: args.message,
-                audioPath: audioUrl, // Use URL instead of file path
-                voice: args.voice,
-                speed: args.speed,
-                success: result.success,
-                timestamp: Date.now()
-              }
-            }]
-          };
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
-          logger.chat.error("Voice generation failed: {error}", { error });
-          logger.chat.error("Voice generation config: {config}", {
-            text: args.message,
+          // ✅ FIXED: Use direct function call instead of HTTP API (follows MCP best practices)
+          logger.chat.info("[MCP_VOICE_TOOL] Calling voice generation service directly: {direct_call}", {
+            message: args.message,
             voice: args.voice,
             speed: args.speed,
-            baseDir: process.env.WORKSPACE_DIR || process.cwd()
+            approach: "DIRECT_FUNCTION_CALL",
+            timestamp: new Date().toISOString()
+          });
+
+          // Call the shared voice generation service directly
+          const result = await generateVoiceResponse({
+            text: args.message,
+            voice: args.voice || 'nova',
+            speed: args.speed || 1.0
+          });
+
+          logger.chat.info("[MCP_VOICE_TOOL] Voice generation result: {result}", {
+            success: result.success,
+            audioPath: result.audioPath,
+            error: result.error
+          });
+
+          if (result.success && result.audioPath) {
+            // Generate the appropriate audio URL for the deployment context
+            const audioUrl = generateAudioUrl(result.audioPath);
+
+            // ✅ JSON EMBEDDING: Embed voice metadata as JSON within text content
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `🔊 Voice message generated successfully!\n\n**Voice:** ${args.voice || 'nova'}\n**Speed:** ${args.speed || 1.0}x\n**Audio URL:** ${audioUrl}\n\nVOICE_DATA:${JSON.stringify({
+                    audioUrl: audioUrl,
+                    voiceType: args.voice || 'nova',
+                    speed: args.speed || 1.0,
+                    timestamp: Date.now()
+                  })}\n\nThe voice file has been created and is ready for playback.`
+                }
+              ]
+            };
+          } else {
+            // Voice generation failed
+            throw new Error(result.error || 'Voice generation failed');
+          }
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+
+          // 🔍 ENHANCED DEBUG: Comprehensive error logging
+          logger.chat.error("[MCP_VOICE_TOOL] Voice generation failed: {error}", {
+            error: errorMsg,
+            stack: errorStack,
+            args: {
+              message: args.message,
+              voice: args.voice,
+              speed: args.speed
+            },
+            environment: {
+              baseDir: process.env.WORKSPACE_DIR || process.cwd(),
+              pythonScript: `${process.env.WORKSPACE_DIR || '/home/node'}/tools/src/cli/auto_jarvis_voice.py`,
+              openaiKeySet: !!process.env.OPENAI_API_KEY,
+              deploymentMode: process.env.DEPLOYMENT_MODE,
+              nodeVersion: process.version,
+              platform: process.platform,
+              arch: process.arch,
+              pid: process.pid,
+              cwd: process.cwd(),
+              memoryUsage: process.memoryUsage()
+            }
           });
 
           return {
             content: [{
               type: "text",
-              text: `🔊 Voice generation failed: ${errorMsg}\nCheck logs for details. Ensure voice tools are available in environment.`
+              text: `🔊 Voice generation failed: ${errorMsg}\n\nDEBUG INFO:\n- Environment: ${process.env.DEPLOYMENT_MODE || 'unknown'}\n- Working dir: ${process.cwd()}\n- OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET'}\n- Error: ${errorMsg}`
             }],
             isError: true
           };
@@ -142,7 +196,7 @@ async function* executeClaudeCommand(
           ...allowedTools.filter(tool =>
             tool !== "Bash" &&
             !tool.includes("jarvis_voice.sh") &&
-            !tool.startsWith("mcp__jarvis-tools__") // Avoid duplicates
+            tool !== "mcp__jarvis-tools__voice_generate" // Avoid duplicates of our own tool
           )
         ]
       } : {
