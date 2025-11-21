@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import * as path from "path";
+import * as fs from "fs";
 import { logger } from "./logger";
 
 /**
@@ -68,16 +69,41 @@ export async function generateVoiceResponse(config: VoiceGenerationConfig): Prom
       return;
     }
 
-    logger.chat.debug("Generating voice with Python script: {args}", { args, voice, speed });
-    logger.chat.debug("Voice generation environment: {env}", {
+    // 🔍 ENHANCED DEBUG: Comprehensive pre-execution logging
+    logger.chat.info("[VOICE_GEN] Starting Python script execution: {details}", {
+      args,
+      voice,
+      speed,
+      text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
+      textLength: text.length
+    });
+
+    logger.chat.info("[VOICE_GEN] Environment and paths: {environment}", {
       baseDir,
       pythonScript,
       outputDir,
       cwd: process.cwd(),
-      workspaceDir: process.env.WORKSPACE_DIR
+      workspaceDir: process.env.WORKSPACE_DIR,
+      pythonScriptExists: fs.existsSync(pythonScript),
+      outputDirExists: fs.existsSync(outputDir),
+      openaiKeySet: !!env.OPENAI_API_KEY,
+      openaiKeyPrefix: env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 10) + '...' : 'NOT SET'
     });
 
     // Execute Python script with correct working directory
+    logger.chat.info("[VOICE_GEN] Spawning Python process: {spawn}", {
+      command: "python3",
+      args: args,
+      env: {
+        OPENAI_API_KEY: env.OPENAI_API_KEY ? 'SET' : 'NOT SET',
+        WORKSPACE_DIR: env.WORKSPACE_DIR,
+        PATH: env.PATH?.substring(0, 100) + '...',
+        NODE_ENV: env.NODE_ENV
+      },
+      cwd: baseDir,
+      stdio: ["pipe", "pipe", "pipe"]
+    });
+
     const pythonProcess = spawn("python3", args, {
       env,
       cwd: baseDir, // ✅ CRITICAL: Set working directory to /home/node
@@ -88,61 +114,128 @@ export async function generateVoiceResponse(config: VoiceGenerationConfig): Prom
     let stderr = "";
 
     pythonProcess.stdout.on("data", (data) => {
-      stdout += data.toString();
+      const chunk = data.toString();
+      stdout += chunk;
+      logger.chat.debug("[VOICE_GEN] STDOUT chunk: {chunk}", { chunk: chunk.substring(0, 500) });
     });
 
     pythonProcess.stderr.on("data", (data) => {
-      stderr += data.toString();
+      const chunk = data.toString();
+      stderr += chunk;
+      logger.chat.debug("[VOICE_GEN] STDERR chunk: {chunk}", { chunk: chunk.substring(0, 500) });
+    });
+
+    pythonProcess.on("spawn", () => {
+      logger.chat.info("[VOICE_GEN] Python process spawned successfully with PID: {pid}", { pid: pythonProcess.pid });
     });
 
     pythonProcess.on("close", (code) => {
+      // 🔍 ENHANCED DEBUG: Process completion logging
+      logger.chat.info("[VOICE_GEN] Python process completed: {completion}", {
+        code,
+        stdoutLength: stdout.length,
+        stderrLength: stderr.length,
+        stdout: stdout.substring(0, 1000) + (stdout.length > 1000 ? '...' : ''),
+        stderr: stderr.substring(0, 1000) + (stderr.length > 1000 ? '...' : ''),
+        pid: pythonProcess.pid
+      });
+
       if (code === 0) {
         try {
           // Parse JSON output from Python script
           const result = JSON.parse(stdout.trim());
 
-          if (result.success && result.saved_path) {
-            logger.chat.info("Voice generation successful: {audioPath}", { audioPath: result.saved_path });
+          // Handle new JSON format: {"type": "voice", "audioPath": "...", "transcript": "...", "filename": "..."}
+          if (result.type === "voice" && result.audioPath) {
+            logger.chat.info("[VOICE_GEN] Voice generation successful: {success}", {
+              audioPath: result.audioPath,
+              fileExists: fs.existsSync(result.audioPath),
+              fileSize: fs.existsSync(result.audioPath) ? fs.statSync(result.audioPath).size : 0
+            });
+            resolve({
+              success: true,
+              audioPath: result.audioPath,
+              message: text
+            });
+          }
+          // Fallback: handle legacy format with success/saved_path
+          else if (result.success && result.saved_path) {
+            logger.chat.info("[VOICE_GEN] Voice generation successful (legacy): {success}", {
+              audioPath: result.saved_path,
+              fileExists: fs.existsSync(result.saved_path),
+              fileSize: fs.existsSync(result.saved_path) ? fs.statSync(result.saved_path).size : 0
+            });
             resolve({
               success: true,
               audioPath: result.saved_path,
               message: text
             });
           } else {
-            logger.chat.error("Voice generation failed: {error}", { error: result.error });
+            logger.chat.error("[VOICE_GEN] Python script reported failure: {failure}", {
+              result,
+              error: result.error,
+              success: result.success,
+              savedPath: result.saved_path || result.audioPath
+            });
             reject(new Error(result.error || "Voice generation failed"));
           }
         } catch (parseError) {
           // Fallback: try to parse legacy output format
+          logger.chat.warn("[VOICE_GEN] JSON parse failed, trying legacy format: {parseError}", {
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
+            stdout: stdout.substring(0, 500)
+          });
+
           const audioPathMatch = stdout.match(/Audio generated successfully at: (.+\.mp3)/);
           if (audioPathMatch) {
             const audioPath = audioPathMatch[1];
-            logger.chat.info("Voice generation successful (legacy format): {audioPath}", { audioPath });
+            logger.chat.info("[VOICE_GEN] Voice generation successful (legacy format): {legacy}", {
+              audioPath,
+              fileExists: fs.existsSync(audioPath)
+            });
             resolve({
               success: true,
               audioPath,
               message: text
             });
           } else {
-            logger.chat.error("Failed to parse voice generation output: {stdout}", { stdout, stderr });
+            logger.chat.error("[VOICE_GEN] Failed to parse any output format: {parseFailure}", {
+              parseError: parseError instanceof Error ? parseError.message : String(parseError),
+              stdout,
+              stderr,
+              stdoutMatch: audioPathMatch
+            });
             reject(new Error(`Failed to parse voice generation output: ${parseError}`));
           }
         }
       } else {
-        logger.chat.error("Voice generation process failed: {code} {stderr} {stdout}", {
-          code,
+        logger.chat.error("[VOICE_GEN] Python process failed: {processFailure}", {
+          exitCode: code,
           stderr,
           stdout,
           args,
           baseDir,
-          pythonScript
+          pythonScript,
+          pythonExists: fs.existsSync(pythonScript),
+          cwdContents: fs.readdirSync(baseDir).slice(0, 20)
         });
         reject(new Error(`Voice generation process failed with code ${code}. STDERR: ${stderr}. STDOUT: ${stdout}`));
       }
     });
 
     pythonProcess.on("error", (error) => {
-      logger.chat.error("Failed to start voice generation process: {error}", { error });
+      logger.chat.error("[VOICE_GEN] Failed to start Python process: {spawnError}", {
+        error: error.message,
+        code: (error as any).code,
+        errno: (error as any).errno,
+        syscall: (error as any).syscall,
+        path: (error as any).path,
+        spawnfile: (error as any).spawnfile,
+        command: "python3",
+        args: args,
+        cwd: baseDir,
+        pythonExists: fs.existsSync(pythonScript)
+      });
       reject(new Error(`Failed to start voice generation process: ${error.message}`));
     });
 
@@ -152,6 +245,24 @@ export async function generateVoiceResponse(config: VoiceGenerationConfig): Prom
       reject(new Error("Voice generation timed out after 30 seconds"));
     }, 30000);
   });
+}
+
+/**
+ * Sanitize text for safe JSON serialization in streaming context
+ * Prevents JSON parse errors caused by special characters, quotes, newlines, etc.
+ */
+export function sanitizeForJson(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+
+  return text
+    .replace(/\\/g, '\\\\')         // Must be first: escape backslashes
+    .replace(/"/g, '\\"')           // Escape double quotes
+    .replace(/\n/g, '\\n')          // Escape newlines
+    .replace(/\r/g, '\\r')          // Escape carriage returns
+    .replace(/\t/g, '\\t')          // Escape tabs
+    .replace(/\f/g, '\\f')          // Escape form feeds
+    .replace(/\b/g, '\\b')          // Escape backspaces
+    .substring(0, 1000);            // Limit length to prevent huge responses
 }
 
 /**
