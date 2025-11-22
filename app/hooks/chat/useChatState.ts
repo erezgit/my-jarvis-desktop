@@ -33,6 +33,7 @@ export function useChatState(options: ChatStateOptions = {}) {
   const [currentAssistantMessage, setCurrentAssistantMessage] =
     useState<ChatMessage | null>(null);
 
+
   // Update messages and sessionId when initial values change
   useEffect(() => {
     setMessages(memoizedInitialMessages);
@@ -43,13 +44,16 @@ export function useChatState(options: ChatStateOptions = {}) {
   }, [initialSessionId]);
 
   const addMessage = useCallback((msg: AllMessage) => {
-    console.log('[CHAT_STATE_DEBUG] addMessage called with:', msg.type, msg);
-    if (msg.type === 'file_operation') {
-      console.log('[CHAT_STATE_DEBUG] 🚨 FileOperationMessage being added to state!', msg);
-    }
     setMessages((prev) => {
+      // Check for duplicates for voice messages
+      if (msg.type === 'voice') {
+        const existingVoiceMsg = prev.find(m => m.type === 'voice' && m.timestamp === msg.timestamp);
+        if (existingVoiceMsg) {
+          return prev; // Don't add duplicate
+        }
+      }
+
       const newMessages = [...prev, msg];
-      console.log('[CHAT_STATE_DEBUG] Messages array now has', newMessages.length, 'items');
       return newMessages;
     });
   }, []);
@@ -96,6 +100,7 @@ export function useChatState(options: ChatStateOptions = {}) {
     setHasReceivedInit(false);
     setCurrentAssistantMessage(null);
   }, []);
+
 
   return {
     // State
