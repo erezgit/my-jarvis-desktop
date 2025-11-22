@@ -39,12 +39,23 @@ const jarvisToolsServer = createSdkMcpServer({
 
         try {
           // ✅ FIXED: Use direct function call instead of HTTP API (follows MCP best practices)
+          const voiceStartTime = Date.now();
           logger.chat.info("[MCP_VOICE_TOOL] Calling voice generation service directly: {direct_call}", {
             message: args.message,
             voice: args.voice,
             speed: args.speed,
             approach: "DIRECT_FUNCTION_CALL",
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            messageLength: args.message?.length || 0
+          });
+
+          // 🎯 VOICE TIMING: Log start of voice generation
+          console.log('[VOICE_TIMING] Voice generation start', {
+            phase: 'start',
+            timestamp: voiceStartTime,
+            messageLength: args.message?.length || 0,
+            voice: args.voice,
+            speed: args.speed
           });
 
           // Call the shared voice generation service directly
@@ -52,6 +63,17 @@ const jarvisToolsServer = createSdkMcpServer({
             text: args.message,
             voice: args.voice || 'nova',
             speed: args.speed || 1.0
+          });
+
+          // 🎯 VOICE TIMING: Log end of voice generation
+          const voiceEndTime = Date.now();
+          const voiceDuration = voiceEndTime - voiceStartTime;
+          console.log('[VOICE_TIMING] Voice generation end', {
+            phase: 'end',
+            timestamp: voiceEndTime,
+            duration: voiceDuration,
+            messageLength: args.message?.length || 0,
+            success: result.success
           });
 
           logger.chat.info("[MCP_VOICE_TOOL] Voice generation result: {result}", {
@@ -64,20 +86,48 @@ const jarvisToolsServer = createSdkMcpServer({
             // Generate the appropriate audio URL for the deployment context
             const audioUrl = generateAudioUrl(result.audioPath);
 
+            // 🎯 STREAM TX: Log voice message transmission preparation
+            const voiceDataSize = JSON.stringify({
+              audioUrl: audioUrl,
+              transcript: args.message,
+              voiceType: args.voice || 'nova',
+              speed: args.speed || 1.0,
+              timestamp: Date.now()
+            }).length;
+
+            console.log('[STREAM_TX] Preparing voice message for transmission', {
+              audioUrl,
+              transcriptLength: args.message?.length || 0,
+              voiceDataSize,
+              timestamp: Date.now(),
+              voice: args.voice || 'nova',
+              speed: args.speed || 1.0
+            });
+
             // ✅ JSON EMBEDDING: Embed voice metadata as JSON within text content
-            return {
+            const responseContent = {
               content: [
                 {
                   type: "text",
                   text: `🔊 Voice message generated successfully!\n\n**Voice:** ${args.voice || 'nova'}\n**Speed:** ${args.speed || 1.0}x\n**Audio URL:** ${audioUrl}\n\nVOICE_DATA:${JSON.stringify({
                     audioUrl: audioUrl,
+                    transcript: args.message,  // Include the original message text
                     voiceType: args.voice || 'nova',
                     speed: args.speed || 1.0,
                     timestamp: Date.now()
-                  })}\n\nThe voice file has been created and is ready for playback.`
+                  })}\n\nThe voice file has been created and is ready for playbook.`
                 }
               ]
             };
+
+            // 🎯 STREAM TX: Log successful voice message ready for stream transmission
+            console.log('[STREAM_TX] Voice message ready for stream transmission', {
+              contentSize: JSON.stringify(responseContent).length,
+              timestamp: Date.now(),
+              success: true
+            });
+
+            return responseContent;
           } else {
             // Voice generation failed
             throw new Error(result.error || 'Voice generation failed');
