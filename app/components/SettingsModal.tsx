@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { GeneralSettings } from "./settings/GeneralSettings";
+import packageJson from "../../package.json";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -71,7 +72,7 @@ export function SettingsModal({ isOpen, onClose, workingDirectory, onWorkspaceCh
         {/* Version Footer */}
         <div className="border-t border-slate-200 dark:border-slate-700 px-6 py-3">
           <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
-            Version 1.4.25 - Strategic timing and stream monitoring logs
+            Version {packageJson.version} - Strategic timing and stream monitoring logs
           </p>
         </div>
       </div>

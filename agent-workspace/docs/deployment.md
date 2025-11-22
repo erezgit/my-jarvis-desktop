@@ -98,21 +98,15 @@ Update the version in `package.json` by incrementing it (e.g., from 1.4.0 to 1.4
 # Edit package.json and increment the "version" field
 ```
 
-### Step 2: Update Settings Display Version
-Update the version display in the Settings modal to match the new version:
-```bash
-# Edit app/components/SettingsModal.tsx
-# Find line: "Version 1.4.X - Description"
-# Update to: "Version 1.4.Y - New Description"
-```
+**Note**: The Settings modal version automatically pulls from package.json, so you only need to update one place.
 
-### Step 3: Deploy Updated Code
+### Step 2: Deploy Updated Code
 ```bash
 fly deploy --app my-jarvis-user --update-only
 ```
 
 **Note**: Always use `--update-only` to avoid creating duplicate machines.
-**Important**: Always increment both package.json version AND settings display version before deploying to track deployments properly.
+**Important**: The version display in Settings modal is automatically updated from package.json - no manual changes needed.
 
 ---
 
