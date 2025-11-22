@@ -5,7 +5,7 @@
 - **GitHub URL**: https://github.com/erezgit/my-jarvis-desktop
 - **Project Type**: Cloud-Deployed AI-Powered Web Application
 - **Framework**: React 19 + TypeScript + Claude Code WebUI + Fly.io
-- **Current Version**: 1.33.7
+- **Current Version**: 1.4.0
 - **Status**: ✅ Production-Ready AI Chat Application
 
 ---
@@ -92,11 +92,27 @@ exit
 
 ## Update Existing App Code
 
+### Step 1: Increment Version Number
+Update the version in `package.json` by incrementing it (e.g., from 1.4.0 to 1.4.1):
+```bash
+# Edit package.json and increment the "version" field
+```
+
+### Step 2: Update Settings Display Version
+Update the version display in the Settings modal to match the new version:
+```bash
+# Edit app/components/SettingsModal.tsx
+# Find line: "Version 1.4.X - Description"
+# Update to: "Version 1.4.Y - New Description"
+```
+
+### Step 3: Deploy Updated Code
 ```bash
 fly deploy --app my-jarvis-user --update-only
 ```
 
 **Note**: Always use `--update-only` to avoid creating duplicate machines.
+**Important**: Always increment both package.json version AND settings display version before deploying to track deployments properly.
 
 ---
 
