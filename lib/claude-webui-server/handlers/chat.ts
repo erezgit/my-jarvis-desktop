@@ -50,7 +50,7 @@ const jarvisToolsServer = createSdkMcpServer({
           });
 
           // 🎯 VOICE TIMING: Log start of voice generation
-          console.log('[VOICE_TIMING] Voice generation start', {
+          logger.chat.info("[VOICE_TIMING] Voice generation start: {timing}", {
             phase: 'start',
             timestamp: voiceStartTime,
             messageLength: args.message?.length || 0,
@@ -68,7 +68,7 @@ const jarvisToolsServer = createSdkMcpServer({
           // 🎯 VOICE TIMING: Log end of voice generation
           const voiceEndTime = Date.now();
           const voiceDuration = voiceEndTime - voiceStartTime;
-          console.log('[VOICE_TIMING] Voice generation end', {
+          logger.chat.info("[VOICE_TIMING] Voice generation end: {timing}", {
             phase: 'end',
             timestamp: voiceEndTime,
             duration: voiceDuration,
@@ -95,7 +95,7 @@ const jarvisToolsServer = createSdkMcpServer({
               timestamp: Date.now()
             }).length;
 
-            console.log('[STREAM_TX] Preparing voice message for transmission', {
+            logger.chat.info("[STREAM_TX] Preparing voice message for transmission: {transmission}", {
               audioUrl,
               transcriptLength: args.message?.length || 0,
               voiceDataSize,
@@ -121,7 +121,7 @@ const jarvisToolsServer = createSdkMcpServer({
             };
 
             // 🎯 STREAM TX: Log successful voice message ready for stream transmission
-            console.log('[STREAM_TX] Voice message ready for stream transmission', {
+            logger.chat.info("[STREAM_TX] Voice message ready for stream transmission: {ready}", {
               contentSize: JSON.stringify(responseContent).length,
               timestamp: Date.now(),
               success: true
@@ -322,8 +322,13 @@ export async function handleChatRequest(
 
   logger.chat.debug("Working directory for Claude CLI: {workingDirectory}", { workingDirectory });
 
+  // Detect mobile browsers for enhanced streaming
+  const userAgent = c.req.header('user-agent') || '';
+  const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(userAgent);
+
   const stream = new ReadableStream({
     async start(controller) {
+      let chunkCount = 0;
       try {
         for await (const chunk of executeClaudeCommand(
           chatRequest.message,
@@ -337,6 +342,13 @@ export async function handleChatRequest(
         )) {
           const data = JSON.stringify(chunk) + "\n";
           controller.enqueue(new TextEncoder().encode(data));
+          chunkCount++;
+
+          // Mobile-specific: Add keep-alive ping every 5 chunks to prevent mobile timeout
+          if (isMobile && chunkCount % 5 === 0) {
+            const keepAlive = JSON.stringify({ type: "ping", timestamp: Date.now() }) + "\n";
+            controller.enqueue(new TextEncoder().encode(keepAlive));
+          }
         }
         controller.close();
       } catch (error) {

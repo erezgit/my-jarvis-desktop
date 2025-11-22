@@ -253,16 +253,46 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
           onTokenUpdate: setTokenUsage,
         };
 
+        // Mobile stream buffer for JSON reconstruction
+        let streamBuffer = "";
+        const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+
         while (true) {
           const { done, value } = await reader.read();
           if (done || shouldAbort) break;
 
           const chunk = decoder.decode(value);
-          const lines = chunk.split("\n").filter((line) => line.trim());
 
-          for (const line of lines) {
-            if (shouldAbort) break;
-            processStreamLine(line, streamingContext);
+          if (isMobile) {
+            // Mobile: Accumulate chunks and extract complete JSON lines
+            streamBuffer += chunk;
+
+            // Extract complete lines ending with newline
+            const lines = streamBuffer.split("\n");
+            // Keep the last incomplete line in buffer
+            streamBuffer = lines.pop() || "";
+
+            // Process complete lines
+            for (const line of lines) {
+              if (shouldAbort) break;
+              const trimmedLine = line.trim();
+              if (trimmedLine) {
+                try {
+                  // Validate JSON before processing to catch fragments
+                  JSON.parse(trimmedLine);
+                  processStreamLine(trimmedLine, streamingContext);
+                } catch (parseError) {
+                  // Skip invalid JSON fragments silently
+                }
+              }
+            }
+          } else {
+            // Desktop: Standard processing
+            const lines = chunk.split("\n").filter((line) => line.trim());
+            for (const line of lines) {
+              if (shouldAbort) break;
+              processStreamLine(line, streamingContext);
+            }
           }
 
           if (shouldAbort) break;

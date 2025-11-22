@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Folder, FileText, MessageSquare, Settings, PlusCircle } from 'lucide-react'
 import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
+import { ChatPage } from '../ChatPage'
 import { isFileOperationMessage } from '../../types'
 import { useChatStateContext } from '../../contexts/ChatStateContext'
 import { useSettings } from '../../hooks/useSettings'
@@ -27,11 +28,13 @@ interface MobileLayoutProps {
   onFileSelect: (file: FileItem) => void
   onFileUpload?: (file: File) => void
   onNewChat?: () => void
-  chatInterface: React.ReactNode
   currentView: 'chat' | 'history'
+  onViewChange: (view: 'chat' | 'history') => void
   onChatClick: () => void
   onHistoryClick: () => void
   onSettingsClick: () => void
+  onFileUploadReady?: (handler: ((file: File) => void) | null) => void
+  onNewChatReady?: (handler: (() => void) | null) => void
 }
 
 // Utility function to combine class names
@@ -44,11 +47,13 @@ export function MobileLayout({
   onFileSelect,
   onFileUpload,
   onNewChat,
-  chatInterface,
   currentView,
+  onViewChange,
   onChatClick,
   onHistoryClick,
-  onSettingsClick
+  onSettingsClick,
+  onFileUploadReady,
+  onNewChatReady
 }: MobileLayoutProps) {
   const [currentPanel, setCurrentPanel] = useState<PanelView>('chat')
   const fileTreeRef = useRef<FileTreeRef>(null)
@@ -206,33 +211,39 @@ export function MobileLayout({
         </div>
       </div>
 
-      {/* Panel Container with smooth transitions */}
+      {/* Panel Container - All panels mounted, visibility controlled by CSS */}
       <div className="flex-1 relative overflow-hidden">
-        <div
-          className="h-full transition-opacity duration-200 ease-in-out"
-        >
-          {/* Render only the active panel */}
-          {currentPanel === 'files' && (
-            <div className="h-full flex flex-col overflow-auto bg-gray-50 dark:bg-gray-900">
-              <VirtualizedFileTree
-                ref={fileTreeRef}
-                workingDirectory={fileTreeDirectory}
-                onFileSelect={onFileSelect}
-              />
-            </div>
-          )}
+        {/* Files Panel */}
+        <div className={cn(
+          "absolute inset-0 h-full flex flex-col overflow-auto bg-gray-50 dark:bg-gray-900",
+          currentPanel === 'files' ? 'block' : 'hidden'
+        )}>
+          <VirtualizedFileTree
+            ref={fileTreeRef}
+            workingDirectory={fileTreeDirectory}
+            onFileSelect={onFileSelect}
+          />
+        </div>
 
-          {currentPanel === 'preview' && (
-            <div className="h-full flex flex-col overflow-auto bg-white dark:bg-gray-900">
-              <FilePreview file={selectedFile} />
-            </div>
-          )}
+        {/* Preview Panel */}
+        <div className={cn(
+          "absolute inset-0 h-full flex flex-col overflow-auto bg-white dark:bg-gray-900",
+          currentPanel === 'preview' ? 'block' : 'hidden'
+        )}>
+          <FilePreview file={selectedFile} />
+        </div>
 
-          {currentPanel === 'chat' && (
-            <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-              {chatInterface}
-            </div>
-          )}
+        {/* Chat Panel */}
+        <div className={cn(
+          "absolute inset-0 h-full flex flex-col bg-white dark:bg-gray-900",
+          currentPanel === 'chat' ? 'block' : 'hidden'
+        )}>
+          <ChatPage
+            currentView={currentView}
+            onViewChange={onViewChange}
+            onFileUploadReady={onFileUploadReady}
+            onNewChatReady={onNewChatReady}
+          />
         </div>
       </div>
       </div>

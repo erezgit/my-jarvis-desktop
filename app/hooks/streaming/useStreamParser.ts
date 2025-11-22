@@ -107,6 +107,9 @@ export function useStreamParser() {
           const claudeData = data.data as SDKMessage;
           console.log('[STREAM_PARSER] Processing claude_json, message type:', claudeData.type);
           processClaudeData(claudeData, context);
+        } else if (data.type === "ping") {
+          // Mobile keep-alive ping - ignore silently
+          console.log('[STREAM_PARSER] Received mobile keep-alive ping');
         } else if (data.type === "error") {
           const errorMessage: SystemMessage = {
             type: "error",

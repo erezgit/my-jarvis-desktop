@@ -155,10 +155,6 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
     enabled: !!workingDirectory,
   })
 
-  console.log('[FILE_TREE_DEBUG] workingDirectory:', workingDirectory)
-  console.log('[FILE_TREE_DEBUG] rootFiles:', rootFiles)
-  console.log('[FILE_TREE_DEBUG] isLoading:', isLoading)
-  console.log('[FILE_TREE_DEBUG] error:', error)
 
   // Transform FileItem[] to TreeNode[] for React Arborist
   const transformToTreeNodes = useCallback((files: FileItem[], parentPath: string): TreeNode[] => {
@@ -184,7 +180,6 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
     }
   }, [rootFiles, workingDirectory, transformToTreeNodes])
 
-  console.log('[FILE_TREE_DEBUG] treeData length:', treeData.length)
 
   // Load children when a directory is opened
   const onToggle = useCallback(async (nodeId: string) => {

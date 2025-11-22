@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
 import { ChatPage } from '../ChatPage'
@@ -63,15 +63,16 @@ export function ResponsiveLayout() {
   // Get workspace settings from context
   const { fileTreeDirectory, setFileTreeDirectory } = useSettings()
 
-  // Create chat element with currentView prop (re-creates when view changes)
-  const chatElement = useMemo(() => (
+  // For desktop, we still create the element since it renders it directly
+  // For mobile, we'll pass the props instead
+  const chatElement = isDesktop ? (
     <ChatPage
       currentView={currentView}
       onViewChange={setCurrentView}
       onFileUploadReady={(handler) => setFileUploadHandler(() => handler)}
       onNewChatReady={(handler) => setNewChatHandler(() => handler)}
     />
-  ), [currentView]);
+  ) : null;
 
   // ChatHeader callbacks - manage view state
   const handleChatClick = () => setCurrentView('chat');
@@ -99,12 +100,14 @@ export function ResponsiveLayout() {
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
           onFileUpload={fileUploadHandler || undefined}
-          chatInterface={chatElement}
           currentView={currentView}
+          onViewChange={setCurrentView}
           onChatClick={handleChatClick}
           onHistoryClick={handleHistoryClick}
           onSettingsClick={handleSettingsClick}
           onNewChat={newChatHandler || undefined}
+          onFileUploadReady={(handler) => setFileUploadHandler(() => handler)}
+          onNewChatReady={(handler) => setNewChatHandler(() => handler)}
         />
       )}
 
