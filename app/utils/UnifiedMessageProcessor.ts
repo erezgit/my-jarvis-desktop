@@ -176,20 +176,6 @@ export class UnifiedMessageProcessor {
     const toolName = cachedToolInfo?.name || "Tool";
 
 
-    // MOBILE STREAMING DEBUG - Only for voice generation
-    const isMobile = typeof window !== 'undefined' && /Mobi|Android/i.test(window.navigator.userAgent);
-    const isVoiceGenerationTool = toolName === "mcp__jarvis-tools__voice_generate";
-
-    if (isVoiceGenerationTool && isMobile) {
-      const streamingInfo = {
-        timestamp: Date.now(),
-        contentLength: typeof content === 'string' ? content.length : JSON.stringify(content).length,
-        memoryUsage: (window as any).performance?.memory ?
-          Math.round((window as any).performance.memory.usedJSHeapSize / 1024 / 1024) : 'N/A',
-        userAgent: window.navigator.userAgent.substring(0, 50)
-      };
-      console.log('[MOBILE_STREAM_DEBUG] Voice tool start:', streamingInfo);
-    }
 
     // Don't show tool_result for TodoWrite since we already show TodoMessage from tool_use
     if (toolName === "TodoWrite") {
@@ -198,17 +184,8 @@ export class UnifiedMessageProcessor {
 
     // Check if this is the MCP voice generation tool
     if (toolName === "mcp__jarvis-tools__voice_generate") {
-      const memoryUsage = typeof window !== 'undefined' && (window as any).performance?.memory
-        ? `${Math.round((window as any).performance.memory.usedJSHeapSize / 1024 / 1024)}MB`
-        : 'N/A';
-      if (isMobile) {
-        console.log('[MOBILE_STREAM_DEBUG] Voice generation tool detected, memory:', memoryUsage + 'MB');
-      }
-
       // Extract the text content from various possible formats
       let textContent = content;
-
-      // Extract text content
 
       // Handle content that might be JSON string containing array
       if (typeof content === 'string' && (content.startsWith('[') || content.includes('{"type":"text"'))) {
@@ -218,131 +195,44 @@ export class UnifiedMessageProcessor {
             textContent = parsedContent[0].text;
           }
         } catch (e) {
-          if (isMobile) {
-            console.log('[MOBILE_STREAM_DEBUG] JSON parse error:', e.message);
-          }
+          // Silent fallback for JSON parse errors
         }
       }
       // Handle direct array format
       else if (Array.isArray(content) && content.length > 0) {
-        console.log('[MCP_VOICE_DEBUG] 📋 Direct array detected, length:', content.length);
-        console.log('[MCP_VOICE_DEBUG] First item:', content[0]);
-        console.log('[MCP_VOICE_DEBUG] First item type:', content[0]?.type);
-        console.log('[MCP_VOICE_DEBUG] Has text:', !!content[0]?.text);
         if (content[0]?.type === 'text' && content[0]?.text) {
-          console.log('[MCP_VOICE_DEBUG] ✅ Extracting text from direct array format');
           textContent = content[0].text;
-          console.log('[MCP_VOICE_DEBUG] Extracted text length:', textContent.length);
         }
       }
       // Handle toolUseResult fallback
       else if (toolUseResult) {
-        console.log('[MCP_VOICE_DEBUG] 🔄 Using toolUseResult fallback');
-        console.log('[MCP_VOICE_DEBUG] toolUseResult type:', typeof toolUseResult);
-        console.log('[MCP_VOICE_DEBUG] toolUseResult:', toolUseResult);
         if (Array.isArray(toolUseResult) && toolUseResult[0]?.text) {
           textContent = toolUseResult[0].text;
-          console.log('[MCP_VOICE_DEBUG] ✅ Used array toolUseResult');
         } else if (typeof toolUseResult === 'object' && toolUseResult.text) {
           textContent = toolUseResult.text;
-          console.log('[MCP_VOICE_DEBUG] ✅ Used object toolUseResult');
         }
-      } else {
-        console.log('[MCP_VOICE_DEBUG] 🤷 Using content as-is, no special handling');
       }
 
-      console.log('[MCP_VOICE_DEBUG] Text content to parse:', typeof textContent, textContent);
-
-      // Extract VOICE_DATA JSON from the response - improved regex for nested objects
-      console.log('[MCP_VOICE_DEBUG] 🎯 SEARCHING FOR VOICE_DATA PATTERN');
-      console.log('[MCP_VOICE_DEBUG] Text content to search in (length):', textContent.length);
-      console.log('[MCP_VOICE_DEBUG] Looking for "VOICE_DATA:" in text');
-      console.log('[MCP_VOICE_DEBUG] Text includes "VOICE_DATA:":', textContent.includes('VOICE_DATA:'));
-      console.log('[MCP_VOICE_DEBUG] Text content full text for pattern matching:', textContent);
-
+      // Extract VOICE_DATA JSON from the response
       const voiceDataMatch = textContent.match(/VOICE_DATA:(\{.*?\}(?=\n|$))/s);
-      console.log('[MCP_VOICE_DEBUG] Regex match result:', voiceDataMatch);
 
       if (!voiceDataMatch) {
-        console.log('[MCP_VOICE_DEBUG] ❌ VOICE_DATA pattern not found!');
-        console.log('[MCP_VOICE_DEBUG] Trying simpler regex patterns...');
-
-        // Try alternative patterns
-        const alternativePatterns = [
-          /VOICE_DATA:(\{[^}]+\})/,
-          /VOICE_DATA:\s*(\{.*?\})/,
-          /VOICE_DATA:({.*})/,
-        ];
-
-        for (let i = 0; i < alternativePatterns.length; i++) {
-          const altMatch = textContent.match(alternativePatterns[i]);
-          console.log(`[MCP_VOICE_DEBUG] Alternative pattern ${i} match:`, altMatch);
-          if (altMatch) {
-            console.log('[MCP_VOICE_DEBUG] ✅ Found with alternative pattern!');
-            break;
-          }
-        }
-
-        console.log('[MCP_VOICE_DEBUG] ❌ No VOICE_DATA pattern found with any method');
-        console.log('[MCP_VOICE_DEBUG] Full text content for manual inspection:', textContent);
         return;
       }
 
-      console.log('[MCP_VOICE_DEBUG] ✅ VOICE_DATA pattern found!');
-      console.log('[MCP_VOICE_DEBUG] Full match:', voiceDataMatch[0]);
-      console.log('[MCP_VOICE_DEBUG] Extracted VOICE_DATA string:', voiceDataMatch[1]);
-
-      // 🎯 STREAM RX: Log voice message reception from stream
-      console.log('[STREAM_RX] Voice message received from stream', {
-        voiceDataString: voiceDataMatch[1],
-        voiceDataLength: voiceDataMatch[1].length,
-        timestamp: Date.now(),
-        receivedAt: new Date().toISOString()
-      });
-
       let voiceData = null;
       try {
-        console.log('[MCP_VOICE_DEBUG] 🔄 Attempting to parse VOICE_DATA JSON...');
         voiceData = JSON.parse(voiceDataMatch[1]);
-        console.log('[MCP_VOICE_DEBUG] ✅ Successfully parsed VOICE_DATA:', voiceData);
-        console.log('[MCP_VOICE_DEBUG] VOICE_DATA type:', typeof voiceData);
-        console.log('[MCP_VOICE_DEBUG] VOICE_DATA keys:', Object.keys(voiceData || {}));
       } catch (e) {
-        console.log('[MCP_VOICE_DEBUG] ❌ Failed to parse VOICE_DATA JSON:', e);
-        console.log('[MCP_VOICE_DEBUG] JSON that failed to parse:', voiceDataMatch[1]);
-        console.log('[MCP_VOICE_DEBUG] Error message:', (e as Error).message);
         return;
       }
 
       // Validate required fields
-      console.log('[MCP_VOICE_DEBUG] 🔍 VALIDATING VOICE_DATA FIELDS');
-      console.log('[MCP_VOICE_DEBUG] audioUrl exists:', !!voiceData.audioUrl);
-      console.log('[MCP_VOICE_DEBUG] audioUrl value:', voiceData.audioUrl);
-      console.log('[MCP_VOICE_DEBUG] transcript exists:', !!voiceData.transcript);
-      console.log('[MCP_VOICE_DEBUG] transcript value:', voiceData.transcript);
-
-      if (!voiceData.audioUrl) {
-        console.log('[MCP_VOICE_DEBUG] ❌ CRITICAL: No audioUrl in VOICE_DATA!');
-        console.log('[MCP_VOICE_DEBUG] Available fields in voiceData:', Object.keys(voiceData));
+      if (!voiceData.audioUrl || !voiceData.transcript) {
         return;
       }
-
-      if (!voiceData.transcript) {
-        console.log('[MCP_VOICE_DEBUG] ❌ CRITICAL: No transcript in VOICE_DATA!');
-        console.log('[MCP_VOICE_DEBUG] Available fields in voiceData:', Object.keys(voiceData));
-        return;
-      }
-
-      console.log('[MCP_VOICE_DEBUG] ✅ VALIDATION PASSED - Have both audioUrl and transcript');
 
       // Create VoiceMessage from VOICE_DATA
-      console.log('[MCP_VOICE_DEBUG] 🏗️ CREATING VOICE MESSAGE OBJECT');
-      console.log('[MCP_VOICE_DEBUG] Using transcript:', voiceData.transcript);
-      console.log('[MCP_VOICE_DEBUG] Using audioUrl:', voiceData.audioUrl);
-      console.log('[MCP_VOICE_DEBUG] Using voiceType:', voiceData.voiceType || 'nova');
-      console.log('[MCP_VOICE_DEBUG] Using timestamp:', voiceData.timestamp || options.timestamp || Date.now());
-      console.log('[MCP_VOICE_DEBUG] AutoPlay setting:', options.isStreaming !== false);
-
       const voiceMessage = {
         type: "voice" as const,
         content: voiceData.transcript,
@@ -352,99 +242,7 @@ export class UnifiedMessageProcessor {
         autoPlay: options.isStreaming !== false
       };
 
-      console.log('[MCP_VOICE_DEBUG] ✅ VOICE MESSAGE OBJECT CREATED');
-      console.log('[MCP_VOICE_DEBUG] CRITICAL TIMESTAMP TRACKING:', voiceMessage.timestamp);
-      console.log('[MCP_VOICE_DEBUG] Final voice message object:', JSON.stringify(voiceMessage, null, 2));
-      console.log('[MCP_VOICE_DEBUG] Object type check:', voiceMessage.type === 'voice');
-      console.log('[MCP_VOICE_DEBUG] Content length:', voiceMessage.content.length);
-      console.log('[MCP_VOICE_DEBUG] AudioUrl valid:', voiceMessage.audioUrl.startsWith('http') || voiceMessage.audioUrl.startsWith('/'));
-
-      // ADD COMPREHENSIVE RENDERING PIPELINE LOGS - FOCUS ON MOBILE ISSUES
-      console.log('[VOICE_RENDER_DEBUG] ========================================');
-      console.log('[VOICE_RENDER_DEBUG] 🎯 STARTING VOICE MESSAGE RENDERING PIPELINE');
-      console.log('[VOICE_RENDER_DEBUG] Browser info:', {
-        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent.substring(0, 100) : 'N/A',
-        isMobile: typeof window !== 'undefined' ? window.innerWidth <= 768 : false,
-        viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 'N/A',
-        devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 'N/A'
-      });
-      console.log('[VOICE_RENDER_DEBUG] Rendering environment:', {
-        isStreaming: options.isStreaming,
-        hasWindow: typeof window !== 'undefined',
-        hasDocument: typeof document !== 'undefined',
-        readyState: typeof document !== 'undefined' ? document.readyState : 'N/A'
-      });
-      console.log('[VOICE_RENDER_DEBUG] Voice message size analysis:', {
-        contentLength: voiceMessage.content.length,
-        audioUrlLength: voiceMessage.audioUrl.length,
-        totalMessageSize: JSON.stringify(voiceMessage).length,
-        isLargeMessage: JSON.stringify(voiceMessage).length > 1000
-      });
-      console.log('[VOICE_RENDER_DEBUG] ========================================');
-
-      console.log('[MCP_VOICE_DEBUG] 🔄 CALLING addMessage - BEFORE');
-      console.log('[MCP_VOICE_DEBUG] Context available:', !!context);
-      console.log('[MCP_VOICE_DEBUG] addMessage function available:', typeof context.addMessage);
-      console.log('[MCP_VOICE_DEBUG] addMessage function available:', typeof context.addMessage === 'function');
-
-      // ADD DEEP CONTEXT ANALYSIS
-      console.log('[VOICE_RENDER_DEBUG] 🔍 DEEP CONTEXT ANALYSIS:');
-      console.log('[VOICE_RENDER_DEBUG] Context object type:', typeof context);
-      console.log('[VOICE_RENDER_DEBUG] Context object keys:', Object.keys(context));
-      console.log('[VOICE_RENDER_DEBUG] Context prototype:', Object.getPrototypeOf(context));
-      console.log('[VOICE_RENDER_DEBUG] Context instanceof check available:', !!context.addMessage);
-
-      // Track timing and memory before/after addMessage call
-      const beforeMemory = typeof window !== 'undefined' && (window as any).performance?.memory
-        ? (window as any).performance.memory.usedJSHeapSize
-        : 0;
-      const beforeTime = performance.now();
-
-      console.log('[VOICE_RENDER_DEBUG] ⏰ PRE-ADDMESSAGE TIMING:', {
-        timestamp: new Date().toISOString(),
-        performanceNow: beforeTime,
-        dateNow: Date.now(),
-        messageTimestamp: voiceMessage.timestamp
-      });
-
-      // CRITICAL STEP: Call addMessage with comprehensive error handling
-      try {
-        console.log('[VOICE_RENDER_DEBUG] 🚀 EXECUTING context.addMessage...');
-        context.addMessage(voiceMessage);
-        console.log('[VOICE_RENDER_DEBUG] ✅ context.addMessage COMPLETED WITHOUT ERRORS');
-      } catch (error) {
-        console.log('[VOICE_RENDER_DEBUG] ❌ CRITICAL ERROR in context.addMessage:', error);
-        console.log('[VOICE_RENDER_DEBUG] Error type:', typeof error);
-        console.log('[VOICE_RENDER_DEBUG] Error message:', error instanceof Error ? error.message : String(error));
-        console.log('[VOICE_RENDER_DEBUG] Error stack:', error instanceof Error ? error.stack : 'No stack');
-        throw error; // Re-throw to see in console
-      }
-
-      const afterTime = performance.now();
-      const afterMemory = typeof window !== 'undefined' && (window as any).performance?.memory
-        ? (window as any).performance.memory.usedJSHeapSize
-        : 0;
-      const memoryDelta = afterMemory - beforeMemory;
-
-      console.log('[MCP_VOICE_DEBUG] 🔄 Calling addMessage - AFTER');
-      console.log('[MCP_VOICE_DEBUG] ⏱️ addMessage timing:', (afterTime - beforeTime).toFixed(2) + 'ms');
-      console.log('[MCP_VOICE_DEBUG] 💾 Memory delta:', memoryDelta > 0 ? `+${Math.round(memoryDelta/1024)}KB` : `${Math.round(memoryDelta/1024)}KB`);
-
-      console.log('[VOICE_RENDER_DEBUG] ⏰ POST-ADDMESSAGE TIMING:', {
-        timestamp: new Date().toISOString(),
-        performanceNow: afterTime,
-        executionTime: (afterTime - beforeTime).toFixed(2) + 'ms',
-        memoryImpact: memoryDelta
-      });
-
-      // ADD FINAL VALIDATION CHECK
-      console.log('[VOICE_RENDER_DEBUG] 🔍 FINAL VALIDATION CHECK - MOBILE CRITICAL');
-      console.log('[VOICE_RENDER_DEBUG] Message should now be in React state pipeline');
-      console.log('[VOICE_RENDER_DEBUG] Next step: Watch for [VOICE_DEBUG] addMessage: Voice message received in useChatState');
-      console.log('[VOICE_RENDER_DEBUG] If missing on mobile but present on desktop = MOBILE RENDERING BUG CONFIRMED');
-      console.log('[VOICE_RENDER_DEBUG] ========================================');
-
-      console.log('[MCP_VOICE_DEBUG] ✅ Voice message processing complete');
+      context.addMessage(voiceMessage);
       return; // Skip creating ToolResultMessage for voice tool
     }
 

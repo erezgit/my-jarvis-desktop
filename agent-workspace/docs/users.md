@@ -66,11 +66,16 @@
 
 ## 6. my-jarvis-yaron
 - **URL**: https://my-jarvis-yaron.fly.dev
-- **Version**: 1.34.2
-- **Status**: ✅ Working
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
 - **Architecture**: /home/node ✅
-- **User Profile**: **My Jarvis Team Member** - Joining to drive My Jarvis forward. Will become a power user and potentially max user in the future.
-- **Notes**: New app created 2025-11-11, fully initialized with chat history
+- **Features**: 📊 Excel Editing, 🎤 MCP Voice System, 📱 Mobile Optimized
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: yaron@myjarvis.io
+  - **Password**: Yaron2024MyJarvis!
+- **User Profile**: **My Jarvis Team Member** - Joining to drive My Jarvis forward. Power user with full feature access and latest system capabilities.
+- **Notes**: Comprehensive upgrade completed 2025-11-23 from 1.34.2 to 1.35.0. Includes MCP voice migration (bash → MCP tool), mobile file tree persistence fixes, Claude Agent SDK 2.0.42 with thinking support, and full authentication integration. Volume data preserved (333MB). User created through official Supabase Auth API.
 
 ## 7. my-jarvis-guy
 - **URL**: https://my-jarvis-guy.fly.dev
