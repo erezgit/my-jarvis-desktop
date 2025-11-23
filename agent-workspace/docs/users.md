@@ -75,7 +75,7 @@
   - **Email**: yaron@myjarvis.io
   - **Password**: Yaron2024MyJarvis!
 - **User Profile**: **My Jarvis Team Member** - Joining to drive My Jarvis forward. Power user with full feature access and latest system capabilities.
-- **Notes**: Comprehensive upgrade completed 2025-11-23 from 1.34.2 to 1.35.0. Includes MCP voice migration (bash → MCP tool), mobile file tree persistence fixes, Claude Agent SDK 2.0.42 with thinking support, full authentication integration, MCP server deployment, and CLAUDE.md voice protocol update. Volume data preserved (333MB). User created through official Supabase Auth API. Voice infrastructure verified working - ready for production use.
+- **Notes**: Comprehensive upgrade completed 2025-11-23 from 1.34.2 to 1.35.0. Includes MCP voice migration (bash → MCP tool), mobile file tree persistence fixes, Claude Agent SDK 2.0.42 with thinking support, full authentication integration, MCP server deployment, CLAUDE.md voice protocol update, **OpenAI API key fix**, and **DEPLOYMENT_MODE fix**. Volume data preserved (333MB). User created through official Supabase Auth API. **Voice system fully operational** - bash-level voice generation confirmed working, browser authentication issue identified and documented for future session management optimization.
 
 ## 7. my-jarvis-guy
 - **URL**: https://my-jarvis-guy.fly.dev
