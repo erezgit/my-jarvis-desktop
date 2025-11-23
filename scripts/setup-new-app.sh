@@ -64,6 +64,12 @@ if [ -d "$TEMPLATE_DIR/my-jarvis" ]; then
     echo "[Setup] ✅ Copied my-jarvis/ project directory"
 fi
 
+# Create uploads directory for file uploads
+echo "[Setup] 📁 Creating uploads directory..."
+mkdir -p "$HOME_DIR/my-jarvis/uploads"
+chmod 755 "$HOME_DIR/my-jarvis/uploads"
+echo "[Setup] ✅ Uploads directory ready"
+
 # Spaces directory no longer needed in simplified architecture
 
 echo ""

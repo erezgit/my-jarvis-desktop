@@ -353,14 +353,18 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     voicePlayedTracker.clearAll();
   }, [resetChat, resetTokenUsage, isLoading, currentRequestId, handleAbort]);
 
+  // Track file upload state
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+
   const handleFileUpload = useCallback(async (file: File) => {
     console.log('[FILE_UPLOAD] Starting upload:', file.name);
 
+    setIsUploadingFile(true);
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/upload-document', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
@@ -376,7 +380,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
       addMessage({
         type: 'chat',
         role: 'assistant',
-        content: `File "${file.name}" uploaded successfully to ${result.path}. You can now ask me to process it and create a knowledge base.`,
+        content: `File "${file.name}" uploaded successfully to ${result.directory}/. ${file.name.toLowerCase().endsWith('.pdf') ? 'You can ask me to convert this PDF to a knowledge base if needed.' : ''}`,
         timestamp: Date.now(),
       });
     } catch (error) {
@@ -387,6 +391,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
         content: `Error uploading file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: Date.now(),
       });
+    } finally {
+      setIsUploadingFile(false);
     }
   }, [addMessage]);
 
@@ -631,6 +637,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             onSubmit={() => sendMessage()}
             onAbort={handleAbort}
             onFileUpload={handleFileUpload}
+            isUploadingFile={isUploadingFile}
             permissionMode={permissionMode}
             onPermissionModeChange={setPermissionMode}
             showPermissions={isPermissionMode}

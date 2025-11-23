@@ -46,6 +46,7 @@ interface ChatInputProps {
   onSubmit: () => void;
   onAbort: () => void;
   onFileUpload?: (file: File) => void;
+  isUploadingFile?: boolean;
   // Permission mode props
   permissionMode: PermissionMode;
   onPermissionModeChange: (mode: PermissionMode) => void;
@@ -62,6 +63,7 @@ export function ChatInput({
   onSubmit,
   onAbort,
   onFileUpload,
+  isUploadingFile = false,
   permissionMode,
   onPermissionModeChange,
   showPermissions = false,
@@ -238,6 +240,7 @@ export function ChatInput({
             <FileUploadButton
               onFileSelect={onFileUpload}
               disabled={isLoading}
+              isUploading={isUploadingFile}
             />
           )}
           {isLoading && currentRequestId && (
