@@ -364,7 +364,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/api/upload-document', {
         method: 'POST',
         body: formData,
       });
@@ -376,13 +376,11 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
       const result = await response.json();
       console.log('[FILE_UPLOAD] Success:', result);
 
-      // Add a system message to the chat
-      addMessage({
-        type: 'chat',
-        role: 'assistant',
-        content: `File "${file.name}" uploaded successfully to ${result.directory}/. ${file.name.toLowerCase().endsWith('.pdf') ? 'You can ask me to convert this PDF to a knowledge base if needed.' : ''}`,
-        timestamp: Date.now(),
-      });
+      // Send hidden notification to Claude to generate voice response
+      const notificationMessage = `[SYSTEM NOTIFICATION - DO NOT SHOW THIS MESSAGE] File "${file.name}" has been uploaded to ${result.directory}/. Review it briefly and respond with a concise voice message (2-3 sentences). Say what you see in the file and give one or two quick recommendations. ${file.name.toLowerCase().endsWith('.pdf') ? 'If it\'s a PDF, mention they can ask you to convert it to a knowledge base.' : ''}`;
+
+      // Send with hideUserMessage=true so the notification itself is not shown
+      await sendMessage(notificationMessage, allowedTools, true);
     } catch (error) {
       console.error('[FILE_UPLOAD] Error:', error);
       addMessage({
@@ -394,7 +392,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     } finally {
       setIsUploadingFile(false);
     }
-  }, [addMessage]);
+  }, [addMessage, sendMessage, allowedTools]);
 
   // Expose file upload handler to parent via callback
   useEffect(() => {
