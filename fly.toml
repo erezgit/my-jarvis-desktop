@@ -5,6 +5,7 @@ app = "my-jarvis-dev"
 primary_region = "sjc"
 
 [build]
+  dockerfile = "Dockerfile"
 
 [env]
   PORT = "10000"
