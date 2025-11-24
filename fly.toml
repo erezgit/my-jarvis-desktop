@@ -1,7 +1,7 @@
 # fly.toml template for My Jarvis Desktop Web Deployment
-# Use: cp fly.toml.template fly.toml && sed -i '' 's/my-jarvis-erez/your-app-name/g' fly.toml
+# Use: cp fly.toml.template fly.toml && sed -i '' 's/APP_NAME/your-app-name/g' fly.toml
 
-app = "my-jarvis-erez"
+app = "my-jarvis-dev"
 primary_region = "sjc"
 
 [build]
