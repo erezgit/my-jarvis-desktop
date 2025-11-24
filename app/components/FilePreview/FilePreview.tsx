@@ -3,6 +3,8 @@ import { MDXRenderer } from './mdx/MDXRenderer';
 import { PDFViewer } from './PDFViewer';
 import { SandpackPreview } from './SandpackPreview';
 import { ExcelViewer } from './ExcelViewer';
+import { ImageViewer } from './ImageViewer';
+import { FileDownloadButton } from './FileDownloadButton';
 
 interface FileItem {
   name: string;
@@ -98,12 +100,36 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
     );
   }
 
+  // Image files - use ImageViewer with zoom and pan support
+  const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'];
+  if (imageExtensions.includes(file.extension)) {
+    const streamUrl = `/api/stream-file?path=${encodeURIComponent(file.path)}`;
+    return (
+      <ImageViewer
+        imageUrl={streamUrl}
+        fileName={file.name}
+        alt={file.name}
+        className={className}
+      />
+    );
+  }
+
   if (file.content) {
     // Rich markdown rendering
     if (file.extension === '.md') {
       return (
-        <div className={`h-full w-full overflow-auto p-6 bg-white dark:bg-gray-900 ${className}`}>
-          <MarkdownRenderer source={file.content} />
+        <div className={`h-full w-full flex flex-col bg-white dark:bg-gray-900 ${className}`}>
+          {/* Fixed header matching file tree pattern */}
+          <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0 justify-between bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{file.name}</h3>
+            </div>
+            <FileDownloadButton fileName={file.name} content={file.content} />
+          </div>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-auto p-6">
+            <MarkdownRenderer source={file.content} />
+          </div>
         </div>
       );
     }
@@ -111,8 +137,18 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
     // Interactive MDX rendering
     if (file.extension === '.mdx') {
       return (
-        <div className={`h-full w-full overflow-auto p-6 bg-white dark:bg-gray-900 ${className}`}>
-          <MDXRenderer source={file.content} />
+        <div className={`h-full w-full flex flex-col bg-white dark:bg-gray-900 ${className}`}>
+          {/* Fixed header matching file tree pattern */}
+          <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0 justify-between bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{file.name}</h3>
+            </div>
+            <FileDownloadButton fileName={file.name} content={file.content} />
+          </div>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-auto p-6">
+            <MDXRenderer source={file.content} />
+          </div>
         </div>
       );
     }
@@ -121,15 +157,17 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
     // Note: .tsx and .jsx are handled by Sandpack above
     if (['.js', '.ts', '.py', '.json', '.css', '.html', '.yml', '.yaml', '.sh', '.bash'].includes(file.extension)) {
       return (
-        <div className={`h-full w-full overflow-auto bg-white dark:bg-gray-900 ${className}`}>
-          <div className="p-4">
-            {/* File header */}
-            <div className="mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{file.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{getLanguageFromExtension(file.extension)}</p>
+        <div className={`h-full w-full flex flex-col bg-white dark:bg-gray-900 ${className}`}>
+          {/* Fixed header matching file tree pattern */}
+          <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0 justify-between bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{file.name}</h3>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{getLanguageFromExtension(file.extension)}</span>
             </div>
-
-            {/* Code content */}
+            <FileDownloadButton fileName={file.name} content={file.content} />
+          </div>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-auto p-4">
             <pre className="font-mono text-sm whitespace-pre-wrap leading-relaxed text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 p-4 rounded-md overflow-x-auto">
               {file.content}
             </pre>
@@ -140,13 +178,20 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
 
     // Plain text files
     return (
-      <div className={`h-full w-full overflow-auto p-4 bg-white dark:bg-gray-900 ${className}`}>
-        <div className="mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">{file.name}</h3>
+      <div className={`h-full w-full flex flex-col bg-white dark:bg-gray-900 ${className}`}>
+        {/* Fixed header matching file tree pattern */}
+        <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0 justify-between bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">{file.name}</h3>
+          </div>
+          <FileDownloadButton fileName={file.name} content={file.content} />
         </div>
-        <pre className="font-mono text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">
-          {file.content}
-        </pre>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-auto p-4">
+          <pre className="font-mono text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+            {file.content}
+          </pre>
+        </div>
       </div>
     );
   }
