@@ -264,15 +264,15 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
           const chunk = decoder.decode(value);
 
           if (isMobile) {
-            // Mobile: Accumulate chunks and extract complete JSON lines
+            // Mobile: Accumulate chunks and extract complete JSON messages
             streamBuffer += chunk;
 
-            // Extract complete lines ending with newline
-            const lines = streamBuffer.split("\n");
-            // Keep the last incomplete line in buffer
+            // Extract complete messages ending with ___DELIM___
+            const lines = streamBuffer.split("___DELIM___");
+            // Keep the last incomplete message in buffer
             streamBuffer = lines.pop() || "";
 
-            // Process complete lines
+            // Process complete messages
             for (const line of lines) {
               if (shouldAbort) break;
               const trimmedLine = line.trim();
@@ -287,8 +287,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
               }
             }
           } else {
-            // Desktop: Standard processing
-            const lines = chunk.split("\n").filter((line) => line.trim());
+            // Desktop: Standard processing with new delimiter
+            const lines = chunk.split("___DELIM___").filter((line) => line.trim());
             for (const line of lines) {
               if (shouldAbort) break;
               processStreamLine(line, streamingContext);
@@ -644,6 +644,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
           />
         </>
       )}
+
+      {/* Agent Dashboard - Multi-Agent Orchestrator (Ticket #107) */}
     </div>
   );
 }

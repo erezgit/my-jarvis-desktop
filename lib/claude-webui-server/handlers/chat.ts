@@ -1,9 +1,80 @@
 import { Context } from "hono";
-import { query, type PermissionMode, createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk";
+import { query, type PermissionMode, createSdkMcpServer, tool, AgentDefinition, HookMatcher } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
 import { generateVoiceResponse, generateAudioUrl, sanitizeForJson } from "../utils/voiceGenerator.ts";
+import { SubagentTracker } from "../utils/subagent-tracker.ts";
+import path from "path";
+import fs from "fs";
+
+/**
+ * Load agent definition from .claude/agents/ directory
+ */
+function loadAgentDefinition(agentName: string): { description: string; tools: string[]; prompt: string } | null {
+  const agentPath = path.join(process.cwd(), '.claude', 'agents', `${agentName}.md`);
+
+  if (!fs.existsSync(agentPath)) {
+    logger.agent.warn('Agent definition not found: {path}', { path: agentPath });
+    return null;
+  }
+
+  const content = fs.readFileSync(agentPath, 'utf-8');
+
+  // Parse frontmatter
+  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!frontmatterMatch) {
+    logger.agent.error('Invalid agent definition format: {agent}', { agent: agentName });
+    return null;
+  }
+
+  const [, frontmatter, prompt] = frontmatterMatch;
+  const lines = frontmatter.split('\n');
+  let description = '';
+  let tools: string[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('description:')) {
+      description = line.substring(12).trim().replace(/^["']|["']$/g, '');
+    } else if (line.startsWith('tools:')) {
+      tools = line.substring(6).trim().split(',').map(t => t.trim());
+    }
+  }
+
+  return { description, tools, prompt: prompt.trim() };
+}
+
+/**
+ * Worker agent definitions for multi-agent orchestration
+ * These agents are spawned via the Task tool
+ */
+const workerAgents: Record<string, AgentDefinition> = {};
+
+// Load ticket-worker agent
+const ticketWorkerDef = loadAgentDefinition('ticket-worker');
+if (ticketWorkerDef) {
+  workerAgents['ticket-worker'] = new AgentDefinition({
+    description: ticketWorkerDef.description,
+    tools: ticketWorkerDef.tools,
+    prompt: ticketWorkerDef.prompt,
+    model: 'haiku' // Use fast model for workers
+  });
+  logger.agent.info('Loaded worker agent: ticket-worker');
+}
+
+/**
+ * Global subagent tracker instance
+ */
+let globalSubagentTracker: SubagentTracker | null = null;
+
+function getOrCreateSubagentTracker(): SubagentTracker {
+  if (!globalSubagentTracker) {
+    const sessionDir = path.join(process.cwd(), 'agent-workspace', 'sessions', `session-${Date.now()}`);
+    globalSubagentTracker = new SubagentTracker(sessionDir);
+    logger.agent.info('Created global subagent tracker: {dir}', { dir: sessionDir });
+  }
+  return globalSubagentTracker;
+}
 
 /**
  * Create JARVIS Tools MCP Server with voice generation capability
@@ -237,19 +308,40 @@ async function* executeClaudeCommand(
         "jarvis-tools": jarvisToolsServer
       },
 
+      // ✅ MULTI-AGENT: Enable Task tool for worker delegation
+      agents: Object.keys(workerAgents).length > 0 ? workerAgents : undefined,
+
+      // ✅ MULTI-AGENT: Add hooks for subagent tracking
+      hooks: {
+        PreToolUse: [
+          new HookMatcher({
+            matcher: null, // Match all tools
+            hooks: [getOrCreateSubagentTracker().preToolUse]
+          })
+        ],
+        PostToolUse: [
+          new HookMatcher({
+            matcher: null, // Match all tools
+            hooks: [getOrCreateSubagentTracker().postToolUse]
+          })
+        ]
+      },
+
       // ✅ ENHANCED: Clean architecture - MCP tools ALWAYS prioritized
       ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? {
         allowedTools: [
-          "mcp__jarvis-tools__voice_generate",     // Only keep voice tool
+          "Task",                                      // Enable Task tool for worker spawning
+          "mcp__jarvis-tools__voice_generate",         // Voice generation tool
           // Include all other non-MCP file tools (native Claude Code tools work perfectly)
           ...allowedTools.filter(tool =>
-            tool !== "mcp__jarvis-tools__voice_generate"
+            tool !== "mcp__jarvis-tools__voice_generate" && tool !== "Task"
           )
         ]
       } : {
         allowedTools: [
-          "mcp__jarvis-tools__voice_generate"     // Default: only voice tool
+          "Task",                                      // Enable Task tool for worker spawning
+          "mcp__jarvis-tools__voice_generate"          // Default: voice tool
         ]
       }),
       ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend
@@ -340,13 +432,13 @@ export async function handleChatRequest(
           workingDirectory,
           chatRequest.permissionMode,
         )) {
-          const data = JSON.stringify(chunk) + "\n";
+          const data = JSON.stringify(chunk) + "___DELIM___";
           controller.enqueue(new TextEncoder().encode(data));
           chunkCount++;
 
           // Mobile-specific: Add keep-alive ping every 5 chunks to prevent mobile timeout
           if (isMobile && chunkCount % 5 === 0) {
-            const keepAlive = JSON.stringify({ type: "ping", timestamp: Date.now() }) + "\n";
+            const keepAlive = JSON.stringify({ type: "ping", timestamp: Date.now() }) + "___DELIM___";
             controller.enqueue(new TextEncoder().encode(keepAlive));
           }
         }
@@ -357,7 +449,7 @@ export async function handleChatRequest(
           error: error instanceof Error ? error.message : String(error),
         };
         controller.enqueue(
-          new TextEncoder().encode(JSON.stringify(errorResponse) + "\n"),
+          new TextEncoder().encode(JSON.stringify(errorResponse) + "___DELIM___"),
         );
         controller.close();
       }
