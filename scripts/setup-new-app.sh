@@ -97,19 +97,18 @@ cat > "$HOME_DIR/.claude.json" << 'EOF'
     "/home/node": {
       "allowedTools": ["Read", "Write", "Edit", "Bash"],
       "history": [],
-      "mcpServers": {},
+      "mcpServers": {
+        "jarvis-tools": {
+          "command": "node",
+          "args": ["/home/node/jarvis-mcp-server.js"],
+          "env": {
+            "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+            "WORKSPACE_DIR": "${WORKSPACE_DIR}"
+          }
+        }
+      },
       "exampleFiles": [],
       "mcpContextUris": []
-    }
-  },
-  "mcpServers": {
-    "jarvis-tools": {
-      "command": "node",
-      "args": ["/home/node/jarvis-mcp-server.js"],
-      "env": {
-        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
-        "WORKSPACE_DIR": "${WORKSPACE_DIR}"
-      }
     }
   }
 }

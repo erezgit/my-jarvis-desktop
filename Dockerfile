@@ -47,6 +47,7 @@ ENV HOME=/home/node
 
 # Copy workspace template and scripts (available for manual execution)
 COPY workspace-template /app/workspace-template
+COPY jarvis-mcp-server.js /app/workspace-template/jarvis-mcp-server.js
 COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
 COPY scripts/migrate-to-home-node.sh /app/scripts/migrate-to-home-node.sh
