@@ -164,9 +164,22 @@
 - **User Profile**: **New User** - Profile to be determined based on usage patterns.
 - **Notes**: Created 2025-11-19 with stable codebase deployment and full authentication integration
 
+## 14. my-jarvis-dev
+- **URL**: https://my-jarvis-dev.fly.dev
+- **Version**: 1.35.0
+- **Status**: ✅ Working (Authentication Required)
+- **Architecture**: /home/node ✅
+- **Features**: 📊 Excel Editing, 🎤 MCP Voice System, 📱 Mobile Optimized
+- **Authentication**:
+  - **Login URL**: https://www.myjarvis.io/login
+  - **Email**: dev@myjarvis.io
+  - **Password**: 1ZfOjR!q73IH
+- **User Profile**: **Development User** - Development environment for testing new features and deployment procedures.
+- **Notes**: Created 2025-11-23 with latest codebase deployment (version 1.35.0), Claude CLI 2.0.42, full authentication integration, and complete new app deployment process. User ID: 2b659942-ebda-44e7-a33e-40b93f3e9846.
+
 ---
 
-**Last Update**: 2025-11-18
+**Last Update**: 2025-11-23
 **Security Update**: Favicon and authentication middleware fix deployed across all instances
 - ✅ **Favicon Issue Resolved**: All instances now show proper Jarvis Orb favicon
 - ✅ **Security Enhanced**: 2025 OWASP-compliant authentication middleware with path traversal protection

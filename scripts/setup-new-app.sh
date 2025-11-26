@@ -58,17 +58,19 @@ if [ -d "$TEMPLATE_DIR/guides" ]; then
     echo "[Setup] ✅ Copied guides/ directory"
 fi
 
-# Copy my-jarvis project directory
-if [ -d "$TEMPLATE_DIR/my-jarvis" ]; then
-    cp -r "$TEMPLATE_DIR/my-jarvis" "$HOME_DIR/"
-    echo "[Setup] ✅ Copied my-jarvis/ project directory"
+# Copy MCP server file for voice generation
+if [ -f "$TEMPLATE_DIR/jarvis-mcp-server.js" ]; then
+    cp "$TEMPLATE_DIR/jarvis-mcp-server.js" "$HOME_DIR/"
+    echo "[Setup] ✅ Copied jarvis-mcp-server.js to persistent volume"
 fi
 
-# Create uploads directory for file uploads
-echo "[Setup] 📁 Creating uploads directory..."
+# Create my-jarvis project directory structure programmatically (eliminates Git keep files)
+echo "[Setup] 📁 Creating my-jarvis project structure..."
+mkdir -p "$HOME_DIR/my-jarvis/docs"
+mkdir -p "$HOME_DIR/my-jarvis/tickets"
 mkdir -p "$HOME_DIR/my-jarvis/uploads"
-chmod 755 "$HOME_DIR/my-jarvis/uploads"
-echo "[Setup] ✅ Uploads directory ready"
+chmod -R 755 "$HOME_DIR/my-jarvis"
+echo "[Setup] ✅ Created clean my-jarvis directory structure (no Git keep files)"
 
 # Spaces directory no longer needed in simplified architecture
 
@@ -88,7 +90,7 @@ echo "[Setup] ✅ Set ownership to node:node and fixed permissions"
 echo ""
 echo "[Claude Setup] Creating Claude configuration with projects object..."
 
-# Create .claude.json with projects object for chat history API
+# Create .claude.json with projects object for chat history AND MCP servers for voice
 cat > "$HOME_DIR/.claude.json" << 'EOF'
 {
   "projects": {
@@ -98,6 +100,16 @@ cat > "$HOME_DIR/.claude.json" << 'EOF'
       "mcpServers": {},
       "exampleFiles": [],
       "mcpContextUris": []
+    }
+  },
+  "mcpServers": {
+    "jarvis-tools": {
+      "command": "node",
+      "args": ["/home/node/jarvis-mcp-server.js"],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "WORKSPACE_DIR": "${WORKSPACE_DIR}"
+      }
     }
   }
 }

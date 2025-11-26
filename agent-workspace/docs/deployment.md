@@ -10,9 +10,9 @@
 
 ---
 
-## Create New App (5 Simple Steps)
+## Create New App (8 Simple Steps)
 
-**When user requests "create new app [name]", Jarvis executes all steps 1-5. User can then immediately access the working app. Do not create any documentation or guides - just follow the steps.**
+**When user requests "create new app [name]", Jarvis executes all steps 1-8. User can then immediately access the working app. Do not create any documentation or guides - just follow the steps.**
 
 ### Step 1: Create Fly.io App
 ```bash
@@ -24,24 +24,87 @@ fly apps create my-jarvis-newuser
 fly deploy --app my-jarvis-newuser
 ```
 
-### Step 3: Set Authentication Environment Variables
+### Step 3: Set Authentication & MCP Environment Variables
 ```bash
-fly secrets set JWT_SECRET="dEf2vFruOirvQX/GtVV14NfQr3X9HkEG99+QEvf9Y2g=" LOGIN_URL="https://www.myjarvis.io/login" --app my-jarvis-newuser
+fly secrets set \
+  JWT_SECRET="dEf2vFruOirvQX/GtVV14NfQr3X9HkEG99+QEvf9Y2g=" \
+  LOGIN_URL="https://www.myjarvis.io/login" \
+  OPENAI_API_KEY="${OPENAI_API_KEY}" \
+  WORKSPACE_DIR="/home/node" \
+  DEPLOYMENT_MODE="web" \
+  --app my-jarvis-newuser
 ```
 
+**Note**: Replace `${OPENAI_API_KEY}` with your actual OpenAI API key for MCP voice generation.
+
 ### Step 4: Create User Account (Supabase Auth)
-```bash
-# Create user through official Supabase Auth API (NOT manual SQL inserts)
-# Use supabase.auth.signUp() with email/password
-# Generate secure password (8+ characters, mixed characters)
+
+**CRITICAL: Use the Supabase Auth API, NOT manual SQL inserts**
+
+#### 4a. Generate Secure Password
+```javascript
+// Generate secure password (8+ characters, mixed case, numbers, symbols)
+function generateSecurePassword() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
+const userPassword = generateSecurePassword();
+console.log('Generated password for user:', userPassword);
+```
+
+#### 4b. Create User via Supabase Auth API
+```javascript
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://ocvkyhlfdjrvvipljbsa.supabase.co';
+const supabaseServiceKey = 'sbp_4b23d38fb597138830f7cfa14c0e6f5fe95d12a6'; // Service key for admin operations
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+// Create user account
+const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+  email: 'user@example.com', // Replace with actual email
+  password: userPassword,
+  email_confirm: true, // Auto-confirm email (skip verification step)
+  user_metadata: {
+    name: 'User Name' // Optional: add user's name
+  }
+});
+
+if (authError) {
+  console.error('Error creating user:', authError);
+  process.exit(1);
+}
+
+console.log('✅ User created successfully');
+console.log('User ID:', authUser.user.id);
+console.log('Email:', authUser.user.email);
+console.log('Password:', userPassword);
+
+// SAVE THESE CREDENTIALS - YOU'LL NEED THEM FOR LOGIN
 ```
 
 ### Step 5: Create Database Instance Mapping
+
+**Link the authenticated user to their Fly.io app instance**
+
 ```sql
 -- CRITICAL: Link user account to Fly.io app in user_instances table
 -- ⚠️  WARNING: fly_app_url MUST be hostname-only (NO https://)
 -- ✅ CORRECT: 'my-jarvis-newuser.fly.dev'
 -- ❌ WRONG:   'https://my-jarvis-newuser.fly.dev'
+
+-- Use the User ID from Step 4b (authUser.user.id)
 INSERT INTO user_instances (
   user_id,
   fly_app_name,
@@ -49,7 +112,25 @@ INSERT INTO user_instances (
   status,
   provisioned_at
 ) VALUES (
-  '[USER_ID_FROM_AUTH_USERS]',
+  '${authUser.user.id}', -- Use the actual UUID from Supabase Auth
+  'my-jarvis-newuser',
+  'my-jarvis-newuser.fly.dev',
+  'ready',
+  now()
+);
+```
+
+#### Example Complete SQL with Real User ID:
+```sql
+-- Example with actual UUID (replace with your user's ID from Step 4b)
+INSERT INTO user_instances (
+  user_id,
+  fly_app_name,
+  fly_app_url,
+  status,
+  provisioned_at
+) VALUES (
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   'my-jarvis-newuser',
   'my-jarvis-newuser.fly.dev',
   'ready',
@@ -66,7 +147,100 @@ fly ssh console -a my-jarvis-newuser
 exit
 ```
 
-**Result**: Fully working app with authentication and chat history auto-loading.
+### Step 6b: Restart App (Critical for MCP Environment Variables)
+```bash
+# CRITICAL: Restart the entire app to ensure MCP server picks up environment variables
+fly apps restart my-jarvis-newuser
+
+# Wait for app to fully restart (usually takes 30-60 seconds)
+fly status --app my-jarvis-newuser
+# Wait until status shows "running"
+```
+
+**Why this step is required:**
+- MCP server process starts when container boots and caches environment variables
+- The setup script creates `.claude.json` but MCP server is already running with stale config
+- App restart ensures MCP server restarts with fresh OPENAI_API_KEY and WORKSPACE_DIR
+
+### Step 7: Test Complete Authentication Flow
+
+#### 7a. Test Redirect (Unauthenticated)
+```bash
+# Verify app blocks unauthenticated access
+curl -I https://my-jarvis-newuser.fly.dev
+# Should return: 302 redirect to https://www.myjarvis.io/login
+```
+
+#### 7b. Test User Login (Full Authentication)
+**Manual Test Steps:**
+1. Open browser to: `https://www.myjarvis.io/login`
+2. Enter credentials from Step 4:
+   - **Email**: `user@example.com` (from Step 4b)
+   - **Password**: `[generated password from Step 4a]`
+3. Click "Sign In"
+4. Should redirect to: `https://my-jarvis-newuser.fly.dev`
+5. Should see working My Jarvis Desktop interface (not login page)
+
+#### 7c. Verify App Functionality
+Once logged in, test:
+- ✅ Chat interface loads
+- ✅ Voice messages work (MCP voice generation)
+- ✅ File tree shows clean directories (docs, tickets, uploads)
+- ✅ Claude Code terminal available
+
+#### 7d. Test Voice Generation System
+```bash
+# Test voice generation directly (should work immediately after setup)
+fly ssh console -a my-jarvis-newuser -C "python3 /home/node/tools/src/cli/auto_jarvis_voice.py 'Voice system test for new app deployment' --voice nova --output-dir /home/node/tools/voice --json-output"
+
+# Should return JSON with success confirmation and audio file path
+# Example: {"type": "voice", "transcript": "...", "audioPath": "...", "filename": "..."}
+```
+
+**Result**: Fully working app with authentication, chat history auto-loading, and MCP voice generation.
+
+### Step 8: Update Users Documentation
+
+Add the new user to the users.md file with complete information:
+
+```bash
+# Edit /Users/erezfern/Workspace/my-jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop/agent-workspace/docs/users.md
+```
+
+**Add new user entry with:**
+- URL: `https://my-jarvis-newuser.fly.dev`
+- Version: `[current version from package.json]`
+- Status: `✅ Working (Authentication Required)`
+- Architecture: `/home/node ✅`
+- Features: `📊 Excel Editing, 🎤 MCP Voice System, 📱 Mobile Optimized`
+- Authentication credentials (email/password from Step 4)
+- User Profile: `[classify based on intended use]`
+- Notes: Creation date and deployment details
+- User ID from Supabase (for reference)
+
+**Update the "Last Update" date** to current date.
+
+---
+
+## 🔄 Complete Workflow Summary
+
+When creating a new app, follow this exact sequence:
+
+1. **Create Fly.io app**: `fly apps create my-jarvis-newuser`
+2. **Deploy Docker image**: `fly deploy --app my-jarvis-newuser`
+3. **Set environment variables**: JWT_SECRET, LOGIN_URL, OPENAI_API_KEY, WORKSPACE_DIR
+4. **Create Supabase user**: Use Auth API with generated password
+5. **Link to database**: Insert into user_instances with correct User ID
+6. **Initialize workspace**: Run setup script via SSH
+6b. **Restart app**: Ensure MCP server picks up environment variables
+7. **Test authentication**: Verify login flow AND voice generation works
+8. **Update users.md**: Add new user entry with all credentials and details
+
+**Critical Notes**:
+- Always use Supabase Auth API (never manual SQL in auth.users)
+- Save generated password - required for user login
+- Use exact User ID from auth response in user_instances
+- Never include https:// in fly_app_url field
 
 ---
 
@@ -79,14 +253,16 @@ exit
 
 ### During Setup Script
 - Copies template files from `/app/workspace-template/` to `/home/node/`
-- **Creates `.claude.json` with projects object** (enables chat history API)
+- **Creates `.claude.json` with projects object AND MCP servers** (enables chat history + voice)
+- Creates clean `my-jarvis/docs`, `my-jarvis/tickets`, `my-jarvis/uploads` directories
 - Creates `.claude/projects/-home-node/` directory structure
 - Sets proper file permissions for node user
 
 ### After User Login
 - ✅ Chat history works immediately (auto-loads latest conversation)
-- ✅ Voice generation works immediately
+- ✅ **MCP Voice generation works immediately** (no manual setup required)
 - ✅ Claude Code agent works for all AI features
+- ✅ Clean workspace folders (no Git keep files)
 
 ---
 
@@ -177,12 +353,13 @@ Then authenticate in web terminal: `claude login`
 
 | Task | Command |
 |------|---------|
-| Create new app | `fly apps create NAME` → `fly deploy --app NAME` → SSH + setup script |
+| Create new app | `fly apps create NAME` → `fly deploy --app NAME` → Set secrets → Create user → Link DB → SSH setup |
 | Update code | `fly deploy --app NAME --update-only` |
 | Delete app | `fly apps destroy NAME --yes` |
 | SSH access | `fly ssh console -a NAME` |
 | View logs | `fly logs --app NAME` |
 | Check status | `fly status --app NAME` |
+| Test auth | `curl -I https://NAME.fly.dev` (should redirect to login) |
 
 ---
 

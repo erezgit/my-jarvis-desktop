@@ -11,6 +11,11 @@ This workspace overrides Claude Code's default text-only behavior.
 - **Tool:** `mcp__jarvis-tools__voice_generate`
 - **Parameters:** message, voice (nova/echo/alloy/onyx/fable/shimmer), speed (0.25-4.0)
 
+**CRITICAL: MCP Voice Tool Usage**
+- NEVER use bash commands like `/path/to/jarvis_voice.sh`
+- ALWAYS use the MCP tool: `mcp__jarvis-tools__voice_generate`
+- MCP server handles voice generation through jarvis-mcp-server.js
+
 **Rules:**
 - Voice messages ARE the response (contain full transcript)
 - NEVER write text-only responses
