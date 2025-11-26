@@ -374,22 +374,14 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   return (
     <div className={cn("flex flex-col h-full bg-neutral-50 dark:bg-neutral-900", className)}>
       {/* Fixed header */}
-      <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0 justify-between">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <JarvisOrb />
-          <button
-            onClick={selectNewDirectory}
-            className="text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left truncate"
-          >
-            {folderName}
-          </button>
-        </div>
-        {onFileUpload && (
-          <FileUploadButton
-            onFileSelect={onFileUpload}
-            disabled={false}
-          />
-        )}
+      <div className="h-[60px] flex items-center gap-2 px-4 flex-shrink-0">
+        <JarvisOrb />
+        <button
+          onClick={selectNewDirectory}
+          className="text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left truncate"
+        >
+          {folderName}
+        </button>
       </div>
 
       {/* Loading state */}

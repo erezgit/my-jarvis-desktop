@@ -1,0 +1,50 @@
+# fly.toml template for My Jarvis Desktop Web Deployment
+# Use: cp fly.toml.template fly.toml && sed -i '' 's/APP_NAME/your-app-name/g' fly.toml
+
+app = "APP_NAME"
+primary_region = "sjc"
+
+[build]
+
+[env]
+  PORT = "10000"
+  TERMINAL_WS_PORT = "3001"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 10000
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 100
+    soft_limit = 80
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "10s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/health"
+
+# REMOVED: Port 3001 service causing routing conflicts
+# [[services]]
+#   internal_port = 3001
+#   protocol = "tcp"
+#   processes = ["app"]
+#
+#   [[services.ports]]
+#     port = 3001
+#     handlers = []
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2gb"
+
+[mounts]
+  source = "workspace_data"
+  destination = "/home/node"

@@ -100,7 +100,23 @@ Update the version in `package.json` by incrementing it (e.g., from 1.4.0 to 1.4
 
 **Note**: The Settings modal version automatically pulls from package.json, so you only need to update one place.
 
-### Step 2: Deploy Updated Code
+### Step 2: Verify fly.toml Configuration
+**⚠️ CRITICAL**: Before deploying, verify `fly.toml` points to the correct app:
+```bash
+# Check which app fly.toml is configured for
+grep "^app = " fly.toml
+
+# Expected output: app = "my-jarvis-user"
+```
+
+**WARNING**: If `fly.toml` has the wrong app name, `flyctl deploy` will deploy to that app instead of the one specified in `--app` flag! The `app` field in `fly.toml` takes precedence.
+
+**Best Practice**:
+- Use `--config` flag to specify app-specific config: `fly deploy --config fly-my-jarvis-user.toml`
+- OR verify `fly.toml` before every deployment
+- OR always use `--app` flag AND verify fly.toml matches
+
+### Step 3: Deploy Updated Code
 ```bash
 fly deploy --app my-jarvis-user --update-only
 ```
