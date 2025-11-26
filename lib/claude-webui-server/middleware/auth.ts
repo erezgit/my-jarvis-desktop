@@ -26,6 +26,8 @@ interface AuthContext {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const LOGIN_URL = process.env.LOGIN_URL || "https://www.myjarvis.io/login";
+const DISABLE_AUTH = process.env.DISABLE_AUTH === "true";
+const NODE_ENV = process.env.NODE_ENV || "production";
 const SESSION_COOKIE_NAME = "jarvis_session";
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
 
@@ -86,6 +88,15 @@ export const authMiddleware = createMiddleware<AuthContext>(async (c, next) => {
 
   // 1. Health checks (must come first)
   if (path === "/health" || path === "/api/health") {
+    return next();
+  }
+
+  // 2. Development mode bypass
+  if (DISABLE_AUTH && NODE_ENV === "development") {
+    // Create a mock session for development
+    c.set("userId", "dev-user-123");
+    c.set("sessionId", "dev-session-123");
+    logger.app.info("Development mode: Authentication bypassed");
     return next();
   }
 
