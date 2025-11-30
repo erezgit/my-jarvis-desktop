@@ -35,7 +35,6 @@ interface ChatPageProps {
 }
 
 export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewChatReady }: ChatPageProps) {
-  console.log('[CHATPAGE] ===== ChatPage component loaded - BUILD TEST =====');
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
 

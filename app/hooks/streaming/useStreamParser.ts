@@ -88,7 +88,6 @@ export function useStreamParser() {
       }
 
       // Process the message using the unified processor
-      console.log('[DEBUG] useStreamParser calling processor.processMessage for:', claudeData.type);
       processor.processMessage(claudeData, processingContext, {
         isStreaming: true,
       });

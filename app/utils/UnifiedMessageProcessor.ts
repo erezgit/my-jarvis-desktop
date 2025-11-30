@@ -174,7 +174,6 @@ export class UnifiedMessageProcessor {
     const toolUseId = contentItem.tool_use_id || "";
     const cachedToolInfo = this.getCachedToolInfo(toolUseId);
     const toolName = cachedToolInfo?.name || "Tool";
-    console.log('[DEBUG] tool_result lookup:', { toolUseId, toolName, hasCachedInfo: !!cachedToolInfo });
 
 
 
@@ -258,7 +257,6 @@ export class UnifiedMessageProcessor {
     let isDirectory = false;
 
     // Check if this is a Write, Edit, or Bash (delete) tool by examining the cached input
-    console.log('[DEBUG] Tool result processing:', { toolName, cachedToolInfo: !!cachedToolInfo, hasInput: !!(cachedToolInfo?.input) });
     if (cachedToolInfo && cachedToolInfo.input) {
       const input = cachedToolInfo.input;
 
@@ -275,7 +273,6 @@ export class UnifiedMessageProcessor {
       }
       else if (toolName === "Bash" && input.command && typeof input.command === 'string') {
         const command = input.command as string;
-        console.log('[DEBUG] Bash command detected:', command);
         // Pattern 1: Directory creation (mkdir)
         const mkdirMatch = command.match(/mkdir\s+(?:-p\s+)?["']?([^\s"']+)["']?/);
         if (mkdirMatch) {
@@ -500,14 +497,12 @@ export class UnifiedMessageProcessor {
   ): void {
 
     // Cache tool_use information for later permission error handling and tool_result correlation
-    console.log('[DEBUG] handleToolUse called:', { id: contentItem.id, name: contentItem.name, input: contentItem.input });
     if (contentItem.id && contentItem.name) {
       this.cacheToolUse(
         contentItem.id,
         contentItem.name,
         contentItem.input || {},
       );
-      console.log('[DEBUG] Cached tool_use:', { id: contentItem.id, name: contentItem.name });
     }
 
     // Note: We don't create FileOperationMessage from tool_use anymore
