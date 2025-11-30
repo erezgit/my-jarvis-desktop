@@ -4,6 +4,27 @@ import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
 import { generateVoiceResponse, generateAudioUrl, sanitizeForJson } from "../utils/voiceGenerator.ts";
+import { TokenUsageService } from "../../../app/lib/token-tracking/token-usage-service.ts";
+
+/**
+ * Get user ID for token tracking based on environment
+ */
+function getTokenTrackingUserId(context?: Context): string | null {
+  // Development mode: Use test user ID
+  if (process.env.DISABLE_AUTH === 'true' && process.env.NODE_ENV === 'development') {
+    return '2553131c-33c9-49ad-8e31-ecd3b966ea94'; // Development test user
+  }
+
+  // Production: Use USER_ID environment variable (set per container for specific user)
+  if (process.env.USER_ID) {
+    console.log('[INFO] Using USER_ID from environment for token tracking');
+    return process.env.USER_ID;
+  }
+
+  // Fallback: No user ID available
+  console.log('[WARNING] Token tracking skipped - USER_ID environment variable not set');
+  return null;
+}
 
 /**
  * Create JARVIS Tools MCP Server with voice generation capability
@@ -193,8 +214,10 @@ async function* executeClaudeCommand(
   allowedTools?: string[],
   workingDirectory?: string,
   permissionMode?: PermissionMode,
+  context?: Context,
 ): AsyncGenerator<StreamResponse> {
   let abortController: AbortController;
+  let actualSessionId = sessionId; // Store the session ID, may be updated from system message
 
   try {
     // Process commands that start with '/'
@@ -270,6 +293,84 @@ async function* executeClaudeCommand(
       // Debug logging of raw SDK messages with detailed content
       logger.chat.debug("Claude SDK Message: {sdkMessage}", { sdkMessage });
 
+      // Check for usage data in message properties
+
+      // Capture session ID from system init message
+      if (sdkMessage.type === 'system' && sdkMessage.session_id) {
+        actualSessionId = sdkMessage.session_id;
+        logger.chat.debug("Captured session ID from system message: {sessionId}", { sessionId: actualSessionId });
+      }
+
+      // Extract usage data from any message type that contains it
+      let usageData = null;
+      let modelName = null;
+
+      // Check for usage in different possible locations
+      if (sdkMessage.usage) {
+        usageData = sdkMessage.usage;
+      } else if (sdkMessage.message?.usage) {
+        usageData = sdkMessage.message.usage;
+        modelName = sdkMessage.message.model;
+      }
+
+      // Process usage data if found
+      if (usageData) {
+
+        // Calculate total input tokens
+        const totalInputTokens =
+          (usageData.input_tokens || 0) +
+          (usageData.cache_creation_input_tokens || 0) +
+          (usageData.cache_read_input_tokens || 0);
+
+        // Send token update to frontend
+        yield {
+          type: "token_update",
+          usage: {
+            input_tokens: usageData.input_tokens || 0,
+            output_tokens: usageData.output_tokens || 0,
+            cache_creation_tokens: usageData.cache_creation_input_tokens || 0,
+            cache_read_tokens: usageData.cache_read_input_tokens || 0,
+            thinking_tokens: usageData.thinking_tokens || 0,
+            total_input: totalInputTokens,
+            total_output: usageData.output_tokens || 0,
+            total: totalInputTokens + (usageData.output_tokens || 0)
+          },
+          sessionId: actualSessionId
+        };
+
+        // Save to database asynchronously
+        if (actualSessionId) {
+          try {
+            const userId = getTokenTrackingUserId(context);
+            if (!userId) {
+              // Skip token tracking if no user ID available
+              return;
+            }
+            const tokenService = new TokenUsageService(userId);
+
+            await tokenService.processSessionUsage({
+              sessionId: actualSessionId,
+              inputTokens: usageData.input_tokens || 0,
+              outputTokens: usageData.output_tokens || 0,
+              cacheCreationTokens: usageData.cache_creation_input_tokens || 0,
+              cacheReadTokens: usageData.cache_read_input_tokens || 0,
+              thinkingTokens: usageData.thinking_tokens || 0,
+              messageCount: 1,
+              sessionStartedAt: new Date().toISOString(),
+              model: modelName || 'claude-3-5-sonnet-20241022'
+            });
+
+            console.log('[DEBUG] Token usage successfully saved to database');
+            logger.chat.info("Token usage saved to database for session: {sessionId}", { sessionId: actualSessionId });
+          } catch (error) {
+            console.log('[DEBUG] Failed to save token usage to database:', error);
+            logger.chat.error("Failed to save token usage: {error}", { error });
+          }
+        } else {
+          console.log('[DEBUG] No session ID available for database saving');
+        }
+      }
+
       yield {
         type: "claude_json",
         data: sdkMessage,
@@ -339,6 +440,7 @@ export async function handleChatRequest(
           chatRequest.allowedTools,
           workingDirectory,
           chatRequest.permissionMode,
+          c, // Pass context for token tracking
         )) {
           const data = JSON.stringify(chunk) + "\n";
           controller.enqueue(new TextEncoder().encode(data));

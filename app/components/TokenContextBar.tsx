@@ -69,6 +69,18 @@ export function TokenContextBar() {
               {formatTokens(context.tokens_used)} / {formatTokens(context.max_tokens)} tokens
             </span>
           </div>
+
+          {/* Token breakdown when cache data is available */}
+          {(context.cacheReadTokens || context.cacheCreationTokens) && (
+            <div className="text-xs text-muted-foreground mt-1">
+              Cache: {formatTokens((context.cacheReadTokens || 0) + (context.cacheCreationTokens || 0))} tokens
+              {context.inputTokens && context.outputTokens && (
+                <span className="ml-2">
+                  | New: {formatTokens(context.inputTokens)} in + {formatTokens(context.outputTokens)} out
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

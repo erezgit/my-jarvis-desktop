@@ -23,7 +23,8 @@ import { handleVoiceRequest } from "./handlers/voice.ts";
 import { handleUploadRequest } from "./handlers/upload.ts";
 import { handleSavePDFRequest } from "./handlers/save-pdf.ts";
 import { handleStreamFileRequest } from "./handlers/stream-file.ts";
-import { getSessionTokens } from "./handlers/session-tokens.ts";
+// Removed deprecated session-tokens handler - now using real-time stream tokens
+// import { getSessionTokens } from "./handlers/session-tokens.ts";
 import { logger } from "./utils/logger.ts";
 import { readBinaryFile } from "./utils/fs.ts";
 import { generateVoiceResponse, generateAudioUrl } from "./utils/voiceGenerator.ts";
@@ -101,8 +102,8 @@ export function createApp(
 
   app.post("/api/chat", requireAuth, (c) => handleChatRequest(c, requestAbortControllers));
 
-  // Session tokens route - get cumulative token usage for a session
-  app.get("/api/session-tokens/:sessionId", requireAuth, (c) => getSessionTokens(c));
+  // Deprecated: session tokens now come through real-time stream messages
+  // app.get("/api/session-tokens/:sessionId", requireAuth, (c) => getSessionTokens(c));
 
   // Document upload route
   app.post("/api/upload-document", requireAuth, (c) => handleUploadRequest(c));

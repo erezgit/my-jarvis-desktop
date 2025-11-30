@@ -92,6 +92,14 @@ console.log('Email:', authUser.user.email);
 console.log('Password:', userPassword);
 
 // SAVE THESE CREDENTIALS - YOU'LL NEED THEM FOR LOGIN
+// SAVE THE USER ID - YOU'LL NEED IT FOR STEP 4c
+```
+
+### Step 4c: Set User ID Environment Variable
+```bash
+# Set the USER_ID environment variable for token tracking
+# Use the User ID from Step 4b (authUser.user.id)
+fly secrets set USER_ID="${authUser.user.id}" --app my-jarvis-newuser
 ```
 
 ### Step 5: Create Database Instance Mapping

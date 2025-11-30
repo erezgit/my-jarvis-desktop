@@ -1,16 +1,16 @@
 import { useRef, useEffect, useLayoutEffect, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import {
   PanelGroup,
   Panel,
   PanelResizeHandle
 } from 'react-resizable-panels'
-import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
+import { AntFileTree, type FileNode, type AntFileTreeHandle } from '../FileTree/AntFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
 import { ChatHeader } from '../chat/ChatHeader'
 import { isFileOperationMessage } from '../../types'
 import { useChatStateContext } from '../../contexts/ChatStateContext'
 import { useSettings } from '../../hooks/useSettings'
+import MyJarvis from '../logos/MyJarvis'
 
 interface FileItem {
   name: string
@@ -49,9 +49,8 @@ export function DesktopLayout({
   onHistoryClick,
   onSettingsClick
 }: DesktopLayoutProps) {
-  const fileTreeRef = useRef<FileTreeRef>(null)
+  const fileTreeRef = useRef<AntFileTreeHandle>(null)
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
-  const queryClient = useQueryClient()
 
   // Get working directory from settings
   const { fileTreeDirectory } = useSettings()
@@ -97,15 +96,12 @@ export function DesktopLayout({
 
           console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory to refresh:', parentPath);
 
-          // Use the same method as create/edit - expandToPath will refresh the parent
+          // For AntFileTree, trigger refresh via ref
+          console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 Triggering tree refresh via ref');
           if (fileTreeRef.current) {
-            console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 Calling expandToPath to refresh parent');
-            // Add a dummy file name so expandToPath processes the parent correctly
-            await fileTreeRef.current.expandToPath(parentPath + '/dummy');
-            console.log('[DESKTOP_LAYOUT_DEBUG] ✅ Refresh completed');
-          } else {
-            console.log('[DESKTOP_LAYOUT_DEBUG] ⚠️ fileTreeRef.current is null');
+            fileTreeRef.current.refreshTree();
           }
+          console.log('[DESKTOP_LAYOUT_DEBUG] ✅ Refresh triggered');
 
           // Update last processed count
           console.log('[DESKTOP_LAYOUT_DEBUG] 🏁 Setting lastProcessedMessageCount to:', messages.length);
@@ -121,15 +117,12 @@ export function DesktopLayout({
 
         console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory:', parentPath);
 
-        // React Arborist's reveal method handles everything automatically!
-        // Just call expandToPath which uses tree.reveal() internally
+        // For AntFileTree, trigger refresh to show new files
+        console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 Triggering tree refresh for new file');
         if (fileTreeRef.current) {
-          console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 About to call expandToPath');
-          await fileTreeRef.current.expandToPath(fileOpMessage.path);
-          console.log('[DESKTOP_LAYOUT_DEBUG] 🟢 expandToPath completed');
-        } else {
-          console.log('[DESKTOP_LAYOUT_DEBUG] ⚠️ fileTreeRef.current is null');
+          fileTreeRef.current.refreshTree();
         }
+        console.log('[DESKTOP_LAYOUT_DEBUG] 🟢 Refresh triggered');
 
         console.log('[DESKTOP_LAYOUT_DEBUG] 🔍 Reading file via backend API...');
 
@@ -182,7 +175,7 @@ export function DesktopLayout({
       // No file operation, update count immediately
       setLastProcessedMessageCount(messages.length);
     }
-  }, [messages, onFileSelect, lastProcessedMessageCount, queryClient])
+  }, [messages, onFileSelect, lastProcessedMessageCount])
 
   return (
     <div className="h-screen">
@@ -192,13 +185,33 @@ export function DesktopLayout({
           defaultSize={20}
           minSize={15}
           maxSize={30}
-          className="bg-gray-50 dark:bg-gray-900"
+          className="bg-gray-50 dark:bg-gray-900 px-5 py-4"
         >
-          <VirtualizedFileTree
+          {/* Header bar with My Jarvis icon and title */}
+          <div className="flex items-center gap-3 mb-4">
+            <MyJarvis />
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
+              My Jarvis
+            </span>
+          </div>
+
+          <AntFileTree
             ref={fileTreeRef}
             workingDirectory={fileTreeDirectory}
-            onFileSelect={onFileSelect}
-            onFileUpload={onFileUpload}
+            onFileSelect={(node: FileNode) => {
+              // Convert FileNode to FileItem for compatibility
+              const fileItem: FileItem = {
+                name: node.name,
+                path: node.path,
+                isDirectory: node.isFolder,
+                size: node.size || 0,
+                modified: node.modified || '',
+                extension: node.extension || ''
+              }
+              onFileSelect(fileItem)
+            }}
+            selectedFile={selectedFile}
+            className="desktop-file-tree"
           />
         </Panel>
 

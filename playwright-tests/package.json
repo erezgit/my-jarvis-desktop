@@ -1,0 +1,31 @@
+{
+  "name": "file-tree-refresh-tests",
+  "version": "1.0.0",
+  "description": "Automated tests for My Jarvis Desktop file tree refresh functionality",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:basic": "playwright test tests/basic-file-ops.spec.ts",
+    "test:directory": "playwright test tests/directory-ops.spec.ts",
+    "test:complex": "playwright test tests/complex-ops.spec.ts",
+    "test:edge": "playwright test tests/edge-cases.spec.ts",
+    "test:report": "playwright show-report test-results/html",
+    "test:codegen": "playwright codegen http://localhost:3000",
+    "install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "automation",
+    "jarvis",
+    "file-tree"
+  ],
+  "author": "",
+  "license": "MIT"
+}

@@ -88,6 +88,7 @@ export function useStreamParser() {
       }
 
       // Process the message using the unified processor
+      console.log('[DEBUG] useStreamParser calling processor.processMessage for:', claudeData.type);
       processor.processMessage(claudeData, processingContext, {
         isStreaming: true,
       });
@@ -127,6 +128,27 @@ export function useStreamParser() {
           };
           context.addMessage(abortedMessage);
           context.setCurrentAssistantMessage(null);
+        } else if (data.type === "token_update") {
+          // Handle token usage updates from backend
+          if (data.usage) {
+            const currentContextSize =
+              (data.usage.cache_read_tokens || 0) +
+              (data.usage.cache_creation_tokens || 0) +
+              data.usage.input_tokens +
+              data.usage.output_tokens;
+
+            // Update token usage context (assuming it exists)
+            context.setTokenUsage?.({
+              inputTokens: data.usage.input_tokens,
+              outputTokens: data.usage.output_tokens,
+              cacheCreationTokens: data.usage.cache_creation_tokens,
+              cacheReadTokens: data.usage.cache_read_tokens,
+              currentContextSize: currentContextSize,
+              percentage: (currentContextSize / 200000) * 100
+            });
+
+            console.log('[TOKEN_UPDATE] Current context size:', currentContextSize);
+          }
         }
       } catch (parseError) {
         console.error("Failed to parse stream line:", parseError);

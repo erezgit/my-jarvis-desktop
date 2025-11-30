@@ -1,1 +1,7 @@
 @import "tailwindcss";
+@import "antd/dist/reset.css";
+
+/* Minimal tree switcher arrow removal - scoped specifically to file tree */
+.ant-file-tree .ant-tree-treenode > .ant-tree-switcher {
+  display: none !important;
+}

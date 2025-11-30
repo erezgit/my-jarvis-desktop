@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { Folder, FileText, MessageSquare, Settings, PlusCircle } from 'lucide-react'
-import { VirtualizedFileTree, type FileTreeRef } from '../FileTree/VirtualizedFileTree'
+import { AntFileTree, type FileNode, type AntFileTreeHandle } from '../FileTree/AntFileTree'
 import { FilePreview } from '../FilePreview/FilePreview'
 import { ChatPage } from '../ChatPage'
 import { isFileOperationMessage } from '../../types'
@@ -56,8 +56,8 @@ export function MobileLayout({
   onNewChatReady
 }: MobileLayoutProps) {
   const [currentPanel, setCurrentPanel] = useState<PanelView>('chat')
-  const fileTreeRef = useRef<FileTreeRef>(null)
   const [lastProcessedMessageCount, setLastProcessedMessageCount] = useState(0)
+  const fileTreeRef = useRef<AntFileTreeHandle>(null)
 
   // Get working directory from settings
   const { fileTreeDirectory } = useSettings()
@@ -87,9 +87,9 @@ export function MobileLayout({
       pathParts.pop() // Remove filename
       const parentPath = pathParts.join('/')
 
-      // Refresh the parent directory
-      if (fileTreeRef.current && parentPath) {
-        fileTreeRef.current.refreshDirectory(parentPath)
+      // For AntFileTree, trigger refresh via ref
+      if (fileTreeRef.current) {
+        fileTreeRef.current.refreshTree()
       }
 
       // Auto-select the new file and load its content
@@ -218,10 +218,23 @@ export function MobileLayout({
           "absolute inset-0 h-full flex flex-col overflow-auto bg-gray-50 dark:bg-gray-900",
           currentPanel === 'files' ? 'block' : 'hidden'
         )}>
-          <VirtualizedFileTree
+          <AntFileTree
             ref={fileTreeRef}
             workingDirectory={fileTreeDirectory}
-            onFileSelect={onFileSelect}
+            onFileSelect={(node: FileNode) => {
+              // Convert FileNode to FileItem for compatibility
+              const fileItem: FileItem = {
+                name: node.name,
+                path: node.path,
+                isDirectory: node.isFolder,
+                size: node.size || 0,
+                modified: node.modified || '',
+                extension: node.extension || ''
+              }
+              onFileSelect(fileItem)
+            }}
+            selectedFile={selectedFile}
+            className="mobile-file-tree"
           />
         </div>
 

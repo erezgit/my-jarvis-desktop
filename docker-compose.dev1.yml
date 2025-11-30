@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  my-jarvis-web-dev1:
+    build: .
+    ports:
+      - "3001:10000"  # Dev1 isolation on port 3001
+    volumes:
+      # Persistent workspace for development testing - Dev1 specific
+      - ./workspace-dev1:/workspace
+      # Mount Claude JSONL files for session token tracking
+      - /Users/erezfern/.claude:/root/.claude:ro
+    environment:
+      - NODE_ENV=development
+      - PORT=10000
+      - WORKSPACE_DIR=/workspace
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET=test-secret-key-for-development
+      - DISABLE_AUTH=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped

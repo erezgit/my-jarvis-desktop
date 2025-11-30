@@ -11,12 +11,17 @@ interface FileItem {
   size: number;
   modified: string;
   extension: string;
+  children?: FileItem[];  // Add children for nested structure
 }
 
 /**
- * List directory contents and return file metadata
+ * List directory contents with recursive depth support
  */
-async function listDirectoryContents(dirPath: string): Promise<FileItem[]> {
+async function listDirectoryContents(
+  dirPath: string,
+  depth: number = 0,
+  maxDepth: number = 0
+): Promise<FileItem[]> {
   try {
     const entries = await readdir(dirPath, { withFileTypes: true });
     const files: FileItem[] = [];
@@ -32,14 +37,29 @@ async function listDirectoryContents(dirPath: string): Promise<FileItem[]> {
           ? entry.name.substring(entry.name.lastIndexOf('.'))
           : '';
 
-      files.push({
+      const fileItem: FileItem = {
         name: entry.name,
         path: fullPath,
         isDirectory: entry.isDirectory(),
         size: stats.size,
         modified: stats.mtime.toISOString(),
         extension,
-      });
+      };
+
+      // If it's a directory and we haven't reached max depth, recurse
+      if (entry.isDirectory() && depth < maxDepth) {
+        try {
+          const children = await listDirectoryContents(fullPath, depth + 1, maxDepth);
+          if (children.length > 0) {
+            fileItem.children = children;
+          }
+        } catch (err) {
+          // If we can't read a subdirectory, just skip adding children
+          logger.api.warn("Could not read subdirectory: {path}", { path: fullPath });
+        }
+      }
+
+      files.push(fileItem);
     }
 
     // Sort: directories first, then files alphabetically
@@ -61,15 +81,21 @@ async function listDirectoryContents(dirPath: string): Promise<FileItem[]> {
 export async function handleFilesRequest(c: Context) {
   try {
     const requestedPath = c.req.query('path');
+    const depthParam = c.req.query('depth');
     const workspaceDir = process.env.WORKSPACE_DIR || '/home/node';
 
     // Use requested path or default to workspace directory
     const targetPath = requestedPath || workspaceDir;
+    // Parse depth parameter, default to 0 (no recursion)
+    const maxDepth = depthParam ? parseInt(depthParam, 10) : 0;
 
-    logger.api.info("Listing directory: {path}", { path: targetPath });
+    logger.api.info("Listing directory: {path} with depth: {depth}", {
+      path: targetPath,
+      depth: maxDepth
+    });
 
-    // Read directory contents
-    const files = await listDirectoryContents(targetPath);
+    // Read directory contents with specified depth
+    const files = await listDirectoryContents(targetPath, 0, maxDepth);
 
     return c.json({
       success: true,

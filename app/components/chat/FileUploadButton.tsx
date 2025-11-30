@@ -34,7 +34,7 @@ export function FileUploadButton({
         type="file"
         accept="*"
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: 'none' }}
       />
       <button
         type="button"

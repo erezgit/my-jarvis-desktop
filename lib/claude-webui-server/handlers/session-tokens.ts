@@ -2,6 +2,7 @@ import { Context } from "hono";
 import * as fs from "fs";
 import * as path from "path";
 import { logger } from "../utils/logger.ts";
+import { TokenUsageService } from "../../../app/lib/token-tracking/token-usage-service.ts";
 
 interface TokenResponse {
   sessionId: string;
@@ -19,18 +20,23 @@ interface TokenResponse {
 export async function getSessionTokens(c: Context): Promise<Response> {
   const sessionId = c.req.param("sessionId");
 
-  logger.chat.debug("Fetching session tokens for: {sessionId}", { sessionId });
+  logger.chat.info("[SESSION_TOKENS] Fetching session tokens for: {sessionId}", { sessionId });
 
   // Construct JSONL file path
-  // Claude Code writes JSONL files to ~/.claude/projects/-workspace/{sessionId}.jsonl
-  const claudeHome = process.env.HOME || "/root";
+  // Claude Code writes JSONL files to ~/.claude/projects/-home-node/{sessionId}.jsonl
+  // In Docker, the .claude directory is mounted at /home/node/.claude
+  const claudeHome = "/home/node";  // Correct path in Docker container
   const jsonlPath = path.join(
     claudeHome,
-    ".claude/projects/-workspace",
+    ".claude/projects/-home-node",
     `${sessionId}.jsonl`
   );
 
-  logger.chat.debug("JSONL file path: {jsonlPath}", { jsonlPath });
+  logger.chat.info("[SESSION_TOKENS] FIXED VERSION - Looking for JSONL file at: {jsonlPath}", {
+    jsonlPath,
+    claudeHome,
+    exists: fs.existsSync(jsonlPath)
+  });
 
   // Check if file exists
   if (!fs.existsSync(jsonlPath)) {
@@ -66,10 +72,34 @@ export async function getSessionTokens(c: Context): Promise<Response> {
 
     const totalTokens = totalInput + totalOutput;
 
-    logger.chat.debug(
-      "Session tokens calculated: {totalTokens} ({inputTokens} in, {outputTokens} out, {messageCount} messages)",
+    logger.chat.info(
+      "[SESSION_TOKENS] Tokens calculated: {totalTokens} ({inputTokens} in, {outputTokens} out, {messageCount} messages)",
       { totalTokens, inputTokens: totalInput, outputTokens: totalOutput, messageCount }
     );
+
+    // Save token usage to database (asynchronously - don't block response)
+    if (totalTokens > 0) {
+      // TODO: Get actual user ID from auth context - for now using hardcoded test user
+      const testUserId = "3dfb3580-b7c4-4da3-8d9e-b9775c216f7e"; // erez.test@gmail.com
+
+      const tokenService = new TokenUsageService(testUserId);
+
+      tokenService.processSessionUsage({
+        sessionId,
+        inputTokens: totalInput,
+        outputTokens: totalOutput,
+        cacheCreationTokens: 0, // TODO: Extract from JSONL if available
+        cacheReadTokens: 0,     // TODO: Extract from JSONL if available
+        thinkingTokens: 0,      // TODO: Extract from JSONL if available
+        messageCount,
+        sessionStartedAt: new Date().toISOString(),
+        model: "claude-3-5-sonnet-20241022"
+      }).catch(error => {
+        logger.chat.error("[SESSION_TOKENS] Failed to save to database: {error}", { error });
+      });
+
+      logger.chat.info("[SESSION_TOKENS] Token data saved to database (async)");
+    }
 
     const response: TokenResponse = {
       sessionId,

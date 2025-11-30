@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  my-jarvis-web-dev2:
+    build: .
+    ports:
+      - "3002:10000"
+    volumes:
+      # Persistent workspace for development testing
+      - ./workspace:/workspace
+      # Mount Claude JSONL files for session token tracking
+      - /Users/erezfern/.claude:/root/.claude:ro
+    environment:
+      - NODE_ENV=development
+      - PORT=10000
+      - WORKSPACE_DIR=/workspace
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET=test-secret-key-for-development
+      - DISABLE_AUTH=true
+      - SUPABASE_URL=https://ocvkyhlfdjrvvipljbsa.supabase.co
+      - SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jdmt5aGxmZGpydnZpcGxqYnNhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjg5NTkyOSwiZXhwIjoyMDc4NDcxOTI5fQ.6txUfavRFo2d5rQFqTld6OrcY6Akvx7cqrMn90uFwLA
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped

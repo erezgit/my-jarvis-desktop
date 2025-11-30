@@ -174,6 +174,7 @@ export class UnifiedMessageProcessor {
     const toolUseId = contentItem.tool_use_id || "";
     const cachedToolInfo = this.getCachedToolInfo(toolUseId);
     const toolName = cachedToolInfo?.name || "Tool";
+    console.log('[DEBUG] tool_result lookup:', { toolUseId, toolName, hasCachedInfo: !!cachedToolInfo });
 
 
 
@@ -254,8 +255,10 @@ export class UnifiedMessageProcessor {
 
     let filePath: string | null = null;
     let operation: "created" | "modified" | "deleted" | null = null;
+    let isDirectory = false;
 
     // Check if this is a Write, Edit, or Bash (delete) tool by examining the cached input
+    console.log('[DEBUG] Tool result processing:', { toolName, cachedToolInfo: !!cachedToolInfo, hasInput: !!(cachedToolInfo?.input) });
     if (cachedToolInfo && cachedToolInfo.input) {
       const input = cachedToolInfo.input;
 
@@ -263,18 +266,64 @@ export class UnifiedMessageProcessor {
       if (toolName === "Write" && input.file_path && typeof input.file_path === 'string') {
         filePath = input.file_path;
         operation = "created";
+        isDirectory = false;
       }
       else if (toolName === "Edit" && input.file_path && typeof input.file_path === 'string') {
         filePath = input.file_path;
         operation = "modified";
+        isDirectory = false;
       }
       else if (toolName === "Bash" && input.command && typeof input.command === 'string') {
-        // Check if Bash command is a delete operation (rm, unlink, etc.)
         const command = input.command as string;
-        const deleteMatch = command.match(/(?:rm|unlink)\s+(?:-[rf]+\s+)?["']?([^\s"']+)["']?/);
-        if (deleteMatch) {
+        console.log('[DEBUG] Bash command detected:', command);
+        // Pattern 1: Directory creation (mkdir)
+        const mkdirMatch = command.match(/mkdir\s+(?:-p\s+)?["']?([^\s"']+)["']?/);
+        if (mkdirMatch) {
+          filePath = mkdirMatch[1];
+          operation = "created";
+          isDirectory = true;
+        }
+
+        // Pattern 2: File creation with echo/cat
+        const echoMatch = command.match(/(?:echo|cat)\s+.*?>\s*["']?([^\s"']+)["']?/);
+        if (!filePath && echoMatch) {
+          filePath = echoMatch[1];
+          operation = "created";
+          isDirectory = false;
+        }
+
+        // Pattern 3: Move/Rename operations
+        const mvMatch = command.match(/mv\s+["']?([^\s"']+)["']?\s+["']?([^\s"']+)["']?/);
+        if (!filePath && mvMatch) {
+          // For moves, we need to handle both deletion of old and creation of new
+          // First, trigger deletion of old path
+          filePath = mvMatch[1];
+          operation = "deleted";
+          // TODO: Also trigger creation for mvMatch[2] (may need separate message)
+        }
+
+        // Pattern 4: Copy operations
+        const cpMatch = command.match(/cp\s+(?:-r\s+)?["']?([^\s"']+)["']?\s+["']?([^\s"']+)["']?/);
+        if (!filePath && cpMatch) {
+          filePath = cpMatch[2];  // Destination is what appears in tree
+          operation = "created";
+          isDirectory = command.includes('-r');
+        }
+
+        // Pattern 5: Delete operations (improved)
+        const deleteMatch = command.match(/(?:rm|rmdir|unlink)\s+(?:-[rf]+\s+)?["']?([^\s"']+)["']?/);
+        if (!filePath && deleteMatch) {
           filePath = deleteMatch[1];
           operation = "deleted";
+          isDirectory = command.includes('rmdir') || command.includes('-r');
+        }
+
+        // Pattern 6: Touch for file creation
+        const touchMatch = command.match(/touch\s+["']?([^\s"']+)["']?/);
+        if (!filePath && touchMatch) {
+          filePath = touchMatch[1];
+          operation = "created";
+          isDirectory = false;
         }
       }
     }
@@ -302,17 +351,52 @@ export class UnifiedMessageProcessor {
       }
     }
 
+    // Special handling for move operations - need both delete and create
+    if (cachedToolInfo && cachedToolInfo.input && toolName === "Bash") {
+      const input = cachedToolInfo.input;
+      if (input.command && typeof input.command === 'string') {
+        const command = input.command as string;
+        const mvMatch = command.match(/mv\s+["']?([^\s"']+)["']?\s+["']?([^\s"']+)["']?/);
+        if (mvMatch) {
+          // First message: delete old location
+          const deleteMessage = {
+            type: "file_operation" as const,
+            operation: "deleted" as const,
+            path: mvMatch[1],
+            fileName: mvMatch[1].split('/').pop() || mvMatch[1],
+            isDirectory: false,  // Could enhance with stat check
+            timestamp: options.timestamp || Date.now(),
+          };
+          context.addMessage(deleteMessage);
+
+          // Second message: create new location
+          const createMessage = {
+            type: "file_operation" as const,
+            operation: "created" as const,
+            path: mvMatch[2],
+            fileName: mvMatch[2].split('/').pop() || mvMatch[2],
+            isDirectory: false,  // Could enhance with stat check
+            timestamp: options.timestamp || Date.now(),
+          };
+          context.addMessage(createMessage);
+
+          // Skip normal single message creation
+          filePath = null;
+          operation = null;
+        }
+      }
+    }
+
     // If we detected a file operation, create FileOperationMessage
     if (filePath && operation) {
       const fileName = filePath.split('/').pop() || filePath;
-
       // Create FileOperationMessage
       const fileOpMessage = {
         type: "file_operation" as const,
         operation,
         path: filePath,
         fileName,
-        isDirectory: false,
+        isDirectory: isDirectory,
         timestamp: options.timestamp || Date.now(),
       };
 
@@ -416,12 +500,14 @@ export class UnifiedMessageProcessor {
   ): void {
 
     // Cache tool_use information for later permission error handling and tool_result correlation
+    console.log('[DEBUG] handleToolUse called:', { id: contentItem.id, name: contentItem.name, input: contentItem.input });
     if (contentItem.id && contentItem.name) {
       this.cacheToolUse(
         contentItem.id,
         contentItem.name,
         contentItem.input || {},
       );
+      console.log('[DEBUG] Cached tool_use:', { id: contentItem.id, name: contentItem.name });
     }
 
     // Note: We don't create FileOperationMessage from tool_use anymore
@@ -595,26 +681,9 @@ export class UnifiedMessageProcessor {
     const resultMessage = convertResultMessage(message, timestamp);
     context.addMessage(resultMessage);
 
-    // Fetch cumulative session tokens from backend by parsing JSONL file
-    // This replaces the old approach of extracting per-turn tokens from modelUsage
-    if (context.onTokenUpdate && message.session_id) {
-      // Call backend endpoint to get cumulative session total
-      fetch(`/api/session-tokens/${message.session_id}`)
-        .then((response) => {
-          if (!response.ok) {
-            return null;
-          }
-          return response.json();
-        })
-        .then((data) => {
-          if (data && data.totalTokens !== undefined) {
-            context.onTokenUpdate?.(data.totalTokens);
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching session tokens:', error);
-        });
-    }
+    // Token tracking now happens via real-time stream messages (token_update type)
+    // No longer need to fetch tokens after completion - they come during the stream
+    console.log('[TOKEN_UPDATE] Token tracking handled by real-time stream messages');
 
     // Clear current assistant message (streaming only)
     if (options.isStreaming) {

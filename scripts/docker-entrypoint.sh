@@ -26,6 +26,9 @@ chmod +x /etc/profile.d/node-env.sh
 export HOME=/home/node
 export USER=node
 
+# Set NODE_PATH to include the webui-server modules for database access
+export NODE_PATH=/app/lib/claude-webui-server/node_modules:/app/node_modules:$NODE_PATH
+
 # Launch Claude config patcher as background task
 # This patches .claude.json AFTER Claude WebUI initializes to add projects object
 echo "[Entrypoint] Starting Claude config patcher in background..."
@@ -40,4 +43,4 @@ echo "[Entrypoint] Executing: $@"
 # Use gosu to switch user and execute command
 # gosu properly handles argument arrays from Docker CMD
 cd /home/node
-exec gosu node "$@"
+exec gosu node env NODE_PATH=/app/lib/claude-webui-server/node_modules:/app/node_modules:$NODE_PATH "$@"

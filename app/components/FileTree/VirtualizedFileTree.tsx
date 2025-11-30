@@ -1,8 +1,6 @@
 import React, { useRef, useImperativeHandle, forwardRef, useCallback, useState, useEffect } from 'react'
-import { Tree, NodeRendererProps } from 'react-arborist'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, ChevronDown, Folder, FolderOpen, File } from 'lucide-react'
-import useResizeObserver from 'use-resize-observer'
 import { JarvisOrb } from '../JarvisOrb'
 import { FileUploadButton } from '../chat/FileUploadButton'
 import { isElectronMode, isWebMode } from '@/app/config/deployment'
@@ -22,16 +20,17 @@ interface FileItem {
   content?: string
 }
 
-// React Arborist expects data with 'id' and 'children'
+// VSCode Explorer pattern - TreeNode matches their Item interface
 interface TreeNode {
-  id: string
+  id: string  // path serves as unique id
   name: string
-  isDirectory: boolean
+  type: 'folder' | 'file'  // VSCode pattern uses type instead of isDirectory
+  parent: string  // parent path for hierarchy
   path: string
   size: number
   modified: string
   extension: string
-  children?: TreeNode[]
+  children?: TreeNode[]  // populated by getFiles function
 }
 
 interface FileTreeProps {
@@ -46,71 +45,77 @@ function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
-// Helper to immutably update a node's children in the tree
-function updateNodeChildren(nodes: TreeNode[], nodeId: string, newChildren: TreeNode[]): TreeNode[] {
-  // Create a completely new array with new object references at every level
-  return nodes.map(node => {
-    if (node.id === nodeId) {
-      // Found the target node - merge children while preserving isOpen state
-      // Create a map of old children by id for quick lookup
-      const oldChildrenMap = new Map(
-        (node.children || []).map(child => [child.id, child])
-      )
-
-      // Merge new children with old state
-      const mergedChildren = newChildren.map(newChild => {
-        const oldChild = oldChildrenMap.get(newChild.id)
-        if (oldChild) {
-          // Preserve isOpen and children from old node, but update data
-          return {
-            ...newChild,
-            isOpen: oldChild.isOpen,
-            // If the old child has loaded children, keep them unless new child has different children
-            children: oldChild.children && oldChild.children.length > 0 ? oldChild.children : newChild.children
-          }
-        }
-        return newChild
-      })
-
-      return { ...node, children: mergedChildren }
-    }
-    if (node.children && node.children.length > 0) {
-      // Recursively search in children - create new object even if children don't change
-      const updatedChildren = updateNodeChildren(node.children, nodeId, newChildren)
-      // Always return new object reference to trigger React re-render
-      return { ...node, children: updatedChildren }
-    }
-    // Return new object reference for leaf nodes too
-    return { ...node }
-  })
+// VSCode Explorer pattern - TreeItem component with full props
+interface TreeItemProps {
+  item: TreeNode
+  expandedItem?: TreeNode
+  onExpand: (item: TreeNode) => void
+  onFileSelect?: (item: TreeNode) => void
+  level?: number
+  allItems: TreeNode[]  // VSCode pattern - access to all items
+  updateFolder: (updatedFolder: TreeNode[]) => void  // VSCode pattern - tree update function
+  getFiles: () => TreeNode[]  // VSCode pattern - rebuild tree function
 }
 
-// Custom Node Renderer with Tailwind styling
-function CustomNode({ node, style, dragHandle }: NodeRendererProps<TreeNode>) {
-  const Icon = node.data.isDirectory
-    ? (node.isOpen ? FolderOpen : Folder)
+function TreeItem({ item, expandedItem, onExpand, onFileSelect, level = 0, allItems, updateFolder, getFiles }: TreeItemProps) {
+  // VSCode pattern: Direct condition evaluation, no derived boolean
+  const Icon = item.type === 'folder'
+    ? (expandedItem?.id === item.id ? FolderOpen : Folder)
     : File
+  const ChevronIcon = expandedItem?.id === item.id ? ChevronDown : ChevronRight
 
-  const ChevronIcon = node.isOpen ? ChevronDown : ChevronRight
+  const handleClick = () => {
+    if (item.type === 'folder') {
+      onExpand(item)
+    } else {
+      onFileSelect?.(item)
+    }
+  }
 
   return (
-    <div
-      ref={dragHandle}
-      style={style}
-      onClick={() => node.isInternal && node.toggle()}
-      className={cn(
-        "flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer select-none",
-        node.isSelected && "bg-gray-100 dark:bg-gray-800"
+    <div>
+      <div
+        onClick={handleClick}
+        style={{ paddingLeft: `${level * 16 + 8}px` }}
+        className={cn(
+          "flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer select-none",
+          expandedItem?.id === item.id && "bg-white dark:bg-gray-700"
+        )}
+      >
+        {item.type === 'folder' && (
+          <ChevronIcon className="h-4 w-4 shrink-0" />
+        )}
+        {item.type === 'file' && (
+          <div className="w-4" />
+        )}
+        <Icon className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+        <span className="truncate text-sm">{item.name}</span>
+      </div>
+
+      {/* Render children when expanded - VSCode pattern: direct condition evaluation */}
+      {expandedItem?.id === item.id && item.children && (
+        <div>
+          {item.children.length > 0 ? (
+            item.children.map((child) => (
+              <TreeItem
+                key={child.id}
+                item={child}
+                expandedItem={expandedItem}
+                onExpand={onExpand}
+                onFileSelect={onFileSelect}
+                level={level + 1}
+                allItems={allItems}
+                updateFolder={updateFolder}
+                getFiles={getFiles}
+              />
+            ))
+          ) : (
+            <div style={{ paddingLeft: `${(level + 1) * 16 + 8}px` }} className="text-sm text-gray-500 py-1">
+              No files found
+            </div>
+          )}
+        </div>
       )}
-    >
-      {node.data.isDirectory && (
-        <ChevronIcon className="h-4 w-4 shrink-0" />
-      )}
-      {!node.data.isDirectory && (
-        <div className="w-4" />
-      )}
-      <Icon className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
-      <span className="truncate text-sm">{node.data.name}</span>
     </div>
   )
 }
@@ -126,11 +131,12 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
   onFileUpload,
   className
 }, ref) => {
-  const treeRef = useRef<any>(null)
   const queryClient = useQueryClient()
 
-  // Use resize observer to get actual pixel dimensions for React Arborist
-  const { ref: containerRef, width = 1, height = 1 } = useResizeObserver()
+  // VSCode Explorer pattern - controlled state
+  const [items, setItems] = useState<TreeNode[]>([])
+  const [expandedItem, setExpandedItem] = useState<TreeNode>()
+  const [allItems, setAllItems] = useState<TreeNode[]>([])
 
   // Fetch directory contents
   const fetchDirectory = async (path: string): Promise<FileItem[]> => {
@@ -155,120 +161,157 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
     enabled: !!workingDirectory,
   })
 
-
-  // Transform FileItem[] to TreeNode[] for React Arborist
+  // Transform FileItem[] to TreeNode[] (VSCode pattern)
   const transformToTreeNodes = useCallback((files: FileItem[], parentPath: string): TreeNode[] => {
     return files.map(file => ({
       id: file.path,
       name: file.name,
-      isDirectory: file.isDirectory,
+      type: file.isDirectory ? 'folder' : 'file',
+      parent: parentPath,
       path: file.path,
       size: file.size,
       modified: file.modified,
       extension: file.extension,
-      children: file.isDirectory ? [] : undefined // Directories have children array, files don't
+      children: file.isDirectory ? [] : undefined
     }))
   }, [])
 
-  // State variable for tree data (controlled mode)
-  const [treeData, setTreeData] = useState<TreeNode[]>([])
+  // VSCode Explorer pattern - getFiles function rebuilds entire tree
+  const getFiles = useCallback((): TreeNode[] => {
+    // VSCode Pattern: Force complete object recreation via JSON stringify/parse
+    const allStorageItems: TreeNode[] = JSON.parse(JSON.stringify(allItems))
+    let filteredItems = allStorageItems.filter((item) => item.parent === workingDirectory)
 
-  // Sync treeData state with rootFiles from query
-  useEffect(() => {
-    if (rootFiles) {
-      setTreeData(transformToTreeNodes(rootFiles, workingDirectory))
-    }
-  }, [rootFiles, workingDirectory, transformToTreeNodes])
-
-
-  // Load children when a directory is opened
-  const onToggle = useCallback(async (nodeId: string) => {
-    const node = treeRef.current?.get(nodeId)
-    if (!node || !node.data.isDirectory) return
-
-    // Check if already loaded
-    if (node.children && node.children.length > 0) return
-
-    // Check cache first
-    const cachedData = queryClient.getQueryData(getDirectoryQueryKey(node.data.path))
-
-    let files: FileItem[]
-    if (cachedData) {
-      files = cachedData as FileItem[]
-    } else {
-      // Fetch from API
-      files = await fetchDirectory(node.data.path)
-      // Cache the data
-      queryClient.setQueryData(getDirectoryQueryKey(node.data.path), files)
-    }
-
-    const children = transformToTreeNodes(files, node.data.path)
-
-    // ✅ FIXED: Immutable update using setState (controlled mode)
-    setTreeData(prevData => updateNodeChildren(prevData, nodeId, children))
-  }, [queryClient, transformToTreeNodes])
-
-  // Handle node selection
-  const onSelect = useCallback(async (nodes: any[]) => {
-    if (!onFileSelect || nodes.length === 0) return
-
-    const node = nodes[0]
-    const fileData = node.data
-
-    if (!fileData.isDirectory) {
-      // Read file content for text files
-      const binaryExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.zip', '.tar', '.gz']
-      if (binaryExtensions.includes(fileData.extension.toLowerCase())) {
-        // Pass item without content - FilePreview will handle streaming
-        onFileSelect({
-          name: fileData.name,
-          path: fileData.path,
-          isDirectory: false,
-          size: fileData.size,
-          modified: fileData.modified,
-          extension: fileData.extension
-        })
-        return
+    const itemsWithChildren: TreeNode[] = []
+    filteredItems.forEach((item) => {
+      if (item.type === 'folder') {
+        const children = allStorageItems.filter(child => child.parent === item.id)
+        item.children = children
       }
+      itemsWithChildren.push(item)
+    })
 
+    return itemsWithChildren
+  }, [allItems, workingDirectory])
+
+  // VSCode Explorer pattern - updateFolder function
+  const updateFolder = useCallback((updatedItems: TreeNode[]) => {
+    setItems(updatedItems)
+  }, [])
+
+  // VSCode Explorer pattern - handleExpandFolder
+  const handleExpandFolder = useCallback(async (item: TreeNode) => {
+    // Toggle expansion
+    if (expandedItem) {
+      expandedItem.id === item.id ? setExpandedItem(undefined) : setExpandedItem(item)
+    } else {
+      setExpandedItem(item)
+    }
+
+    // Load children if folder and not already loaded
+    if (item.type === 'folder' && (!item.children || item.children.length === 0)) {
       try {
-        let fileContent: string = ''
+        // Check cache first
+        const cachedData = queryClient.getQueryData(getDirectoryQueryKey(item.path))
 
-        if (isElectronMode()) {
-          if (typeof window !== 'undefined' && (window as any).fileAPI) {
-            const data = await (window as any).fileAPI.readFile(fileData.path)
-            if (data) fileContent = data.content
-          }
-        } else if (isWebMode()) {
-          const response = await fetch(`/api/files/read?path=${encodeURIComponent(fileData.path)}`)
-          if (response.ok) {
-            const data = await response.json()
-            if (data.success) fileContent = data.content
-          }
+        let files: FileItem[]
+        if (cachedData) {
+          files = cachedData as FileItem[]
+        } else {
+          // Fetch from API
+          files = await fetchDirectory(item.path)
+          // Cache the data
+          queryClient.setQueryData(getDirectoryQueryKey(item.path), files)
         }
 
-        onFileSelect({
-          name: fileData.name,
-          path: fileData.path,
-          isDirectory: false,
-          size: fileData.size,
-          modified: fileData.modified,
-          extension: fileData.extension,
-          content: fileContent
+        const children = transformToTreeNodes(files, item.path)
+
+        // Update allItems with new children
+        const updatedAllItems = [...allItems]
+        children.forEach(child => {
+          const existingIndex = updatedAllItems.findIndex(existing => existing.id === child.id)
+          if (existingIndex >= 0) {
+            updatedAllItems[existingIndex] = child
+          } else {
+            updatedAllItems.push(child)
+          }
         })
+        setAllItems(updatedAllItems)
+
+        // Update the tree
+        const updatedFiles = getFiles()
+        updateFolder(updatedFiles)
       } catch (error) {
-        console.error('Error reading file:', error)
-        onFileSelect({
-          name: fileData.name,
-          path: fileData.path,
-          isDirectory: false,
-          size: fileData.size,
-          modified: fileData.modified,
-          extension: fileData.extension
-        })
+        console.error('Error loading folder:', error)
       }
     }
+  }, [expandedItem, queryClient, transformToTreeNodes, allItems, getFiles, updateFolder])
+
+  // VSCode Explorer pattern - handle file selection
+  const handleFileSelect = useCallback(async (item: TreeNode) => {
+    if (!onFileSelect || item.type === 'folder') return
+
+    // Read file content for text files
+    const binaryExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.zip', '.tar', '.gz']
+    if (binaryExtensions.includes(item.extension.toLowerCase())) {
+      // Pass item without content - FilePreview will handle streaming
+      onFileSelect({
+        name: item.name,
+        path: item.path,
+        isDirectory: false,
+        size: item.size,
+        modified: item.modified,
+        extension: item.extension
+      })
+      return
+    }
+
+    try {
+      let fileContent: string = ''
+
+      if (isElectronMode()) {
+        if (typeof window !== 'undefined' && (window as any).fileAPI) {
+          const data = await (window as any).fileAPI.readFile(item.path)
+          if (data) fileContent = data.content
+        }
+      } else if (isWebMode()) {
+        const response = await fetch(`/api/files/read?path=${encodeURIComponent(item.path)}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) fileContent = data.content
+        }
+      }
+
+      onFileSelect({
+        name: item.name,
+        path: item.path,
+        isDirectory: false,
+        size: item.size,
+        modified: item.modified,
+        extension: item.extension,
+        content: fileContent
+      })
+    } catch (error) {
+      console.error('Error reading file:', error)
+      onFileSelect({
+        name: item.name,
+        path: item.path,
+        isDirectory: false,
+        size: item.size,
+        modified: item.modified,
+        extension: item.extension
+      })
+    }
   }, [onFileSelect])
+
+  // Initialize tree when root files load
+  useEffect(() => {
+    if (rootFiles) {
+      const transformedItems = transformToTreeNodes(rootFiles, workingDirectory)
+      setAllItems(transformedItems)
+      setItems(transformedItems)
+    }
+  }, [rootFiles, workingDirectory, transformToTreeNodes])
 
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
@@ -279,26 +322,49 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         exact: true,
       })
 
-      // Refresh the directory in the tree
-      const node = treeRef.current?.get(path)
-      if (node && node.data.isDirectory) {
-        const files = await fetchDirectory(path)
-        queryClient.setQueryData(getDirectoryQueryKey(path), files)
-        const children = transformToTreeNodes(files, path)
+      // VSCode pattern - update via controlled state
+      const files = await fetchDirectory(path)
+      queryClient.setQueryData(getDirectoryQueryKey(path), files)
+      const children = transformToTreeNodes(files, path)
 
-        // ✅ FIXED: Immutable update using setState
-        setTreeData(prevData => updateNodeChildren(prevData, path, children))
+      // Update allItems
+      const updatedAllItems = [...allItems]
+      children.forEach(child => {
+        const existingIndex = updatedAllItems.findIndex(existing => existing.id === child.id)
+        if (existingIndex >= 0) {
+          updatedAllItems[existingIndex] = child
+        } else {
+          updatedAllItems.push(child)
+        }
+      })
+      setAllItems(updatedAllItems)
+
+      // FIX: Use updated allItems directly
+      const getFilesFromItems = (itemsArray: TreeNode[]): TreeNode[] => {
+        // VSCode Pattern: Force complete object recreation via JSON stringify/parse
+        // This ensures React sees entirely new object references
+        const allStorageItems: TreeNode[] = JSON.parse(JSON.stringify(itemsArray))
+        let filteredItems = allStorageItems.filter((item) => item.parent === workingDirectory)
+
+        const itemsWithChildren: TreeNode[] = []
+        filteredItems.forEach((item) => {
+          if (item.type === 'folder') {
+            const children = allStorageItems.filter(child => child.parent === item.id)
+            item.children = children
+          }
+          itemsWithChildren.push(item)
+        })
+
+        return itemsWithChildren
       }
+
+      const updatedFiles = getFilesFromItems(updatedAllItems)
+      updateFolder(updatedFiles)
     },
     expandToPath: async (filePath: string) => {
       console.log('[expandToPath] Called with:', filePath)
 
       // VSCode Pattern: Refresh ALL ancestor directories
-      // Example: /workspace/tickets/050-foo/file.md
-      // We need to refresh BOTH:
-      // 1. /workspace/tickets (to show the 050-foo folder)
-      // 2. /workspace/tickets/050-foo (to show the file)
-
       const pathParts = filePath.split('/')
       pathParts.pop() // Remove filename
       const immediateParent = pathParts.join('/') // e.g., /workspace/tickets/050-foo
@@ -312,14 +378,30 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
       console.log('[expandToPath] Grandparent:', grandParent)
 
       try {
+        // Special handling for root directory
+        if (!immediateParent || immediateParent === '') {
+          console.log('[expandToPath] Root directory detected - refreshing entire tree')
+          // Refresh the entire tree from workingDirectory
+          const rootFiles = await fetchDirectory(workingDirectory)
+          console.log('[expandToPath] Root has', rootFiles.length, 'files')
+
+          // Update the query cache
+          queryClient.setQueryData(getDirectoryQueryKey(workingDirectory), rootFiles)
+
+          // VSCode pattern - update via controlled state
+          const transformedItems = transformToTreeNodes(rootFiles, workingDirectory)
+          setAllItems(transformedItems)
+          setItems(transformedItems)
+          console.log('[expandToPath] Root tree refreshed successfully')
+          return
+        }
+
         // Refresh grandparent first (to show the new folder appeared)
         if (grandParent && grandParent !== workingDirectory) {
           console.log('[expandToPath] Refreshing grandparent:', grandParent)
           const grandParentFiles = await fetchDirectory(grandParent)
           console.log('[expandToPath] Grandparent has', grandParentFiles.length, 'items')
           queryClient.setQueryData(getDirectoryQueryKey(grandParent), grandParentFiles)
-          const grandParentChildren = transformToTreeNodes(grandParentFiles, grandParent)
-          setTreeData(prevData => updateNodeChildren(prevData, grandParent, grandParentChildren))
         }
 
         // Then refresh immediate parent (to show the new file)
@@ -330,17 +412,46 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         queryClient.setQueryData(getDirectoryQueryKey(immediateParent), files)
         const children = transformToTreeNodes(files, immediateParent)
 
-        setTreeData(prevData => updateNodeChildren(prevData, immediateParent, children))
-        console.log('[expandToPath] Updated tree data')
+        // Update allItems with refreshed data
+        const updatedAllItems = [...allItems]
+        children.forEach(child => {
+          const existingIndex = updatedAllItems.findIndex(existing => existing.id === child.id)
+          if (existingIndex >= 0) {
+            updatedAllItems[existingIndex] = child
+          } else {
+            updatedAllItems.push(child)
+          }
+        })
+        setAllItems(updatedAllItems)
 
-        // That's it! No expanding, no scrolling, no selecting
-        // The directories will show the new content if they're already open
-        // If they're closed, they stay closed (respecting user's tree state)
+        // FIX: Use updated allItems directly instead of waiting for React state
+        const getFilesFromItems = (itemsArray: TreeNode[]): TreeNode[] => {
+          // VSCode Pattern: Force complete object recreation via JSON stringify/parse
+          // This ensures React sees entirely new object references
+          const allStorageItems: TreeNode[] = JSON.parse(JSON.stringify(itemsArray))
+          let filteredItems = allStorageItems.filter((item) => item.parent === workingDirectory)
+
+          const itemsWithChildren: TreeNode[] = []
+          filteredItems.forEach((item) => {
+            if (item.type === 'folder') {
+              const children = allStorageItems.filter(child => child.parent === item.id)
+              item.children = children
+            }
+            itemsWithChildren.push(item)
+          })
+
+          return itemsWithChildren
+        }
+
+        // VSCode pattern - update via controlled state using updated items directly
+        const updatedFiles = getFilesFromItems(updatedAllItems)
+        updateFolder(updatedFiles)
+        console.log('[expandToPath] Updated tree data')
       } catch (error) {
         console.log('[expandToPath] Error:', error)
       }
     }
-  }), [queryClient, transformToTreeNodes])
+  }), [queryClient, transformToTreeNodes, workingDirectory, allItems, getFiles, updateFolder])
 
   const selectNewDirectory = async () => {
     if (typeof window !== 'undefined' && (window as any).fileAPI) {
@@ -391,28 +502,27 @@ export const VirtualizedFileTree = forwardRef<FileTreeRef, FileTreeProps>(({
         </div>
       )}
 
-      {/* React Arborist Tree */}
-      {!isLoading && treeData.length > 0 && (
-        <div ref={containerRef} className="flex-1 overflow-hidden">
-          <Tree
-            ref={treeRef}
-            data={treeData}
-            openByDefault={false}
-            width={width}
-            height={height}
-            indent={16}
-            rowHeight={32}
-            overscanCount={10}
-            onToggle={onToggle}
-            onSelect={onSelect}
-          >
-            {CustomNode}
-          </Tree>
+      {/* VSCode Explorer Pattern - Simple tree rendering */}
+      {!isLoading && items.length > 0 && (
+        <div className="flex-1 overflow-auto">
+          {items.map((item) => (
+            <TreeItem
+              key={item.id}
+              item={item}
+              expandedItem={expandedItem}
+              onExpand={handleExpandFolder}
+              onFileSelect={handleFileSelect}
+              level={0}
+              allItems={allItems}
+              updateFolder={updateFolder}
+              getFiles={getFiles}
+            />
+          ))}
         </div>
       )}
 
       {/* Empty state */}
-      {!isLoading && treeData.length === 0 && (
+      {!isLoading && items.length === 0 && (
         <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
           No files found
         </div>

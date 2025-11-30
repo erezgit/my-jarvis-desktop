@@ -18,6 +18,7 @@ export interface StreamingContext {
   ) => void;
   onAbortRequest?: () => void;
   onTokenUpdate?: (newTokens: number) => void;
+  setTokenUsage?: (tokenData: any) => void;
 }
 
 /**

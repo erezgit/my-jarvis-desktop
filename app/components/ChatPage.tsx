@@ -251,6 +251,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             await createAbortHandler(requestId)();
           },
           onTokenUpdate: setTokenUsage,
+          setTokenUsage: setTokenUsage,
         };
 
         // Mobile stream buffer for JSON reconstruction
