@@ -1,11 +1,15 @@
 import React, { useState } from 'react'
-import { useTokenUsage } from '../hooks/useTokenUsage'
 
-export function TokenContextBar() {
-  const { tokenData } = useTokenUsage()
+interface TokenContextBarProps {
+  // No longer needs messages prop
+}
+
+export function TokenContextBar({}: TokenContextBarProps) {
+  // Static display until proper implementation
+  const tokenUsage = null; // Always show zero
   const [isExpanded, setIsExpanded] = useState(false)
 
-  const context = tokenData || {
+  const context = {
     tokens_used: 0,
     max_tokens: 200000,
     percentage: 0

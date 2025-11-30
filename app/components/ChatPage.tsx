@@ -22,10 +22,10 @@ import { KEYBOARD_SHORTCUTS } from "../utils/constants";
 import { normalizeWindowsPath } from "../utils/pathUtils";
 import type { StreamingContext } from "../hooks/streaming/useMessageProcessor";
 import { TokenContextBar } from "./TokenContextBar";
-import { useTokenUsage } from "../hooks/useTokenUsage";
 import { useSettings } from "../hooks/useSettings";
 import { voicePlayedTracker } from "../lib/voice-played-tracker";
 import { exportPresentationToPDF } from "../utils/presentation-pdf-exporter";
+import { ReconnectModal } from './ReconnectModal';
 
 interface ChatPageProps {
   currentView: 'chat' | 'history';
@@ -37,9 +37,9 @@ interface ChatPageProps {
 export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewChatReady }: ChatPageProps) {
 
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
+  const [showReconnectModal, setShowReconnectModal] = useState(false);
 
-  // Token usage tracking - set cumulative session total from backend
-  const { setTokenUsage, resetTokenUsage } = useTokenUsage();
+  // Token tracking removed - will be re-implemented properly
 
   // Claude Code working directory - always /home/node for Docker deployment
   const claudeWorkingDirectory = '/home/node';
@@ -144,10 +144,10 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     }
   }, [loadedSessionId, setCurrentSessionId]);
 
-  // Reset tokens when session ID changes (new conversation or switching conversations)
+  // Token reset will be re-implemented with message-based architecture
   useEffect(() => {
-    resetTokenUsage();
-  }, [currentSessionId, resetTokenUsage]);
+    // Token reset placeholder
+  }, [currentSessionId]);
 
   const {
     allowedTools,
@@ -247,8 +247,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             shouldAbort = true;
             await createAbortHandler(requestId)();
           },
-          onTokenUpdate: setTokenUsage,
-          setTokenUsage: setTokenUsage,
+          // Token tracking will be added via message-based architecture
         };
 
         // Mobile stream buffer for JSON reconstruction
@@ -297,12 +296,23 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
         }
       } catch (error) {
         console.error("Failed to send message:", error);
-        addMessage({
-          type: "chat",
-          role: "assistant",
-          content: "Error: Failed to get response",
-          timestamp: Date.now(),
-        });
+
+        // Check if this is a connection error (machine likely stopped)
+        if (error instanceof TypeError &&
+            (error.message.includes('Failed to fetch') ||
+             error.message.includes('NetworkError') ||
+             error.message.includes('ERR_CONNECTION_REFUSED'))) {
+          // Show reconnect modal
+          setShowReconnectModal(true);
+        } else {
+          // Other errors show in chat
+          addMessage({
+            type: "chat",
+            role: "assistant",
+            content: "Error: Failed to get response",
+            timestamp: Date.now(),
+          });
+        }
       } finally {
         resetRequestState();
       }
@@ -344,17 +354,26 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     }
     // Reset all chat state
     resetChat();
-    // Reset tokens
-    resetTokenUsage();
+    // Token reset placeholder
     // Clear voice tracking
     voicePlayedTracker.clearAll();
-  }, [resetChat, resetTokenUsage, isLoading, currentRequestId, handleAbort]);
+  }, [resetChat, isLoading, currentRequestId, handleAbort]);
 
   // Track file upload state
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
+  // Create a stable reference to sendMessage for file upload
+  const sendMessageRef = useRef<(messageContent?: string, tools?: string[], hideUserMessage?: boolean, overridePermissionMode?: PermissionMode) => Promise<void>>();
+  sendMessageRef.current = sendMessage;
+
   const handleFileUpload = useCallback(async (file: File) => {
+    console.log('[FILE_UPLOAD] handleFileUpload called at', performance.now());
     console.log('[FILE_UPLOAD] Starting upload:', file.name);
+    console.log('[FILE_UPLOAD] Current dependencies:', {
+      hasAddMessage: !!addMessage,
+      hasSendMessage: !!sendMessage,
+      allowedToolsLength: allowedTools?.length
+    });
 
     setIsUploadingFile(true);
     const formData = new FormData();
@@ -377,7 +396,8 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
       const notificationMessage = `[SYSTEM NOTIFICATION - DO NOT SHOW THIS MESSAGE] File "${file.name}" has been uploaded to ${result.directory}/. Review it briefly and respond with a concise voice message (2-3 sentences). Say what you see in the file and give one or two quick recommendations. ${file.name.toLowerCase().endsWith('.pdf') ? 'If it\'s a PDF, mention they can ask you to convert it to a knowledge base.' : ''}`;
 
       // Send with hideUserMessage=true so the notification itself is not shown
-      await sendMessage(notificationMessage, allowedTools, true);
+      // Use ref for stable reference
+      await sendMessageRef.current?.(notificationMessage, allowedTools, true);
     } catch (error) {
       console.error('[FILE_UPLOAD] Error:', error);
       addMessage({
@@ -389,10 +409,16 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     } finally {
       setIsUploadingFile(false);
     }
-  }, [addMessage, sendMessage, allowedTools]);
+  }, [addMessage, allowedTools]); // sendMessage accessed via ref for stability
+
+  // Log when handleFileUpload changes
+  useEffect(() => {
+    console.log('[FILE_UPLOAD] handleFileUpload reference changed at', performance.now());
+  }, [handleFileUpload]);
 
   // Expose file upload handler to parent via callback
   useEffect(() => {
+    console.log('[FILE_UPLOAD] Exposing handleFileUpload to parent at', performance.now());
     if (onFileUploadReady) {
       onFileUploadReady(handleFileUpload);
     }
@@ -575,8 +601,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
   const handleConversationSelect = useCallback((sessionId: string) => {
     // Only reset state if we're actually switching to a different conversation
     if (sessionId !== currentSessionId) {
-      // Reset tokens when switching to a different conversation
-      resetTokenUsage();
+      // Token reset placeholder
       // Clear voice message tracking to prevent cross-conversation playback
       voicePlayedTracker.clearAll();
       // Clear messages immediately to prevent showing old conversation
@@ -584,7 +609,7 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
       setCurrentSessionId(sessionId);
     }
     onViewChange('chat'); // Always exit history view and show the conversation
-  }, [onViewChange, resetTokenUsage, setCurrentSessionId, setMessages, currentSessionId]);
+  }, [onViewChange, setCurrentSessionId, setMessages, currentSessionId]);
 
   // Handle global keyboard shortcuts
   useEffect(() => {
@@ -638,6 +663,16 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             planPermissionData={planPermissionData}
           />
         </>
+      )}
+
+      {/* Reconnect Modal */}
+      {showReconnectModal && (
+        <ReconnectModal
+          title="Connection Lost"
+          message="Your workspace is sleeping. Click to wake it up."
+          buttonText="Reconnect"
+          onConfirm={() => window.location.reload()}
+        />
       )}
     </div>
   );

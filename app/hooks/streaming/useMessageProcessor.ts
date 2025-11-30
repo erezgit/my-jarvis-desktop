@@ -17,8 +17,7 @@ export interface StreamingContext {
     toolUseId: string,
   ) => void;
   onAbortRequest?: () => void;
-  onTokenUpdate?: (newTokens: number) => void;
-  setTokenUsage?: (tokenData: any) => void;
+  // Token tracking fields removed - will use message-based approach
 }
 
 /**

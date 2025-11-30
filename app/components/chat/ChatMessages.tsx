@@ -11,6 +11,7 @@ import {
   isTodoMessage,
   isVoiceMessage,
   isFileOperationMessage,
+  isTokenUsageMessage,
 } from "../../types";
 import {
   ChatMessageComponent,
@@ -102,6 +103,9 @@ export function ChatMessages({ messages, isLoading, isLoadingHistory, isChecking
       return <VoiceMessageComponentWrapper key={key} message={message} />;
     } else if (isFileOperationMessage(message)) {
       return <FileOperationMessageComponent key={key} message={message} />;
+    } else if (isTokenUsageMessage(message)) {
+      // Token usage messages are handled by TokenContextBar, don't render in chat
+      return null;
     } else if (isChatMessage(message)) {
       return <ChatMessageComponent key={key} message={message} />;
     }

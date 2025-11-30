@@ -4,7 +4,7 @@ import { UI_CONSTANTS, KEYBOARD_SHORTCUTS } from "../../utils/constants";
 import { useEnterBehavior, useSettings } from "../../hooks/useSettings";
 import { PermissionInputPanel } from "./PermissionInputPanel";
 import { PlanPermissionInputPanel } from "./PlanPermissionInputPanel";
-import { FileUploadButton } from "./FileUploadButton";
+import { FileUploadButtonLabel } from "./FileUploadButtonLabel";
 import type { PermissionMode } from "../../types";
 
 interface PermissionData {
@@ -70,6 +70,16 @@ export function ChatInput({
   permissionData,
   planPermissionData,
 }: ChatInputProps) {
+  // Log renders
+  useEffect(() => {
+    console.log('[CHAT_INPUT] Component rendered', {
+      hasOnFileUpload: !!onFileUpload,
+      isUploadingFile,
+      isLoading,
+      timestamp: Date.now()
+    });
+  });
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isComposing, setIsComposing] = useState(false);
   const { enterBehavior } = useEnterBehavior();
@@ -220,6 +230,7 @@ export function ChatInput({
 
   return (
     <div className="flex-shrink-0">
+
       <form onSubmit={handleSubmit} className="relative">
         <textarea
           ref={inputRef}
@@ -237,7 +248,7 @@ export function ChatInput({
         />
         <div className="absolute right-2 bottom-3 flex gap-2">
           {onFileUpload && (
-            <FileUploadButton
+            <FileUploadButtonLabel
               onFileSelect={onFileUpload}
               disabled={isLoading}
               isUploading={isUploadingFile}

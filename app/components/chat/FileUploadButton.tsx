@@ -15,13 +15,43 @@ export function FileUploadButton({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleButtonClick = () => {
+    console.log('[FILE_UPLOAD_BUTTON] Button clicked, triggering file input');
+    const startTime = performance.now();
+
+    // Log the actual input element state
+    if (fileInputRef.current) {
+      console.log('[FILE_UPLOAD_BUTTON] Input element state:', {
+        disabled: fileInputRef.current.disabled,
+        type: fileInputRef.current.type,
+        accept: fileInputRef.current.accept,
+        multiple: fileInputRef.current.multiple,
+        hasEventListeners: !!fileInputRef.current.onchange
+      });
+    }
+
     fileInputRef.current?.click();
+    const endTime = performance.now();
+    console.log(`[FILE_UPLOAD_BUTTON] File input triggered in ${endTime - startTime}ms`);
+
+    // Set a timer to log if file dialog doesn't appear quickly
+    setTimeout(() => {
+      console.log('[FILE_UPLOAD_BUTTON] 100ms after click - dialog should be visible');
+    }, 100);
+
+    setTimeout(() => {
+      console.log('[FILE_UPLOAD_BUTTON] 1 second after click - checking if stuck');
+    }, 1000);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[FILE_UPLOAD_BUTTON] File input changed');
     const file = e.target.files?.[0];
     if (file) {
+      console.log(`[FILE_UPLOAD_BUTTON] File selected: ${file.name}, size: ${file.size} bytes`);
+      const startTime = performance.now();
       onFileSelect(file);
+      const endTime = performance.now();
+      console.log(`[FILE_UPLOAD_BUTTON] onFileSelect callback took ${endTime - startTime}ms`);
       // Reset input so same file can be selected again
       e.target.value = "";
     }
@@ -32,8 +62,15 @@ export function FileUploadButton({
       <input
         ref={fileInputRef}
         type="file"
-        accept="*"
+        accept=""
         onChange={handleFileChange}
+        onFocus={() => console.log('[FILE_UPLOAD_BUTTON] File input focused')}
+        onBlur={() => console.log('[FILE_UPLOAD_BUTTON] File input blurred')}
+        onClick={(e) => {
+          console.log('[FILE_UPLOAD_BUTTON] File input onClick event fired', e);
+          console.log('[FILE_UPLOAD_BUTTON] Event is trusted:', e.isTrusted);
+        }}
+        onCancel={() => console.log('[FILE_UPLOAD_BUTTON] File dialog cancelled')}
         style={{ display: 'none' }}
       />
       <button

@@ -136,6 +136,20 @@ export interface PDFExportMessage {
   timestamp: number;
 }
 
+// Token usage message for token tracking display
+export interface TokenUsageMessage {
+  type: "token_usage";
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    cache_creation_tokens?: number;
+    cache_read_tokens?: number;
+    currentContextSize: number;
+    percentage: number;
+  };
+  timestamp: number;
+}
+
 // Thinking content item from Claude SDK
 export interface ThinkingContentItem {
   type: "thinking";
@@ -167,7 +181,8 @@ export type AllMessage =
   | TodoMessage
   | VoiceMessage
   | FileOperationMessage
-  | PDFExportMessage;
+  | PDFExportMessage
+  | TokenUsageMessage;
 
 // Type guard functions
 export function isChatMessage(message: AllMessage): message is ChatMessage {
@@ -223,6 +238,10 @@ export function isFileOperationMessage(message: AllMessage): message is FileOper
 
 export function isPDFExportMessage(message: AllMessage): message is PDFExportMessage {
   return message.type === "pdf_export";
+}
+
+export function isTokenUsageMessage(message: AllMessage): message is TokenUsageMessage {
+  return message.type === "token_usage";
 }
 
 // Permission mode types (UI-focused subset of SDK PermissionMode)
