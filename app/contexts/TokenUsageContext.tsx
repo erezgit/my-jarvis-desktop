@@ -32,26 +32,21 @@ export function TokenUsageProvider({ children }: TokenUsageProviderProps) {
   });
 
   const updateTokenUsage = useCallback((newTokens: number) => {
-    console.log('[TOKEN_CONTEXT] updateTokenUsage called with newTokens:', newTokens);
     setTokenData(prev => {
       const tokens_used = prev.tokens_used + newTokens;
       const percentage = (tokens_used / prev.max_tokens) * 100;
-      console.log('[TOKEN_CONTEXT] Updating state - prev:', prev.tokens_used, 'new total:', tokens_used, 'percentage:', percentage);
       return { ...prev, tokens_used, percentage };
     });
   }, []);
 
   const setTokenUsage = useCallback((totalTokens: number | TokenUsageData) => {
     if (typeof totalTokens === 'number') {
-      console.log('[TOKEN_CONTEXT] setTokenUsage called with totalTokens:', totalTokens);
       setTokenData(prev => {
         const percentage = (totalTokens / prev.max_tokens) * 100;
-        console.log('[TOKEN_CONTEXT] Setting state - new total:', totalTokens, 'percentage:', percentage);
         return { ...prev, tokens_used: totalTokens, percentage };
       });
     } else {
       // New detailed token data from backend
-      console.log('[TOKEN_CONTEXT] setTokenUsage called with detailed data:', totalTokens);
       setTokenData(prev => {
         const tokens_used = totalTokens.currentContextSize || totalTokens.tokens_used || 0;
         const percentage = totalTokens.percentage || (tokens_used / prev.max_tokens) * 100;

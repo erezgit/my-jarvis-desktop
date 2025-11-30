@@ -99,11 +99,9 @@ export function useClaudeAuth() {
         throw new Error('Authentication is only available in the Electron app');
       }
 
-      console.log('[AUTH] Starting OAuth flow, waiting for completion...');
       const result = await window.electronAPI.auth.startOAuth();
 
       if (result.success) {
-        console.log('[AUTH] OAuth completed successfully, updating state');
 
         // If we got a session back, update state directly
         if (result.session) {

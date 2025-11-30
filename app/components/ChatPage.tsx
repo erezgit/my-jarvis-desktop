@@ -113,7 +113,6 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     // 3. Latest session is available
     // 4. Not still loading
     if (!hasAttemptedInitialLoad.current && !currentSessionId && latestSessionId && !latestLoading) {
-      console.log('[CHATPAGE] Auto-loading latest chat on initial mount:', latestSessionId);
       setCurrentSessionId(latestSessionId);
       hasAttemptedInitialLoad.current = true;
     }
@@ -147,7 +146,6 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
 
   // Reset tokens when session ID changes (new conversation or switching conversations)
   useEffect(() => {
-    console.log('[TOKEN_RESET] Session ID changed:', currentSessionId);
     resetTokenUsage();
   }, [currentSessionId, resetTokenUsage]);
 
@@ -340,7 +338,6 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
 
   // Handle new chat - resets all state
   const handleNewChat = useCallback(() => {
-    console.log('[CHATPAGE] Starting new chat');
     // Abort current request if in progress
     if (isLoading && currentRequestId) {
       handleAbort();
@@ -561,13 +558,11 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
   // Load projects to get encodedName mapping
   // Reload when workingDirectory changes to update file tree
   useEffect(() => {
-    console.log('[PROJECTS_EFFECT] Loading projects for workspace:', claudeWorkingDirectory);
     const loadProjects = async () => {
       try {
         const response = await fetch(getProjectsUrl());
         if (response.ok) {
           const data = await response.json();
-          console.log('[PROJECTS_EFFECT] Loaded projects:', data.projects?.length || 0);
           setProjects(data.projects || []);
         }
       } catch (error) {

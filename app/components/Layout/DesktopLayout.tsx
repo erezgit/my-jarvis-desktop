@@ -60,7 +60,6 @@ export function DesktopLayout({
 
   // Listen for file operation messages and refresh file tree
   useLayoutEffect(() => {
-    console.log('[DESKTOP_LAYOUT_DEBUG] Messages changed, count:', messages.length);
 
     // Only check NEW messages that were added since last time
     if (messages.length <= lastProcessedMessageCount) {
@@ -70,42 +69,33 @@ export function DesktopLayout({
     // Search through only the NEW messages for FileOperationMessage
     let fileOpMessage = null;
     for (let i = messages.length - 1; i >= lastProcessedMessageCount; i--) {
-      console.log('[DESKTOP_LAYOUT_DEBUG] Checking message[' + i + ']:', messages[i].type, messages[i]);
       if (isFileOperationMessage(messages[i])) {
         fileOpMessage = messages[i];
-        console.log('[DESKTOP_LAYOUT_DEBUG] ✅ FOUND FileOperationMessage at index', i);
         break;
       }
     }
 
-    console.log('[DESKTOP_LAYOUT_DEBUG] Final result - FileOperationMessage:', fileOpMessage);
 
     if (fileOpMessage) {
       // Handle async operations in an IIFE
       (async () => {
-        console.log('[DESKTOP_LAYOUT_DEBUG] File operation detected!', fileOpMessage);
 
         if (fileOpMessage.operation === 'deleted') {
           // For delete operations, use expandToPath to refresh the parent directory
           // This works exactly like create/modify - it fetches fresh data and updates the tree
-          console.log('[DESKTOP_LAYOUT_DEBUG] 🗑️ Delete operation detected');
 
           const pathParts = fileOpMessage.path.split('/');
           pathParts.pop(); // Remove the deleted file/folder name
           const parentPath = pathParts.join('/') || '/';
 
-          console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory to refresh:', parentPath);
 
           // For AntFileTree, trigger refresh via ref
-          console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 Triggering tree refresh via ref');
           if (fileTreeRef.current) {
             fileTreeRef.current.refreshTree();
           }
-          console.log('[DESKTOP_LAYOUT_DEBUG] ✅ Refresh triggered');
 
           // Update last processed count
-          console.log('[DESKTOP_LAYOUT_DEBUG] 🏁 Setting lastProcessedMessageCount to:', messages.length);
-          setLastProcessedMessageCount(messages.length);
+            setLastProcessedMessageCount(messages.length);
           return;
         }
 
@@ -115,32 +105,25 @@ export function DesktopLayout({
         const fileName = pathParts.pop() // Remove and save filename
         const parentPath = pathParts.join('/')
 
-        console.log('[DESKTOP_LAYOUT_DEBUG] Parent directory:', parentPath);
 
         // For AntFileTree, trigger refresh to show new files
-        console.log('[DESKTOP_LAYOUT_DEBUG] 🔵 Triggering tree refresh for new file');
         if (fileTreeRef.current) {
           fileTreeRef.current.refreshTree();
         }
-        console.log('[DESKTOP_LAYOUT_DEBUG] 🟢 Refresh triggered');
 
-        console.log('[DESKTOP_LAYOUT_DEBUG] 🔍 Reading file via backend API...');
 
         // Auto-select the file and load its content using backend API
         try {
-          console.log('[DESKTOP_LAYOUT_DEBUG] 📖 Fetching file:', fileOpMessage.path);
           const response = await fetch(`/api/files/read?path=${encodeURIComponent(fileOpMessage.path)}`);
 
           if (!response.ok) {
-            console.error('[DESKTOP_LAYOUT_DEBUG] ❌ API response not ok:', response.status);
+            console.error('API response not ok:', response.status);
             throw new Error(`Failed to read file: ${response.statusText}`);
           }
 
           const fileData = await response.json();
-          console.log('[DESKTOP_LAYOUT_DEBUG] 📄 File read result:', fileData ? 'SUCCESS' : 'NULL');
 
           if (fileData && fileData.content !== undefined) {
-            console.log('[DESKTOP_LAYOUT_DEBUG] 🎯 Calling onFileSelect with content');
             onFileSelect({
               name: fileOpMessage.fileName,
               path: fileOpMessage.path,
@@ -150,12 +133,10 @@ export function DesktopLayout({
               extension: fileOpMessage.fileName.includes('.') ? '.' + fileOpMessage.fileName.split('.').pop() : '',
               content: fileData.content
             });
-            console.log('[DESKTOP_LAYOUT_DEBUG] ✅ onFileSelect completed');
           } else {
-            console.log('[DESKTOP_LAYOUT_DEBUG] ⚠️ fileData was null/undefined');
           }
         } catch (error) {
-          console.error('[DESKTOP_LAYOUT_DEBUG] ❌ Error reading file:', error);
+          console.error('Error reading file:', error);
           // Select without content if read fails
           onFileSelect({
             name: fileOpMessage.fileName,
@@ -168,7 +149,6 @@ export function DesktopLayout({
         }
 
         // Update last processed count AFTER all async operations complete
-        console.log('[DESKTOP_LAYOUT_DEBUG] 🏁 Setting lastProcessedMessageCount to:', messages.length);
         setLastProcessedMessageCount(messages.length);
       })();
     } else {

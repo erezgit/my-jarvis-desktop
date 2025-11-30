@@ -211,11 +211,6 @@ export function isVoiceMessage(message: AllMessage): message is VoiceMessage {
 
   // Only log new voice messages to avoid render loops
   if (result && !(message as any)._logged) {
-    console.log('[VOICE_DEBUG] Voice message detected:', {
-      timestamp: message.timestamp,
-      hasContent: !!(message as any).content,
-      hasAudioUrl: !!(message as any).audioUrl
-    });
     (message as any)._logged = true;
   }
 

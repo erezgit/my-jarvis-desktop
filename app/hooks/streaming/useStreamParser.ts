@@ -100,16 +100,13 @@ export function useStreamParser() {
       try {
         const data: StreamResponse = JSON.parse(line);
 
-        console.log('[STREAM_PARSER] Received stream data type:', data.type);
 
         if (data.type === "claude_json" && data.data) {
           // data.data is already an SDKMessage object, no need to parse
           const claudeData = data.data as SDKMessage;
-          console.log('[STREAM_PARSER] Processing claude_json, message type:', claudeData.type);
           processClaudeData(claudeData, context);
         } else if (data.type === "ping") {
           // Mobile keep-alive ping - ignore silently
-          console.log('[STREAM_PARSER] Received mobile keep-alive ping');
         } else if (data.type === "error") {
           const errorMessage: SystemMessage = {
             type: "error",
@@ -146,7 +143,6 @@ export function useStreamParser() {
               percentage: (currentContextSize / 200000) * 100
             });
 
-            console.log('[TOKEN_UPDATE] Current context size:', currentContextSize);
           }
         }
       } catch (parseError) {
