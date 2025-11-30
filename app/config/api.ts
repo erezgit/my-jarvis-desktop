@@ -1,20 +1,13 @@
-import { isElectronMode } from './deployment'
-
-// API configuration - uses absolute URLs for Electron app, relative for web
-// Use VITE_JARVIS_DEV_PORT for development to avoid conflicts
-const PORT = import.meta.env.VITE_JARVIS_DEV_PORT || "8081";
-
-// In web mode, use relative URLs so they work with any domain
-// In Electron, use absolute localhost URLs
-const BASE_URL = isElectronMode() ? `http://127.0.0.1:${PORT}` : '';
+// API configuration - web-only mode using relative URLs
+// Relative URLs work with Vite proxy in development and same-origin deployment in production
 
 export const API_CONFIG = {
   ENDPOINTS: {
-    CHAT: `${BASE_URL}/api/chat`,
-    ABORT: `${BASE_URL}/api/abort`,
-    PROJECTS: `${BASE_URL}/api/projects`,
-    HISTORIES: `${BASE_URL}/api/projects`,
-    CONVERSATIONS: `${BASE_URL}/api/projects`,
+    CHAT: `/api/chat`,
+    ABORT: `/api/abort`,
+    PROJECTS: `/api/projects`,
+    HISTORIES: `/api/projects`,
+    CONVERSATIONS: `/api/projects`,
   },
 } as const;
 

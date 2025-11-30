@@ -17,6 +17,15 @@ export default defineConfig({
       external: [],
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
   resolve: {
     alias: {
       '@/app': resolve(__dirname, 'app'),

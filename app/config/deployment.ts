@@ -1,46 +1,40 @@
 /**
- * Centralized deployment mode configuration
+ * Deployment configuration for web-only mode
  *
- * This module provides a single source of truth for determining whether
- * the application is running in Electron desktop mode or web browser mode.
- *
- * The deployment mode is set at build time via the VITE_DEPLOYMENT_MODE
- * environment variable, which is injected by the build configuration:
- * - electron.vite.config.ts sets it to 'electron' for desktop builds
- * - vite.web.config.mts sets it to 'web' for browser builds
+ * This application now runs exclusively in web browser mode.
+ * All Electron legacy code has been removed for simplicity.
  *
  * Usage:
  * ```typescript
- * import { isElectronMode, isWebMode } from '@/app/config/deployment'
+ * import { isWebMode } from '@/app/config/deployment'
  *
- * if (isElectronMode()) {
- *   // Use Electron-specific features (IPC, file system access, etc.)
- * } else if (isWebMode()) {
+ * if (isWebMode()) {
  *   // Use web-specific features (HTTP APIs, browser APIs, etc.)
  * }
  * ```
  */
 
-export type DeploymentMode = 'electron' | 'web'
+export type DeploymentMode = 'web'
 
 /**
- * The current deployment mode, set at build time
+ * The current deployment mode - always web
  */
-export const DEPLOYMENT_MODE = import.meta.env.VITE_DEPLOYMENT_MODE as DeploymentMode
+export const DEPLOYMENT_MODE: DeploymentMode = 'web'
 
 /**
  * Check if running in Electron desktop mode
- * @returns true if running as Electron desktop app
+ * @returns false - Electron mode has been removed
+ * @deprecated Electron support has been removed
  */
-export const isElectronMode = (): boolean => DEPLOYMENT_MODE === 'electron'
+export const isElectronMode = (): boolean => false
 
 /**
  * Check if running in web browser mode
- * @returns true if running as web application in browser
+ * @returns true - always runs as web application
  */
-export const isWebMode = (): boolean => DEPLOYMENT_MODE === 'web'
+export const isWebMode = (): boolean => true
 
 // Development mode debugging
 if (import.meta.env.DEV) {
-  console.log(`[Deployment] Running in ${DEPLOYMENT_MODE} mode`)
+  console.log(`[Deployment] Running in web-only mode (Electron legacy removed)`)
 }
