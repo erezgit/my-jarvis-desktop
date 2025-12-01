@@ -1,6 +1,35 @@
 @import "tailwindcss";
 @import "antd/dist/reset.css";
 
+/* FORCE LIGHT MODE ONLY - Override ALL dark mode attempts */
+:root {
+  color-scheme: light !important;
+}
+
+html {
+  color-scheme: light !important;
+}
+
+/* Remove any dark class effects - neutralize it completely */
+html.dark {
+  /* Reset all properties to light mode values */
+  color-scheme: light !important;
+  background: white !important;
+  color: black !important;
+}
+
+/* Prevent any media query dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light !important;
+  }
+
+  html {
+    color-scheme: light !important;
+    background: white !important;
+  }
+}
+
 /* Minimal tree switcher arrow removal - scoped specifically to file tree */
 .ant-file-tree .ant-tree-treenode > .ant-tree-switcher {
   display: none !important;

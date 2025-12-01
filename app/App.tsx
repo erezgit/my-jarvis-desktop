@@ -6,6 +6,7 @@ import { ChatStateProvider } from "./contexts/ChatStateProvider";
 import { TokenUsageProvider } from "./contexts/TokenUsageContext";
 import { MessageProcessorProvider } from "./contexts/MessageProcessorContext";
 import { TerminalOverlay } from "./components/TerminalOverlay";
+import { useEffect } from "react";
 
 // Create QueryClient instance (singleton for the app)
 const queryClient = new QueryClient({
@@ -20,6 +21,45 @@ const queryClient = new QueryClient({
 })
 
 function App() {
+  // Override window.matchMedia to always return light mode
+  useEffect(() => {
+    const originalMatchMedia = window.matchMedia;
+
+    window.matchMedia = function(query: string) {
+      // Check if this is a color scheme query
+      if (query.includes('prefers-color-scheme')) {
+        if (query.includes('dark')) {
+          // Always return false for dark mode queries
+          return {
+            matches: false,
+            media: query,
+            onchange: null,
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            addListener: () => {},
+            removeListener: () => {},
+            dispatchEvent: () => true
+          } as MediaQueryList;
+        } else if (query.includes('light')) {
+          // Always return true for light mode queries
+          return {
+            matches: true,
+            media: query,
+            onchange: null,
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            addListener: () => {},
+            removeListener: () => {},
+            dispatchEvent: () => true
+          } as MediaQueryList;
+        }
+      }
+
+      // For non-color-scheme queries, use the original function
+      return originalMatchMedia.call(window, query);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <MessageProcessorProvider>

@@ -82,12 +82,11 @@ export function DemoPage() {
     }
 
     // Remove existing theme class
+    // ALWAYS remove dark class - force light mode only
     root.classList.remove("dark");
 
-    // Apply current theme
-    if (theme === "dark") {
-      root.classList.add("dark");
-    }
+    // Never add dark class regardless of theme setting
+    // The app is restricted to light mode only
 
     // Save to localStorage (unless overridden by URL)
     if (!themeParam) {

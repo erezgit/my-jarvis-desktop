@@ -40,11 +40,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     const root = window.document.documentElement;
 
-    if (settings.theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    // ALWAYS remove dark class, never add it - force light mode only
+    root.classList.remove("dark");
+
+    // Also remove any dark mode attributes that might be set
+    root.removeAttribute('data-theme');
+    root.style.colorScheme = 'light';
 
     // Save settings to storage
     setSettings(settings);

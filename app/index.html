@@ -6,6 +6,31 @@
     <title>My Jarvis Clean</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script>
+      // FORCE LIGHT MODE - Prevent any dark class from being added
+      (function() {
+        // Remove dark class immediately
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+
+        // Monitor for any attempts to add dark class and remove it
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+              if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                console.log('Prevented dark mode');
+              }
+            }
+          });
+        });
+
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
