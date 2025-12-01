@@ -5,3 +5,15 @@
 .ant-file-tree .ant-tree-treenode > .ant-tree-switcher {
   display: none !important;
 }
+
+/* Align icon and text in Ant Tree nodes */
+.ant-file-tree .ant-tree-node-content-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.ant-file-tree .ant-tree-iconEle {
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 24px !important;
+}

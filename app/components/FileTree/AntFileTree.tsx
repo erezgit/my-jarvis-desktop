@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
-import { Tree } from 'antd'
+import { Tree, ConfigProvider } from 'antd'
 import { FileText, Folder } from 'lucide-react'
 import type { TreeDataNode, TreeProps, EventDataNode } from 'antd/es/tree'
 
@@ -43,7 +43,11 @@ function transformToAntTreeData(apiFiles: APIFileItem[]): TreeDataNode[] {
       key: file.path,
       title: file.name,
       isLeaf: !file.isDirectory,
-      icon: file.isDirectory ? <Folder className="w-4 h-4" /> : <FileText className="w-4 h-4" />,
+      icon: (
+        <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: '24px' }}>
+          {file.isDirectory ? <Folder className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+        </span>
+      ),
       // Store original data for later use
       data: {
         name: file.name,
@@ -293,20 +297,33 @@ export const AntFileTree = forwardRef<AntFileTreeHandle, AntFileTreeProps>(({
   }
 
   return (
-    <div className={`h-full overflow-auto bg-gray-50 dark:bg-gray-900 ${className}`}>
-      <Tree
-        treeData={treeData}
-        loadData={onLoadData}
-        onSelect={onSelect}
-        onExpand={onExpand}
-        expandedKeys={expandedKeys}
-        selectedKeys={selectedKeys}
-        showIcon
-        showLine={false}
-        showLoading={false}
-        selectable={true}
-        className="ant-file-tree"
-      />
+    <div className={`h-full overflow-auto ${className}`}>
+      <ConfigProvider
+        theme={{
+          components: {
+            Tree: {
+              colorBgContainer: '#f9fafb', // bg-gray-50 color
+              colorBgTextHover: '#f3f4f6', // bg-gray-100 for hover
+              colorBgTextActive: '#e5e7eb', // bg-gray-200 for active
+            }
+          }
+        }}
+      >
+        <Tree
+          treeData={treeData}
+          loadData={onLoadData}
+          onSelect={onSelect}
+          onExpand={onExpand}
+          expandedKeys={expandedKeys}
+          selectedKeys={selectedKeys}
+          showIcon
+          showLine={false}
+          showLoading={false}
+          selectable={true}
+          className="ant-file-tree"
+          style={{ backgroundColor: 'transparent' }}
+        />
+      </ConfigProvider>
     </div>
   )
 })
