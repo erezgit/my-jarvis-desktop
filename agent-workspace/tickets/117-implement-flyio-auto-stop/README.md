@@ -1,9 +1,9 @@
 # Ticket 117: Implement Fly.io Auto-Stop to Reduce Costs by 75%
 
-## Status: 🟡 Ready to Implement
+## Status: ✅ COMPLETED - Phase 1 (December 1, 2025)
 **Priority: CRITICAL** - Immediate cost savings of $95/month
-**Complexity: Low - Configuration change only
-**Estimated Time: 1 hour total (5 minutes per app)
+**Completed**: Auto-stop working + Clean UX implemented
+**Next Phase**: Roll out to all 13 remaining apps
 
 ---
 
@@ -28,62 +28,31 @@ Enable Fly.io's built-in auto-stop feature to automatically:
 
 ## Implementation Steps
 
-### Phase 1: Test on my-jarvis-dev ✅ COMPLETED
+### Phase 1: Test on my-jarvis-dev ✅ COMPLETED (December 1, 2025)
 
-#### Step 1.1: Check Current Configuration ✅
-```bash
-cd /Users/erezfern/Workspace/my-jarvis/spaces/my-jarvis-desktop/projects/my-jarvis-desktop
-fly config show -a my-jarvis-dev
-```
+#### Issue Discovered & Fixed ✅
+**Problem**: Original fly.toml had `auto_stop_machines = false`
+**Root Cause**: App-level configuration takes precedence over machine-level settings
 
-#### Step 1.2: BETTER APPROACH - Update Without Code Changes ✅
-```toml
-app = "my-jarvis-dev"
-primary_region = "sjc"
+#### Solution Applied ✅
+1. **Updated fly.toml** with `auto_stop_machines = "stop"`
+2. **Deployed using existing image**: `fly deploy -a my-jarvis-dev --image registry.fly.io/my-jarvis-dev:deployment-01KBB80FKXY6BSBK5C5C958H0G`
+3. **Verified configuration**: `fly config show -a my-jarvis-dev` shows `"auto_stop_machines": true`
 
-[build]
-  dockerfile = "Dockerfile"
+#### Clean UX Implementation ✅
+**Problem**: When machines stopped, API calls returned HTML → JSON parsing errors
+**Solution**: Created HTML response detection and silent redirect to login
 
-[http_service]
-  internal_port = 3000
-  force_https = true
-  auto_stop_machines = "stop"      # NEW: Stop when idle
-  auto_start_machines = true       # NEW: Restart on request
-  min_machines_running = 0         # NEW: Allow scale to zero
+**Files Created/Updated**:
+- `app/utils/redirectHandler.ts` - HTML detection utility
+- `app/hooks/streaming/useStreamParser.ts` - Added HTML handling
+- `app/hooks/useHistoryLoader.ts` - Added HTML detection
+- `package.json` - Version bumped to 1.4.59
 
-  [http_service.concurrency]
-    type = "requests"
-    hard_limit = 250
-    soft_limit = 200
-
-[[vm]]
-  size = "shared-cpu-1x"
-  memory = "2gb"
-
-[mounts]
-  source = "workspace_data"
-  destination = "/workspace"
-```
-
-#### Step 1.3: Deploy Configuration WITHOUT Code Changes ✅
-```bash
-# RECOMMENDED: Update only configuration, keep existing image
-fly machine update <machine-id> --autostop=stop --autostart -a my-jarvis-dev -y
-
-# Actual command used:
-fly machine update 1857311c0979e8 --autostop=stop --autostart -a my-jarvis-dev -y
-# Result: Successfully enabled auto-stop without changing code or image
-```
-
-#### Step 1.4: Verify Auto-Stop Works
-```bash
-# Wait 10 minutes, then check status
-fly machine list -a my-jarvis-dev
-
-# Should show state as "stopped" not "started"
-# Access the app URL to trigger restart
-# Check restart time (should be 2-5 seconds)
-```
+#### Results ✅
+- **Auto-stop working**: Machine stops after ~5 minutes, restarts in 2-5 seconds
+- **Clean UX**: No more console errors, silent redirect to login
+- **Ready for rollout**: Version 1.4.59 deployed to my-jarvis-dev
 
 ---
 

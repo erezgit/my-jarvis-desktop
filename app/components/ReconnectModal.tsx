@@ -19,7 +19,10 @@ export function ReconnectModal({ title, message, buttonText, onConfirm }: Reconn
         </p>
         <button
           onClick={onConfirm}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+          className="w-full text-white font-medium shadow-sm relative overflow-hidden
+                     bg-gradient-to-tr from-cyan-400 to-blue-500
+                     hover:from-cyan-500 hover:to-blue-600
+                     py-2 px-4 rounded-md transition-all duration-200"
         >
           {buttonText}
         </button>

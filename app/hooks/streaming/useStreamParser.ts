@@ -15,6 +15,7 @@ import {
 import type { StreamingContext } from "./useMessageProcessor";
 import type { ProcessingContext } from "../../utils/UnifiedMessageProcessor";
 import { useMessageProcessor } from "../../contexts/MessageProcessorContext";
+import { handleHtmlResponse } from "../../utils/redirectHandler";
 
 export function useStreamParser() {
   // Use the singleton processor instance from context
@@ -97,7 +98,12 @@ export function useStreamParser() {
   );
 
   const processStreamLine = useCallback(
-    (line: string, context: StreamingContext) => {
+    (line: string, context: StreamingContext): { isHtmlDetected?: boolean } => {
+      // Check for HTML response (indicates machine restart during app usage)
+      if (handleHtmlResponse(line, 'app')) {
+        return { isHtmlDetected: true };
+      }
+
       try {
         const data: StreamResponse = JSON.parse(line);
 
@@ -130,6 +136,8 @@ export function useStreamParser() {
       } catch (parseError) {
         console.error("Failed to parse stream line:", parseError);
       }
+
+      return {};
     },
     [processClaudeData],
   );

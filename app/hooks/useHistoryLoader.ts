@@ -3,6 +3,7 @@ import type { AllMessage, TimestampedSDKMessage } from "../types";
 import type { ConversationHistory } from "../../../shared/types";
 import { getConversationUrl } from "../config/api";
 import { useMessageProcessor } from "../contexts/MessageProcessorContext";
+import { handleHtmlResponse } from "../utils/redirectHandler";
 
 interface HistoryLoaderState {
   messages: AllMessage[];
@@ -70,7 +71,20 @@ export function useHistoryLoader(): HistoryLoaderResult {
           );
         }
 
-        const conversationHistory: ConversationHistory = await response.json();
+        // Get response text first to check for HTML
+        const responseText = await response.text();
+
+        // Check for HTML response (indicates machine restart during login)
+        if (handleHtmlResponse(responseText, 'login')) {
+          // Machine is starting up - retry silently after 3 seconds
+          console.log('Machine starting up, retrying history load in 3 seconds...');
+          setTimeout(() => {
+            loadHistory(encodedProjectName, sessionId);
+          }, 3000);
+          return;
+        }
+
+        const conversationHistory: ConversationHistory = JSON.parse(responseText);
 
         // Validate the response structure
         if (

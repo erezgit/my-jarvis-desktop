@@ -168,7 +168,7 @@ export function DesktopLayout({
           className="bg-gray-50 dark:bg-gray-900 px-5 py-4"
         >
           {/* Header bar with My Jarvis icon and title */}
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-8">
             <MyJarvis />
             <span className="font-semibold text-gray-900 dark:text-gray-100">
               My Jarvis
@@ -178,7 +178,7 @@ export function DesktopLayout({
           <AntFileTree
             ref={fileTreeRef}
             workingDirectory={fileTreeDirectory}
-            onFileSelect={(node: FileNode) => {
+            onFileSelect={async (node: FileNode) => {
               // Convert FileNode to FileItem for compatibility
               const fileItem: FileItem = {
                 name: node.name,
@@ -188,6 +188,23 @@ export function DesktopLayout({
                 modified: node.modified || '',
                 extension: node.extension || ''
               }
+
+              // For files (not directories), fetch content before selecting
+              if (!node.isFolder) {
+                try {
+                  const response = await fetch(`/api/files/read?path=${encodeURIComponent(node.path)}`);
+                  if (response.ok) {
+                    const fileData = await response.json();
+                    if (fileData && fileData.content !== undefined) {
+                      fileItem.content = fileData.content;
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error fetching file content:', error);
+                  // Continue without content if fetch fails
+                }
+              }
+
               onFileSelect(fileItem)
             }}
             selectedFile={selectedFile}

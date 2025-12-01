@@ -38,9 +38,9 @@ Add these settings to each app's `fly.toml` file:
 
 ```toml
 [http_service]
-  internal_port = 3000  # or your app's port
+  internal_port = 10000            # or your app's port
   force_https = true
-  auto_stop_machines = "stop"      # Can be "stop", "suspend", or "off"
+  auto_stop_machines = "stop"      # Can be "stop", "suspend", or false/"off"
   auto_start_machines = true       # Enable auto-restart
   min_machines_running = 0         # Allow scaling to zero
 
@@ -53,14 +53,34 @@ Add these settings to each app's `fly.toml` file:
 **Alternative for `[[services]]` section**:
 ```toml
 [[services]]
-  internal_port = 3000
+  internal_port = 10000
   protocol = "tcp"
   auto_stop_machines = "stop"
   auto_start_machines = true
   min_machines_running = 0
 ```
 
-### Step 2: Deploy the Configuration
+### Step 2: Deploy the Configuration (CRITICAL PROCESS)
+
+**⚠️ IMPORTANT: Configuration vs Machine-Level Settings**
+
+There are two levels of auto-stop configuration in Fly.io:
+1. **App-level configuration** (fly.toml) - This is the primary source
+2. **Machine-level configuration** (individual machine settings)
+
+**App-level configuration takes precedence over machine-level settings during deployments.**
+
+#### Method 1: Configuration-Only Deployment (Recommended)
+
+```bash
+# Get current image to avoid rebuilding
+fly image show -a APP_NAME
+
+# Deploy configuration changes without rebuilding image
+fly deploy -a APP_NAME --image registry.fly.io/APP_NAME:deployment-XXXXX
+```
+
+#### Method 2: Full Deployment (Slower but Always Works)
 
 ```bash
 # For each app, deploy the updated configuration
@@ -69,7 +89,18 @@ fly deploy -a my-jarvis-lilah
 # ... repeat for all apps
 ```
 
-**Note**: The configuration change takes effect immediately after deployment.
+#### Method 3: Machine-Level Override (Temporary Only)
+
+```bash
+# This only works until next deployment, then gets overridden
+fly machine update MACHINE_ID -a APP_NAME --autostop=stop --yes
+```
+
+**Note**: Always verify configuration after deployment with:
+```bash
+fly config show -a APP_NAME | grep auto_stop
+# Should show: "auto_stop_machines": true
+```
 
 ### Step 3: Verify Auto-Stop is Working
 
@@ -259,6 +290,43 @@ fly scale count 0 -a <app-name>
 
 ---
 
+---
+
+## ✅ IMPLEMENTATION STATUS UPDATE (December 1, 2025)
+
+### Successfully Implemented on my-jarvis-dev
+
+**Issue Identified**:
+- Original fly.toml had `auto_stop_machines = false` preventing auto-stop
+- Previous attempt using `fly machine update --autostop=stop` was overridden by app-level config
+
+**Solution Applied**:
+1. ✅ Updated local fly.toml with `auto_stop_machines = "stop"`
+2. ✅ Deployed configuration using existing image: `fly deploy -a my-jarvis-dev --image registry.fly.io/my-jarvis-dev:deployment-01KBB80FKXY6BSBK5C5C958H0G`
+3. ✅ Verified configuration: `fly config show -a my-jarvis-dev` now shows `"auto_stop_machines": true`
+
+**Key Learning**:
+App-level configuration in fly.toml takes precedence over machine-level settings. Always use `fly deploy` to apply fly.toml changes, not just `fly machine update` commands.
+
+**Next Steps**:
+- Monitor my-jarvis-dev for auto-stop behavior (should stop after ~5 minutes of inactivity)
+- Apply same process to all 13 other user instances for immediate cost savings
+- Expected monthly savings: ~$90-100 (from $130 to ~$30-40)
+
+**Deployment Command for Other Apps**:
+```bash
+# For each app:
+# 1. Update fly.toml to set auto_stop_machines = "stop"
+# 2. Get current image: fly image show -a APP_NAME
+# 3. Deploy config: fly deploy -a APP_NAME --image registry.fly.io/APP_NAME:deployment-XXXXX
+# 4. Verify: fly config show -a APP_NAME | grep auto_stop
+```
+
+---
+
+*NOTE: This implementation guide has been moved to Ticket 117*
+*See: /agent-workspace/tickets/117-implement-flyio-auto-stop/README.md*
+*All auto-stop work is now consolidated in Ticket 117*
+
 *Implementation Guide Created: November 30, 2025*
-*Estimated Implementation Time: 1-2 hours*
-*Expected Monthly Savings: $90-100*
+*Consolidated into Ticket 117: December 1, 2025*

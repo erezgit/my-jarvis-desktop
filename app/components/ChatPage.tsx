@@ -277,7 +277,13 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
                 try {
                   // Validate JSON before processing to catch fragments
                   JSON.parse(trimmedLine);
-                  processStreamLine(trimmedLine, streamingContext);
+                  const result = processStreamLine(trimmedLine, streamingContext);
+                  if (result?.isHtmlDetected) {
+                    // Machine is sleeping - show reconnect modal
+                    setShowReconnectModal(true);
+                    shouldAbort = true;
+                    break;
+                  }
                 } catch (parseError) {
                   // Skip invalid JSON fragments silently
                 }
@@ -288,7 +294,13 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
             const lines = chunk.split("\n").filter((line) => line.trim());
             for (const line of lines) {
               if (shouldAbort) break;
-              processStreamLine(line, streamingContext);
+              const result = processStreamLine(line, streamingContext);
+              if (result?.isHtmlDetected) {
+                // Machine is sleeping - show reconnect modal
+                setShowReconnectModal(true);
+                shouldAbort = true;
+                break;
+              }
             }
           }
 
@@ -298,11 +310,26 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
         console.error("Failed to send message:", error);
 
         // Check if this is a connection error (machine likely stopped)
-        if (error instanceof TypeError &&
-            (error.message.includes('Failed to fetch') ||
-             error.message.includes('NetworkError') ||
-             error.message.includes('ERR_CONNECTION_REFUSED'))) {
-          // Show reconnect modal
+        // Handle various network error conditions more comprehensively
+        const isNetworkError =
+          error instanceof TypeError ||
+          (error instanceof Error && (
+            error.message.includes('Failed to fetch') ||
+            error.message.includes('NetworkError') ||
+            error.message.includes('ERR_CONNECTION_REFUSED') ||
+            error.message.includes('net::ERR_CONNECTION_REFUSED') ||
+            error.message.includes('ERR_NETWORK_CHANGED') ||
+            error.message.includes('ERR_INTERNET_DISCONNECTED') ||
+            error.message.includes('ERR_PROXY_CONNECTION_FAILED') ||
+            error.message.includes('ERR_NAME_NOT_RESOLVED') ||
+            error.message.includes('fetch') ||
+            error.message.includes('Machine sleeping') || // Our custom HTML detection error
+            error.name === 'NetworkError' ||
+            error.name === 'TypeError'
+          ));
+
+        if (isNetworkError) {
+          // Show reconnect modal for any network-related error
           setShowReconnectModal(true);
         } else {
           // Other errors show in chat
@@ -624,6 +651,11 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, [isLoading, currentRequestId, handleAbort]);
 
+  // Handler to redirect to login when machine is sleeping
+  const handleGoToLogin = useCallback(() => {
+    window.location.href = '/login';
+  }, []);
+
   return (
     <div className="flex flex-col min-w-0 h-full px-4 pb-4 bg-neutral-50 dark:bg-neutral-900 transition-colors duration-300">
       {isHistoryView ? (
@@ -668,10 +700,10 @@ export function ChatPage({ currentView, onViewChange, onFileUploadReady, onNewCh
       {/* Reconnect Modal */}
       {showReconnectModal && (
         <ReconnectModal
-          title="Connection Lost"
-          message="Your workspace is sleeping. Click to wake it up."
-          buttonText="Reconnect"
-          onConfirm={() => window.location.reload()}
+          title="Machine Sleeping"
+          message="Your workspace needs to be restarted. Please log in again."
+          buttonText="Go to Login"
+          onConfirm={handleGoToLogin}
         />
       )}
     </div>
