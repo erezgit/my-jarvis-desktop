@@ -1,13 +1,14 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 @import "antd/dist/reset.css";
 
 /* FORCE LIGHT MODE ONLY - Override ALL dark mode attempts */
 :root {
-  color-scheme: light !important;
+  color-scheme: only light !important;
 }
 
 html {
-  color-scheme: light !important;
+  color-scheme: only light !important;
 }
 
 /* Remove any dark class effects - neutralize it completely */
