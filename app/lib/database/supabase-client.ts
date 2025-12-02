@@ -17,14 +17,29 @@ class SupabaseService {
 
   // 2025 Best Practice: Create new client per operation
   createClient() {
+    const url = process.env.SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_KEY
+
+    if (!url || !key) {
+      console.error('[SUPABASE] Missing environment variables:', {
+        hasUrl: !!url,
+        hasKey: !!key,
+        urlPrefix: url?.substring(0, 20),
+        keyPrefix: key?.substring(0, 10)
+      })
+      throw new Error('Supabase configuration missing')
+    }
+
+    console.log('[SUPABASE] Creating client with URL:', url)
+
     return createClient<Database>(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!,
+      url,
+      key,
       {
         auth: { persistSession: false }, // Backend doesn't need session persistence
         db: { schema: 'public' },
         global: {
-          headers: { 'apikey': process.env.SUPABASE_SERVICE_KEY! }
+          headers: { 'apikey': key }
         }
       }
     )

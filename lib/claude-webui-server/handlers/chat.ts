@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
 import { generateVoiceResponse, generateAudioUrl, sanitizeForJson } from "../utils/voiceGenerator.ts";
-import { TokenUsageService } from "../../../app/lib/token-tracking/token-usage-service.ts";
+import { TokenUsageService } from "../../../app/lib/token-tracking/token-usage-service";
 
 /**
  * Get user ID for token tracking based on environment

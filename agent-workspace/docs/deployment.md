@@ -24,7 +24,7 @@ fly apps create my-jarvis-newuser
 fly deploy --app my-jarvis-newuser
 ```
 
-### Step 3: Set Authentication & MCP Environment Variables
+### Step 3: Set Authentication, MCP & Database Environment Variables
 ```bash
 fly secrets set \
   JWT_SECRET="dEf2vFruOirvQX/GtVV14NfQr3X9HkEG99+QEvf9Y2g=" \
@@ -32,10 +32,16 @@ fly secrets set \
   OPENAI_API_KEY="${OPENAI_API_KEY}" \
   WORKSPACE_DIR="/home/node" \
   DEPLOYMENT_MODE="web" \
+  SUPABASE_URL="https://ocvkyhlfdjrvvipljbsa.supabase.co" \
+  SUPABASE_SERVICE_KEY="${SUPABASE_SERVICE_KEY}" \
+  ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
   --app my-jarvis-newuser
 ```
 
-**Note**: Replace `${OPENAI_API_KEY}` with your actual OpenAI API key for MCP voice generation.
+**Note**: Replace the following with actual values:
+- `${OPENAI_API_KEY}` - Your OpenAI API key for MCP voice generation
+- `${SUPABASE_SERVICE_KEY}` - Your Supabase service role key for database operations
+- `${ANTHROPIC_API_KEY}` - Your Anthropic API key for Claude SDK
 
 ### Step 4: Create User Account (Supabase Auth)
 
@@ -95,12 +101,22 @@ console.log('Password:', userPassword);
 // SAVE THE USER ID - YOU'LL NEED IT FOR STEP 4c
 ```
 
-### Step 4c: Set User ID Environment Variable
+### Step 4c: Set User ID Environment Variable (Required for Token Tracking)
 ```bash
-# Set the USER_ID environment variable for token tracking
+# CRITICAL: Set the USER_ID environment variable for token usage tracking
+# This links all token usage in this container to the correct user in the database
 # Use the User ID from Step 4b (authUser.user.id)
 fly secrets set USER_ID="${authUser.user.id}" --app my-jarvis-newuser
+
+# Example with actual UUID:
+# fly secrets set USER_ID="3dfb3580-b7c4-4da3-8d9e-b9775c216f7e" --app my-jarvis-newuser
 ```
+
+**Why this is required:**
+- Each container serves ONE user exclusively
+- Token usage tracking needs to know which user to attribute usage to
+- Without this, token tracking will fail silently
+- This enables accurate billing and usage analytics per user
 
 ### Step 5: Create Database Instance Mapping
 

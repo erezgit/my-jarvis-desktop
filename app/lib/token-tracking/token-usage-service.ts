@@ -20,9 +20,19 @@ export class TokenUsageService {
   }
 
   async processSessionUsage(data: TokenUsageData): Promise<void> {
+    console.log('[TOKEN_SERVICE] Processing session usage for user:', this.userId)
+    console.log('[TOKEN_SERVICE] Session data:', {
+      sessionId: data.sessionId,
+      inputTokens: data.inputTokens,
+      outputTokens: data.outputTokens,
+      total: data.inputTokens + data.outputTokens + data.cacheCreationTokens + data.cacheReadTokens + data.thinkingTokens
+    })
+
     const cost = this.calculateCost(data)
     const sessionData = this.formatSessionData(data, cost)
     const dailyData = this.formatDailyData(data, cost)
+
+    console.log('[TOKEN_SERVICE] Attempting to save to database...')
 
     // Use centralized service with retry logic
     await supabaseService.withRetry(async () => {
@@ -32,8 +42,11 @@ export class TokenUsageService {
       })
 
       if (error) {
+        console.error('[TOKEN_SERVICE] Database error:', error)
         throw new Error(`Token tracking failed: ${error.message}`)
       }
+
+      console.log('[TOKEN_SERVICE] Successfully saved to database')
     })
   }
 
