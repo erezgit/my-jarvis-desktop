@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Tree, ConfigProvider } from 'antd'
-import { FileText, Folder } from 'lucide-react'
+import { FileText, Folder, FolderOpen } from 'lucide-react'
 import type { TreeDataNode, TreeProps, EventDataNode } from 'antd/es/tree'
 
 interface FileNode {
@@ -43,11 +43,15 @@ function transformToAntTreeData(apiFiles: APIFileItem[]): TreeDataNode[] {
       key: file.path,
       title: file.name,
       isLeaf: !file.isDirectory,
-      icon: (
-        <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: '24px' }}>
-          {file.isDirectory ? <Folder className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
-        </span>
-      ),
+      icon: (props: any) => {
+        return (
+          <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: '24px' }}>
+            {file.isDirectory
+              ? (props.expanded ? <FolderOpen className="w-4 h-4" /> : <Folder className="w-4 h-4" />)
+              : <FileText className="w-4 h-4" />}
+          </span>
+        )
+      },
       // Store original data for later use
       data: {
         name: file.name,
