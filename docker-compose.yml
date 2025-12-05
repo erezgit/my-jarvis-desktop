@@ -4,10 +4,10 @@ services:
   my-jarvis-web:
     build: .
     ports:
-      - "3000:10000"
+      - "${PORT:-3001}:10000"
     volumes:
-      # Persistent workspace for development testing
-      - ./workspace:/workspace
+      # Mount the entire my-jarvis workspace as /home/node
+      - /Users/erezfern/Workspace/my-jarvis:/home/node
       # Mount Claude JSONL files for session token tracking
       - /Users/erezfern/.claude:/root/.claude:ro
     environment:

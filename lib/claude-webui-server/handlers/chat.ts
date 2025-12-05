@@ -226,19 +226,22 @@ async function* executeClaudeCommand(
       model: 'haiku' as const, // Haiku 4.5 - similar coding performance at 66% lower cost
 
       // ✅ REQUIRED: Thinking parameter configuration (fixes clear_thinking_20251015)
-      thinking: {
-        type: "enabled" as const,
-        budget_tokens: 10000 // Optimal balance of performance and speed
-      },
+      // TEMPORARILY DISABLED: Testing SDK update with caching only
+      // thinking: {
+      //   type: "enabled" as const,
+      //   budget_tokens: 10000 // Optimal balance of performance and speed
+      // },
 
-      // ✅ BEST PRACTICE: Explicit system prompt configuration
+      // ✅ BEST PRACTICE: Explicit system prompt configuration (temporarily without caching)
       systemPrompt: {
         type: "preset" as const,
-        preset: "claude_code" as const // Maintains Claude Code behavior
+        preset: "claude_code" as const, // Maintains Claude Code behavior
+        // TEMPORARILY DISABLED: cache_control: { type: "ephemeral" }
       },
 
-      // ✅ ENHANCEMENT: Enable CLAUDE.md project context loading
+      // ✅ ENHANCEMENT: Enable CLAUDE.md project context loading (temporarily without caching)
       settingSources: ['project' as const],
+      // TEMPORARILY DISABLED: projectSettingsCache: { type: "ephemeral" },
 
       // ✅ NEW: MCP server integration for custom tools
       mcpServers: {
@@ -263,6 +266,13 @@ async function* executeClaudeCommand(
           "mcp__jarvis-tools__voice_generate"     // Default: only voice tool
         ]
       }),
+
+      // ✅ CACHING: Add required header for prompt caching
+      // TEMPORARILY DISABLED: Testing without caching
+      // extraArgs: {
+      //   "anthropic-beta": "prompt-caching-2024-07-31"
+      // },
+
       ...(permissionMode ? { permissionMode } : {}), // Only pass permissionMode if provided by frontend
     };
 
