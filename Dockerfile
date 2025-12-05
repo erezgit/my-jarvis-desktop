@@ -66,20 +66,10 @@ RUN npm install --legacy-peer-deps
 # Rebuild native modules for the Docker Node.js version
 RUN npm rebuild node-pty
 
-# Copy application source code (only web-needed directories)
-COPY app ./app
-COPY public ./public
+# Copy backend source code only
 COPY lib/claude-webui-server ./lib/claude-webui-server
 COPY lib/terminal ./lib/terminal
-COPY vite.web.config.mts ./
 COPY tsconfig*.json ./
-
-
-# Build React app for production using web-only Vite config
-ENV NODE_ENV=production
-ENV VITE_API_URL=
-ENV VITE_WORKING_DIRECTORY=/home/node
-RUN npx vite build --config vite.web.config.mts
 
 # Build the backend server (skip frontend copy since we already built it)
 WORKDIR /app/lib/claude-webui-server
@@ -93,8 +83,8 @@ RUN npm install && npm rebuild node-pty
 # Build backend bundle
 RUN npm run build:clean && npm run build:bundle
 
-# Copy the built React app to where the backend expects it
-RUN mkdir -p dist/static && cp -r /app/out/renderer/* dist/static/
+# Create empty static directory (frontend will be served from my-jarvis-web)
+RUN mkdir -p dist/static
 
 # Return to app root and set ownership of application files
 WORKDIR /app
