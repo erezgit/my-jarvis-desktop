@@ -100,7 +100,7 @@ cat > "$HOME_DIR/.claude.json" << 'EOF'
       "mcpServers": {
         "jarvis-tools": {
           "command": "node",
-          "args": ["/home/node/jarvis-mcp-server.js"],
+          "args": ["./jarvis-mcp-server.js"],
           "env": {
             "OPENAI_API_KEY": "${OPENAI_API_KEY}",
             "WORKSPACE_DIR": "${WORKSPACE_DIR}"

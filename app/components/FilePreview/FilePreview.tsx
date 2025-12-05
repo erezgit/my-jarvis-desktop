@@ -4,6 +4,7 @@ import { PDFViewer } from './PDFViewer';
 import { SandpackPreview } from './SandpackPreview';
 import { ExcelViewer } from './ExcelViewer';
 import { ImageViewer } from './ImageViewer';
+import { HTMLViewer } from './HTMLViewer';
 import { FileDownloadButton } from './FileDownloadButton';
 
 interface FileItem {
@@ -29,7 +30,6 @@ function getLanguageFromExtension(extension: string): string {
     '.py': 'python',
     '.json': 'json',
     '.css': 'css',
-    '.html': 'html',
     '.md': 'markdown',
     '.mdx': 'markdown',
     '.yml': 'yaml',
@@ -114,6 +114,17 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
     );
   }
 
+  // HTML files - use HTMLViewer with sandboxed iframe preview
+  if ((file.extension === '.html' || file.extension === '.htm') && file.content) {
+    return (
+      <HTMLViewer
+        content={file.content}
+        fileName={file.name}
+        className={className}
+      />
+    );
+  }
+
   if (file.content) {
     // Rich markdown rendering
     if (file.extension === '.md') {
@@ -155,7 +166,7 @@ export function FilePreview({ file, className = "" }: FilePreviewProps) {
 
     // Code files with basic syntax highlighting placeholder
     // Note: .tsx and .jsx are handled by Sandpack above
-    if (['.js', '.ts', '.py', '.json', '.css', '.html', '.yml', '.yaml', '.sh', '.bash'].includes(file.extension)) {
+    if (['.js', '.ts', '.py', '.json', '.css', '.yml', '.yaml', '.sh', '.bash'].includes(file.extension)) {
       return (
         <div className={`h-full w-full flex flex-col bg-white dark:bg-gray-900 ${className}`}>
           {/* Fixed header matching file tree pattern */}

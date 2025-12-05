@@ -1,0 +1,100 @@
+FROM node:20
+
+# Install system dependencies for Claude Agent SDK and node-pty compilation
+RUN apt-get update && apt-get install -y \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    build-essential \
+    make \
+    g++ \
+    rsync \
+    gosu \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Claude CLI globally (for backend agent functionality)
+RUN npm install -g @anthropic-ai/claude-code@2.0.42
+
+# Install Python dependencies for voice generation and PDF processing
+RUN pip3 install --break-system-packages --no-cache-dir \
+    openai>=2.7.1 \
+    python-dotenv==1.0.0 \
+    pdfplumber==0.7.6 \
+    pdf2image==1.16.3 \
+    PyMuPDF==1.23.8 \
+    Pillow==10.1.0 \
+    python-docx==1.1.0 \
+    openpyxl==3.1.2 \
+    requests==2.31.0 \
+    beautifulsoup4==4.12.2 \
+    pytesseract==0.3.10
+
+# Set HOME environment variable for node user
+ENV HOME=/home/node
+
+# Copy workspace template and scripts
+COPY workspace-template /app/workspace-template
+COPY scripts/setup-new-app.sh /app/scripts/setup-new-app.sh
+COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
+COPY scripts/migrate-to-home-node.sh /app/scripts/migrate-to-home-node.sh
+COPY scripts/legacy-fixes /app/scripts/legacy-fixes
+RUN chmod +x /app/scripts/*.sh /app/scripts/legacy-fixes/*.sh
+
+# Set working directory
+WORKDIR /app
+
+# Copy necessary backend dependencies
+COPY lib/claude-webui-server ./lib/claude-webui-server
+# Terminal removed - not needed for web deployment
+COPY app/lib/token-tracking ./app/lib/token-tracking
+COPY app/lib/database ./app/lib/database
+
+# Build the backend server
+WORKDIR /app/lib/claude-webui-server
+
+# Generate version.ts file
+RUN printf '// Auto-generated file\nexport const VERSION = "%s";\n' "$(node -p "require('./package.json').version")" > cli/version.ts
+
+# Install backend dependencies and rebuild native modules
+RUN npm install && npm rebuild node-pty
+
+# Build backend bundle (WITHOUT copying React app)
+RUN npm run build:clean && npm run build:bundle
+
+# Create empty static directory (backend expects it but we serve React from Next.js)
+RUN mkdir -p dist/static
+
+# Return to app root and set ownership
+WORKDIR /app
+RUN chown -R root:node /app && \
+    chmod -R 750 /app
+
+# Expose ports
+EXPOSE 10000
+EXPOSE 3001
+
+# Set environment variables
+ENV PORT=10000
+ENV TERMINAL_WS_PORT=3001
+ENV NODE_ENV=development
+ENV WORKSPACE_DIR=/home/node
+ENV IS_BACKEND_ONLY=true
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:10000/health || exit 1
+
+# Copy entrypoint script
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Use entrypoint to fix permissions and drop to non-root user
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+# Start from home directory
+WORKDIR /home/node
+
+# Start the backend server (API only mode)
+CMD ["node", "/app/lib/claude-webui-server/dist/cli/node.js", "--port", "10000", "--host", "0.0.0.0"]

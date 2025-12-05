@@ -4,27 +4,9 @@ import { z } from "zod";
 import type { ChatRequest, StreamResponse } from "../../shared/types.ts";
 import { logger } from "../utils/logger.ts";
 import { generateVoiceResponse, generateAudioUrl, sanitizeForJson } from "../utils/voiceGenerator.ts";
-import { TokenUsageService } from "../../../app/lib/token-tracking/token-usage-service";
+// TokenUsageService import removed - database operations now handled by Next.js backend
 
-/**
- * Get user ID for token tracking based on environment
- */
-function getTokenTrackingUserId(context?: Context): string | null {
-  // Development mode: Use test user ID
-  if (process.env.DISABLE_AUTH === 'true' && process.env.NODE_ENV === 'development') {
-    return '2553131c-33c9-49ad-8e31-ecd3b966ea94'; // Development test user
-  }
-
-  // Production: Use USER_ID environment variable (set per container for specific user)
-  if (process.env.USER_ID) {
-    console.log('[INFO] Using USER_ID from environment for token tracking');
-    return process.env.USER_ID;
-  }
-
-  // Fallback: No user ID available
-  console.log('[WARNING] Token tracking skipped - USER_ID environment variable not set');
-  return null;
-}
+// getTokenTrackingUserId function removed - user identification now handled by Next.js backend
 
 /**
  * Create JARVIS Tools MCP Server with voice generation capability
@@ -240,6 +222,9 @@ async function* executeClaudeCommand(
       cwd: workingDirectory, // Set working directory for Claude CLI process
       additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
 
+      // ✅ COST OPTIMIZATION: Use Haiku 4.5 by default (1/3 the cost of Sonnet 4.5)
+      model: 'haiku' as const, // Haiku 4.5 - similar coding performance at 66% lower cost
+
       // ✅ REQUIRED: Thinking parameter configuration (fixes clear_thinking_20251015)
       thinking: {
         type: "enabled" as const,
@@ -261,7 +246,10 @@ async function* executeClaudeCommand(
       },
 
       // ✅ ENHANCED: Clean architecture - MCP tools ALWAYS prioritized
-      ...(sessionId ? { resume: sessionId } : {}),
+      // REMOVED SESSION RESUME - This was causing excessive API caching costs
+      // Each message was reloading and re-caching entire conversation history
+      // Claude SDK handles session memory internally without this
+      // ...(sessionId ? { resume: sessionId } : {}),
       ...(allowedTools ? {
         allowedTools: [
           "mcp__jarvis-tools__voice_generate",     // Only keep voice tool
@@ -338,37 +326,8 @@ async function* executeClaudeCommand(
           sessionId: actualSessionId
         };
 
-        // Save to database asynchronously
-        if (actualSessionId) {
-          try {
-            const userId = getTokenTrackingUserId(context);
-            if (!userId) {
-              // Skip token tracking if no user ID available
-              return;
-            }
-            const tokenService = new TokenUsageService(userId);
-
-            await tokenService.processSessionUsage({
-              sessionId: actualSessionId,
-              inputTokens: usageData.input_tokens || 0,
-              outputTokens: usageData.output_tokens || 0,
-              cacheCreationTokens: usageData.cache_creation_input_tokens || 0,
-              cacheReadTokens: usageData.cache_read_input_tokens || 0,
-              thinkingTokens: usageData.thinking_tokens || 0,
-              messageCount: 1,
-              sessionStartedAt: new Date().toISOString(),
-              model: modelName || 'claude-3-5-sonnet-20241022'
-            });
-
-            console.log('[DEBUG] Token usage successfully saved to database');
-            logger.chat.info("Token usage saved to database for session: {sessionId}", { sessionId: actualSessionId });
-          } catch (error) {
-            console.log('[DEBUG] Failed to save token usage to database:', error);
-            logger.chat.error("Failed to save token usage: {error}", { error });
-          }
-        } else {
-          console.log('[DEBUG] No session ID available for database saving');
-        }
+        // Database saving now handled by Next.js backend via stream interception
+        // Express agent only sends token_update messages - no direct database access
       }
 
       yield {

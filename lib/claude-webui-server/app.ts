@@ -13,6 +13,7 @@ import {
   createConfigMiddleware,
 } from "./middleware/config.ts";
 import { authMiddleware, requireAuth } from "./middleware/auth.ts";
+import { keepaliveMiddleware } from "./middleware/keepalive.ts";
 import { handleProjectsRequest } from "./handlers/projects.ts";
 import { handleHistoriesRequest } from "./handlers/histories.ts";
 import { handleConversationRequest } from "./handlers/conversations.ts";
@@ -44,13 +45,19 @@ export function createApp(
   // Store AbortControllers for each request (shared with chat handler)
   const requestAbortControllers = new Map<string, AbortController>();
 
-  // CORS middleware
+  // CORS middleware - Updated to accept requests from Next.js
   app.use(
     "*",
     cors({
-      origin: "*",
-      allowMethods: ["GET", "POST", "OPTIONS"],
-      allowHeaders: ["Content-Type"],
+      origin: [
+        "https://www.myjarvis.io",
+        "https://my-jarvis-web.vercel.app",
+        "http://localhost:3000",  // Next.js dev
+        /^https:\/\/.*-myjarvis\.vercel\.app$/  // Preview deploys
+      ],
+      allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization", "X-User-Id", "X-Instance-Id"],
+      credentials: true
     }),
   );
 
@@ -63,6 +70,9 @@ export function createApp(
       cliPath: config.cliPath,
     }),
   );
+
+  // Keepalive middleware - monitors activity for auto-stop extension
+  app.use("*", keepaliveMiddleware);
 
   // Authentication middleware - validates JWT tokens and manages sessions
   app.use("*", authMiddleware);

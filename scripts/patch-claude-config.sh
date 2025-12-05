@@ -45,9 +45,18 @@ PROJECTS_JSON=$(cat <<'EOF'
 {
   "projects": {
     "/home/node": {
-      "allowedTools": ["Read", "Write", "Bash"],
+      "allowedTools": ["Read", "Write", "Edit", "Bash"],
       "history": [],
-      "mcpServers": {},
+      "mcpServers": {
+        "jarvis-tools": {
+          "command": "node",
+          "args": ["./jarvis-mcp-server.js"],
+          "env": {
+            "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+            "WORKSPACE_DIR": "${WORKSPACE_DIR}"
+          }
+        }
+      },
       "exampleFiles": [],
       "mcpContextUris": []
     }

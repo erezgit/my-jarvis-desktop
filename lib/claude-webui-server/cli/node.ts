@@ -14,8 +14,7 @@ import { setupLogger, logger } from "../utils/logger.ts";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { exit } from "../utils/os.ts";
-import { createTerminalHandler } from "../../terminal/terminal-handler-http.js";
-import type { Server } from "node:http";
+// Terminal handler removed - not needed for web deployment
 
 async function main(runtime: NodeRuntime) {
   // Parse CLI arguments
@@ -44,18 +43,9 @@ async function main(runtime: NodeRuntime) {
     cliPath,
   });
 
-  // Start server and attach terminal WebSocket handler
+  // Start server (terminal handler removed)
   logger.cli.info(`🚀 Server starting on ${args.host}:${args.port}`);
-  runtime.serve(args.port, args.host, app.fetch, (server: Server) => {
-    // Attach terminal WebSocket handler to the HTTP server
-    // This allows WebSocket and HTTP to share the same port
-    try {
-      createTerminalHandler(server);
-      logger.cli.info(`🖥️  Terminal WebSocket handler registered at /terminal`);
-    } catch (error) {
-      logger.cli.warn(`⚠️  Terminal WebSocket handler failed to register: ${error}`);
-    }
-  });
+  runtime.serve(args.port, args.host, app.fetch);
 }
 
 // Global error handlers to prevent server crashes

@@ -13,13 +13,13 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=10000
-      - WORKSPACE_DIR=/workspace
+      - WORKSPACE_DIR=/home/node
+      - DEPLOYMENT_MODE=web
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JWT_SECRET=test-secret-key-for-development
       - DISABLE_AUTH=true
-      - SUPABASE_URL=https://ocvkyhlfdjrvvipljbsa.supabase.co
-      - SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jdmt5aGxmZGpydnZpcGxqYnNhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Mjg5NTkyOSwiZXhwIjoyMDc4NDcxOTI5fQ.6txUfavRFo2d5rQFqTld6OrcY6Akvx7cqrMn90uFwLA
+      # Supabase credentials removed - database operations now handled by Next.js backend
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
       interval: 30s

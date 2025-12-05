@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: my-jarvis-backend
+    ports:
+      - "3001:10000"  # Map container's 10000 to host's 3001
+    volumes:
+      - ./backend-workspace:/home/node
+    environment:
+      - NODE_ENV=development
+      - PORT=10000
+      - TERMINAL_WS_PORT=3001
+      - WORKSPACE_DIR=/home/node
+      - IS_BACKEND_ONLY=true
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEBUG=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

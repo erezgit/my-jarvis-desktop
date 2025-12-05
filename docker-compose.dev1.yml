@@ -13,11 +13,15 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=10000
-      - WORKSPACE_DIR=/workspace
+      - WORKSPACE_DIR=/home/node
+      - DEPLOYMENT_MODE=web
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JWT_SECRET=test-secret-key-for-development
       - DISABLE_AUTH=true
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - USER_ID=${USER_ID}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
       interval: 30s
