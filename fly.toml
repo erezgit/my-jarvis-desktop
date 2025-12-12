@@ -15,10 +15,5 @@ primary_region = 'sjc'
   PORT = '10000'
   TERMINAL_WS_PORT = '3001'
 
-[[mounts]]
-  source = 'workspace_data'
-  destination = '/home/node'
-
-[[vm]]
-  size = 'shared-cpu-1x'
-  memory = '2gb'
+# No static mounts - volumes attached dynamically to ephemeral machines
+# No static VMs - machines created on-demand via Machines API
