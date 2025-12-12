@@ -1,52 +1,24 @@
-# fly.toml template for My Jarvis Desktop Web Deployment
-# Use: cp fly.toml.template fly.toml && sed -i '' 's/APP_NAME/your-app-name/g' fly.toml
+# fly.toml app configuration file generated for my-jarvis-runtime-bitter-wind-2294 on 2025-12-12T17:38:54+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "my-jarvis-erez"
-primary_region = "sjc"
+app = 'my-jarvis-runtime'
+primary_region = 'sjc'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "10000"
-  TERMINAL_WS_PORT = "3001"
-  NODE_ENV = "production"
-  KEEPALIVE_ENABLED = "true"
+  KEEPALIVE_ENABLED = 'true'
+  NODE_ENV = 'production'
+  PORT = '10000'
+  TERMINAL_WS_PORT = '3001'
 
-[http_service]
-  internal_port = 10000
-  force_https = true
-  auto_stop_machines = false
-  auto_start_machines = true
-  min_machines_running = 1
-  processes = ["app"]
-
-  [http_service.concurrency]
-    type = "requests"
-    hard_limit = 100
-    soft_limit = 80
-
-  [[http_service.checks]]
-    interval = "15s"
-    timeout = "10s"
-    grace_period = "30s"
-    method = "GET"
-    path = "/health"
-
-# REMOVED: Port 3001 service causing routing conflicts
-# [[services]]
-#   internal_port = 3001
-#   protocol = "tcp"
-#   processes = ["app"]
-#
-#   [[services.ports]]
-#     port = 3001
-#     handlers = []
+[[mounts]]
+  source = 'workspace_data'
+  destination = '/home/node'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "2gb"
-
-[mounts]
-  source = "workspace_data"
-  destination = "/home/node"
+  size = 'shared-cpu-1x'
+  memory = '2gb'

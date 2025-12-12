@@ -6,7 +6,8 @@
 
 import { createMiddleware } from "hono/factory";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
-import jwt from "jsonwebtoken";
+import pkg from 'jsonwebtoken';
+const { verify, sign } = pkg;
 import { logger } from "../utils/logger.ts";
 
 interface JWTPayload {
@@ -161,7 +162,7 @@ export const authMiddleware = createMiddleware<AuthContext>(async (c, next) => {
 
   try {
     // Validate JWT token
-    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const payload = verify(token, JWT_SECRET) as JWTPayload;
 
     logger.app.info("JWT token validated successfully for user: {userId}", {
       userId: payload.userId,
