@@ -1,19 +1,20 @@
-# fly.toml app configuration file generated for my-jarvis-runtime-bitter-wind-2294 on 2025-12-12T17:38:54+02:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+# fly.toml app configuration file for my-jarvis-runtime
+# This app uses EPHEMERAL MACHINES created via Machines API
+# Do NOT run "fly deploy" - it creates unused machines
+# All infrastructure is managed programmatically via Next.js frontend
 
 app = 'my-jarvis-runtime'
-primary_region = 'sjc'
+primary_region = 'ord'
 
 [build]
   dockerfile = 'Dockerfile'
 
-[env]
-  KEEPALIVE_ENABLED = 'true'
-  NODE_ENV = 'production'
-  PORT = '10000'
-  TERMINAL_WS_PORT = '3001'
+# No [http_service] section - prevents fly deploy from creating machines
+# No [machine] section - prevents fly deploy from creating machines
+# No [[vm]] section - prevents fly deploy from creating machines
 
-# No static mounts - volumes attached dynamically to ephemeral machines
-# No static VMs - machines created on-demand via Machines API
+# All machines are created dynamically via Machines API with:
+# - User-specific JWT tokens in environment variables
+# - User-specific volume attachments
+# - On-demand creation and destruction
+# - Custom routing through my-jarvis-runtime.fly.dev domain

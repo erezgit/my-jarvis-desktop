@@ -12,10 +12,10 @@ import { logger } from "../utils/logger.ts";
 
 interface JWTPayload {
   userId: string;
-  instanceId: string;
-  flyAppName: string;
+  machineId: string;      // Changed from instanceId to match frontend
+  ephemeral?: boolean;    // Add ephemeral flag from frontend
   iat: number;
-  exp: number;
+  exp?: number;           // Make optional since frontend doesn't always set it
 }
 
 interface AuthContext {
@@ -152,8 +152,12 @@ export const authMiddleware = createMiddleware<AuthContext>(async (c, next) => {
     }
   }
 
-  // Check for JWT token in query params (initial handshake from My Jarvis Web)
-  const token = c.req.query("token");
+  // Check for JWT token in Authorization header first, then query params as fallback
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : c.req.query("token");
+
   if (!token) {
     // No token and no valid session - redirect to login
     logger.app.info("No authentication token or session found, redirecting to login");
