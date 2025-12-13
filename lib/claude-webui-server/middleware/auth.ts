@@ -187,13 +187,26 @@ export const authMiddleware = createMiddleware<AuthContext>(async (c, next) => {
     c.set("userId", payload.userId);
     c.set("sessionId", sessionId);
 
-    // Redirect to clean URL (remove token from query string)
-    const url = new URL(c.req.url);
-    url.searchParams.delete("token");
-    const cleanUrl = url.pathname + (url.search || "");
+    // CRITICAL FIX: Differentiate between API routes and web routes
+    // API routes should proceed to endpoint, web routes should redirect for URL cleaning
+    const isApiRoute = path.startsWith('/api/');
 
-    logger.app.info("Redirecting to clean URL: {url}", { url: cleanUrl });
-    return c.redirect(cleanUrl);
+    if (isApiRoute) {
+      // For API routes: proceed to the endpoint after setting auth context
+      logger.app.info("API route authenticated, proceeding to endpoint", {
+        userId: payload.userId,
+        path
+      });
+      return next();
+    } else {
+      // For web routes: redirect to clean URL (remove token from query string)
+      const url = new URL(c.req.url);
+      url.searchParams.delete("token");
+      const cleanUrl = url.pathname + (url.search || "");
+
+      logger.app.info("Web route authenticated, redirecting to clean URL: {url}", { url: cleanUrl });
+      return c.redirect(cleanUrl);
+    }
   } catch (error) {
     logger.app.error("JWT validation failed: {error}", { error });
 
