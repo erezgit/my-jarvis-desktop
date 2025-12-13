@@ -1,7 +1,7 @@
 # fly.toml app configuration file for my-jarvis-runtime
-# This app uses EPHEMERAL MACHINES created via Machines API
-# Do NOT run "fly deploy" - it creates unused machines
-# All infrastructure is managed programmatically via Next.js frontend
+# MANAGED MACHINES ARCHITECTURE
+# This app uses MANAGED MACHINES - fly deploy updates ALL user machines automatically
+# User machines inherit this configuration and get automatic lifecycle management
 
 app = 'my-jarvis-runtime'
 primary_region = 'ord'
@@ -9,12 +9,33 @@ primary_region = 'ord'
 [build]
   dockerfile = 'Dockerfile'
 
-# No [http_service] section - prevents fly deploy from creating machines
-# No [machine] section - prevents fly deploy from creating machines
-# No [[vm]] section - prevents fly deploy from creating machines
+# HTTP service configuration for managed machines
+# All user machines inherit these settings automatically
+[http_service]
+  internal_port = 10000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
 
-# All machines are created dynamically via Machines API with:
-# - User-specific JWT tokens in environment variables
-# - User-specific volume attachments
-# - On-demand creation and destruction
-# - Custom routing through my-jarvis-runtime.fly.dev domain
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "30s"
+    timeout = "10s"
+    method = "GET"
+    path = "/health"
+
+# Default machine configuration for managed machines
+# All user machines created with managed-machine-service.ts inherit these settings
+[machine]
+  memory = 2048
+  cpu_kind = "shared"
+  cpus = 1
+
+# Environment variables for all managed machines
+[env]
+  NODE_ENV = "production"
+  PORT = "10000"
+
+# Volume mount configuration handled programmatically by managed-machine-service.ts
+# No static mounts needed for managed machines

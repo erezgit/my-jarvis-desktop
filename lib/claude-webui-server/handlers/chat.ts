@@ -222,6 +222,17 @@ async function* executeClaudeCommand(
       cwd: workingDirectory, // Set working directory for Claude CLI process
       additionalDirectories: workingDirectory ? [workingDirectory] : [], // Also add to allowed directories
 
+      // ✅ CRITICAL FIX: Explicit API key configuration for Claude Agent SDK
+      // The SDK requires explicit apiKey parameter - doesn't auto-read from environment
+      apiKey: process.env.ANTHROPIC_API_KEY,
+
+      // ✅ FIX: Explicit environment variable passing for containerized deployments
+      // Ensures ANTHROPIC_API_KEY is available to Claude CLI subprocess in Fly.io containers
+      env: {
+        ...process.env, // Inherit all environment variables from container
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, // Explicitly ensure API key is passed
+      },
+
       // ✅ COST OPTIMIZATION: Use Haiku 4.5 by default (1/3 the cost of Sonnet 4.5)
       model: 'haiku' as const, // Haiku 4.5 - similar coding performance at 66% lower cost
 
